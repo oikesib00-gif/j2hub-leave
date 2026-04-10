@@ -1294,6 +1294,18 @@
     <div class="loading-sub" id="loading-sub">Your request is being processed.<br>Please do not close this screen.</div>
   </div>
 
+
+  <!-- ── 通知許可ポップアップ ── -->
+  <div id="notif-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:250;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:16px;padding:32px 24px;max-width:300px;width:90%;text-align:center;">
+      <div style="font-size:48px;margin-bottom:12px;">🔔</div>
+      <div style="font-family:'Montserrat',sans-serif;font-size:17px;font-weight:800;color:#003087;margin-bottom:8px;">Enable Notifications</div>
+      <div style="font-size:13px;color:#6b7280;margin-bottom:24px;line-height:1.6;">Receive birthday wishes and important updates from J2Hub.</div>
+      <button onclick="requestNotificationPermission()" style="width:100%;padding:14px;background:#003087;color:#fff;border:none;border-radius:10px;font-family:'Montserrat',sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px;">Enable</button>
+      <button onclick="document.getElementById('notif-overlay').style.display='none'" style="width:100%;padding:10px;background:transparent;color:#6b7280;border:none;font-size:13px;cursor:pointer;">Not now</button>
+    </div>
+  </div>
+
   <!-- ── Custom Range Calendar Overlay ── -->
   <div class="cal-overlay" id="cal-overlay" onclick="calOverlayClick(event)">
     <div class="cal-popup">
@@ -1334,7 +1346,7 @@
         <button class="lang-btn" onclick="setLang('ta',this)">தமிழ்</button>
       </div>
       <div id="header-hello" style="font-size:20px;font-weight:800;color:var(--blue-dark);display:none;"></div>
-      <button id="notif-btn" onclick="requestNotificationPermission()" style="display:none;font-size:11px;color:#fff;background:#e67e22;border:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:600;">🔔 通知を有効にする</button>
+
     </div>
   </header>
 
@@ -2622,17 +2634,16 @@ function launchApp(name) {
     if (Notification.permission === 'granted') {
       initFirebaseMessaging(name);
     } else if (Notification.permission !== 'denied') {
-      document.getElementById('notif-btn').style.display = 'inline-block';
+      document.getElementById('notif-overlay').style.display = 'flex';
     }
   }
 }
 
 async function requestNotificationPermission() {
-  const btn = document.getElementById('notif-btn');
   const name = localStorage.getItem('j2hub_passkey_name');
   const permission = await Notification.requestPermission();
+  document.getElementById('notif-overlay').style.display = 'none';
   if (permission === 'granted') {
-    btn.style.display = 'none';
     initFirebaseMessaging(name);
   }
 }
