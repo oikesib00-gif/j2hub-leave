@@ -2999,16 +2999,13 @@ async function initFirebaseMessaging(userName) {
     // FCMトークン取得
     const token = await messaging.getToken({ vapidKey: VAPID_KEY, serviceWorkerRegistration: swReg });
     if (token) {
-      // トークンをGASに送信して保存
-      const saved = localStorage.getItem(FCM_TOKEN_KEY);
-      if (saved !== token) {
-        localStorage.setItem(FCM_TOKEN_KEY, token);
-        await fetch(GAS_URL, {
-          method: 'POST',
-          cache: 'no-store',
-          body: JSON.stringify({ action: 'saveFcmToken', name: userName, token: token })
-        });
-      }
+      // 常にGASに送信して保存
+      localStorage.setItem(FCM_TOKEN_KEY, token);
+      await fetch(GAS_URL, {
+        method: 'POST',
+        cache: 'no-store',
+        body: JSON.stringify({ action: 'saveFcmToken', name: userName, token: token })
+      });
     }
 
     // フォアグラウンド通知受信
