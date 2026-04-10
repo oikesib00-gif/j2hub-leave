@@ -9,6 +9,8 @@
 <link rel="apple-touch-icon" href="https://oikesib00-gif.github.io/j2hub-leave/j2hub-icon.png">
 <link rel="icon" href="https://oikesib00-gif.github.io/j2hub-leave/j2hub-icon.png">
 <title>J2Hub – Staff Portal</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -1332,6 +1334,7 @@
         <button class="lang-btn" onclick="setLang('ta',this)">தமிழ்</button>
       </div>
       <div id="header-hello" style="font-size:20px;font-weight:800;color:var(--blue-dark);display:none;"></div>
+      <button id="notif-btn" onclick="requestNotificationPermission()" style="display:none;font-size:11px;color:#fff;background:#e67e22;border:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:600;">🔔 通知を有効にする</button>
     </div>
   </header>
 
@@ -2614,6 +2617,24 @@ function launchApp(name) {
   showLoading('Loading your data…', 'Please wait while we load your information.');
   // 初回データを1回のリクエストでまとめて取得
   loadInitialData(name);
+  // Firebase Cloud Messaging初期化
+  if ('serviceWorker' in navigator && 'Notification' in window) {
+    if (Notification.permission === 'granted') {
+      initFirebaseMessaging(name);
+    } else if (Notification.permission !== 'denied') {
+      document.getElementById('notif-btn').style.display = 'inline-block';
+    }
+  }
+}
+
+async function requestNotificationPermission() {
+  const btn = document.getElementById('notif-btn');
+  const name = localStorage.getItem('j2hub_passkey_name');
+  const permission = await Notification.requestPermission();
+  if (permission === 'granted') {
+    btn.style.display = 'none';
+    initFirebaseMessaging(name);
+  }
 }
 
 
@@ -2930,6 +2951,68 @@ function resetMedicalForm() {
 
 // ============================================================
 // 医療費関連コード ここまで
+// ============================================================
+
+// ============================================================
+// Firebase Cloud Messaging — プッシュ通知
+// ============================================================
+const VAPID_KEY = 'BCjlIVO95F6Cxl-ty8IBe5bf5l5DlSIUahrQKLENEHsnnLOgX97P-SsiFCJ2QZ33enp8Z0GsW4GI3X8axZiXxjQ';
+const FCM_TOKEN_KEY = 'j2hub_fcm_token';
+
+async function initFirebaseMessaging(userName) {
+  try {
+    const firebaseConfig = {
+      apiKey: "AIzaSyCkVjOvNofSJv7KzThDBlwfBZ9uErOx21o",
+      authDomain: "j2hub-leave.firebaseapp.com",
+      projectId: "j2hub-leave",
+      storageBucket: "j2hub-leave.firebasestorage.app",
+      messagingSenderId: "587983949026",
+      appId: "1:587983949026:web:46ecb271705e33fd4522bb"
+    };
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+
+    const messaging = firebase.messaging();
+
+    // Service Worker登録
+    const swReg = await navigator.serviceWorker.register('/j2hub-leave/firebase-messaging-sw.js');
+
+    // 通知許可を要求
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      console.log('通知が拒否されました');
+      return;
+    }
+
+    // FCMトークン取得
+    const token = await messaging.getToken({ vapidKey: VAPID_KEY, serviceWorkerRegistration: swReg });
+    if (token) {
+      // トークンをGASに送信して保存
+      const saved = localStorage.getItem(FCM_TOKEN_KEY);
+      if (saved !== token) {
+        localStorage.setItem(FCM_TOKEN_KEY, token);
+        await fetch(GAS_URL, {
+          method: 'POST',
+          cache: 'no-store',
+          body: JSON.stringify({ action: 'saveFcmToken', name: userName, token: token })
+        });
+      }
+    }
+
+    // フォアグラウンド通知受信
+    messaging.onMessage(function(payload) {
+      const n = payload.notification;
+      new Notification(n.title, { body: n.body, icon: 'https://oikesib00-gif.github.io/j2hub-leave/j2hubicon.png' });
+    });
+
+  } catch (err) {
+    console.error('FCM初期化エラー:', err);
+  }
+}
+// ============================================================
+// Firebase Cloud Messaging ここまで
 // ============================================================
 </script>
 </body>
