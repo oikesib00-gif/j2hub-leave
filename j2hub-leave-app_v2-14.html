@@ -1845,47 +1845,66 @@
       <div class="page-title-main">Submit <em>Petty Cash</em></div>
     </div>
 
-    <div class="form-section">
-      <div class="form-section-title">Receipt Details</div>
+    <div class="form-main" id="pc-form-section">
+      <div class="form-card">
+        <div class="form-section-label">Receipt Upload</div>
 
-      <div class="form-row">
-        <label class="form-label">Shop / Vendor</label>
-        <input class="form-input" id="pc-shop-name" type="text" placeholder="e.g. Popular Bookstore">
-      </div>
+        <!-- レシート写真 -->
+        <div class="form-row">
+          <label class="form-label">Receipt Photo</label>
+          <input type="file" id="pc-receipt-file" accept="image/*" capture="environment" style="display:none;" onchange="onPcReceiptSelected(this)">
+          <div class="receipt-upload-area" id="pc-upload-area" onclick="document.getElementById('pc-receipt-file').click()">
+            <div class="receipt-upload-icon">📷</div>
+            <div class="receipt-upload-text">Tap to take a photo or select from your gallery</div>
+            <img id="pc-receipt-preview" class="receipt-preview" alt="Receipt preview">
+          </div>
+        </div>
 
-      <div class="form-row">
-        <label class="form-label">Receipt Date</label>
-        <input class="form-input" id="pc-receipt-date" type="date">
-      </div>
+        <!-- スキャンボタン -->
+        <button class="scan-btn" id="pc-scan-btn" onclick="scanPcReceipt()">🔍 Scan Receipt</button>
 
-      <div class="form-row">
-        <label class="form-label">Amount (SGD)</label>
-        <input class="form-input" id="pc-amount" type="number" step="0.01" placeholder="0.00">
-      </div>
+        <!-- OCR読み取り結果（確認・修正） -->
+        <div class="ocr-result-card" id="pc-ocr-result-card">
+          <div class="form-section-label" style="margin-bottom:12px;">Confirm Details</div>
 
-      <div class="form-row">
-        <label class="form-label">Description</label>
-        <input class="form-input" id="pc-description" type="text" placeholder="e.g. A4 paper, stapler">
-      </div>
+          <div class="ocr-field">
+            <label class="form-label">Shop / Vendor</label>
+            <input type="text" class="form-input" id="pc-shop-name" placeholder="Shop name">
+          </div>
 
-      <div class="form-row">
-        <label class="form-label">Receipt Photo</label>
-        <input type="file" id="pc-receipt-file" accept="image/*" capture="environment" style="display:none;" onchange="pcPreviewReceipt(this)">
-        <button class="submit-btn" style="background:#6b7280;margin:0;" onclick="document.getElementById('pc-receipt-file').click()">📷 Take / Upload Photo</button>
-      </div>
-      <div id="pc-receipt-preview" style="margin-top:8px;display:none;">
-        <img id="pc-receipt-img" style="max-width:100%;border-radius:8px;border:1px solid #e5e7eb;">
-      </div>
-    </div>
+          <div class="ocr-field">
+            <label class="form-label">Receipt Date</label>
+            <div class="date-display-wrap">
+              <input type="date" class="form-input date-hidden" id="pc-receipt-date-picker" onchange="updatePcReceiptDate()">
+              <div class="date-display" onclick="document.getElementById('pc-receipt-date-picker').showPicker()">
+                <span class="date-display-text" id="pc-receipt-date-text">DD-MMM-YYYY</span>
+                <span class="date-cal-icon">📅</span>
+              </div>
+            </div>
+            <input type="hidden" id="pc-receipt-date">
+          </div>
 
-    <div class="sticky-submit-bar">
-      <button class="submit-btn" id="pc-submit-btn" onclick="submitPettyCash()">Submit Petty Cash</button>
+          <div class="ocr-field">
+            <label class="form-label">Amount (SGD)</label>
+            <input type="number" class="form-input" id="pc-amount" placeholder="0.00" step="0.01" min="0">
+          </div>
+
+          <div class="ocr-field">
+            <label class="form-label">Description</label>
+            <input type="text" class="form-input" id="pc-description" placeholder="e.g. A4 paper, stapler">
+          </div>
+
+          <button class="submit-btn" style="background:var(--blue-dark);" onclick="submitPettyCash()">Submit Petty Cash</button>
+        </div>
+      </div>
     </div>
 
     <!-- 履歴 -->
-    <div class="form-section" style="margin-top:20px;">
-      <div class="form-section-title">My History</div>
-      <div id="pc-history-list"><div style="color:#9ca3af;font-size:13px;text-align:center;padding:16px;">Loading...</div></div>
+    <div class="form-main" style="margin-top:8px;">
+      <div class="form-card">
+        <div class="form-section-label">My History</div>
+        <div id="pc-history-list"><div style="color:#9ca3af;font-size:13px;text-align:center;padding:16px;">No records found.</div></div>
+      </div>
     </div>
   </div>
 
@@ -3324,18 +3343,71 @@ async function initFirebaseMessaging(userName) {
 let pcReceiptBase64 = '';
 let pcReceiptMime   = '';
 
-function pcPreviewReceipt(input) {
+function onPcReceiptSelected(input) {
   if (!input.files || !input.files[0]) return;
-  const file   = input.files[0];
+  const file = input.files[0];
   pcReceiptMime = file.type;
   const reader = new FileReader();
   reader.onload = function(e) {
     const dataUrl = e.target.result;
     pcReceiptBase64 = dataUrl.split(',')[1];
-    document.getElementById('pc-receipt-img').src = dataUrl;
-    document.getElementById('pc-receipt-preview').style.display = 'block';
+    const preview = document.getElementById('pc-receipt-preview');
+    preview.src   = dataUrl;
+    preview.style.display = 'block';
+    document.getElementById('pc-upload-area').style.border = '2px solid var(--green)';
   };
   reader.readAsDataURL(file);
+}
+
+function updatePcReceiptDate() {
+  const picker = document.getElementById('pc-receipt-date-picker');
+  const hidden = document.getElementById('pc-receipt-date');
+  const textEl = document.getElementById('pc-receipt-date-text');
+  if (!picker.value) return;
+  const d = new Date(picker.value);
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const formatted = String(d.getDate()).padStart(2,'0') + '-' + months[d.getMonth()] + '-' + d.getFullYear();
+  textEl.textContent = formatted.toUpperCase();
+  hidden.value = formatted.toUpperCase();
+}
+
+async function scanPcReceipt() {
+  if (!pcReceiptBase64) {
+    alert('Please take or select a receipt photo first.');
+    return;
+  }
+  const btn = document.getElementById('pc-scan-btn');
+  btn.disabled = true;
+  btn.textContent = '🔍 Scanning…';
+  showLoading('Scanning receipt…', 'Please wait.');
+  try {
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      cache: 'no-store',
+      body: JSON.stringify({ action: 'scanReceipt', base64Image: pcReceiptBase64, mimeType: pcReceiptMime })
+    });
+    const d = await res.json();
+    hideLoading();
+    if (d.status === 'success') {
+      if (d.clinicName)   document.getElementById('pc-shop-name').value   = d.clinicName;
+      if (d.amount)       document.getElementById('pc-amount').value       = d.amount;
+      if (d.receiptDate) {
+        document.getElementById('pc-receipt-date-text').textContent = d.receiptDate;
+        document.getElementById('pc-receipt-date').value            = d.receiptDate;
+      }
+      document.getElementById('pc-ocr-result-card').style.display = 'block';
+    } else {
+      alert('Scan failed. Please enter details manually.');
+      document.getElementById('pc-ocr-result-card').style.display = 'block';
+    }
+  } catch(err) {
+    hideLoading();
+    alert('Error: ' + err.message);
+    document.getElementById('pc-ocr-result-card').style.display = 'block';
+  } finally {
+    btn.disabled    = false;
+    btn.textContent = '🔍 Scan Receipt';
+  }
 }
 
 async function submitPettyCash() {
@@ -3344,13 +3416,10 @@ async function submitPettyCash() {
   const receiptDate = document.getElementById('pc-receipt-date').value;
   const amount      = document.getElementById('pc-amount').value;
   const description = document.getElementById('pc-description').value.trim();
-  if (!shopName || !receiptDate || !amount || !description) {
-    alert('Please fill in all fields.');
+  if (!shopName || !receiptDate || !amount) {
+    alert('Please fill in Shop, Date and Amount.');
     return;
   }
-  const btn = document.getElementById('pc-submit-btn');
-  btn.disabled = true;
-  btn.textContent = 'Submitting…';
   showLoading('Submitting…', 'Please wait.');
   try {
     const res = await fetch(GAS_URL, {
@@ -3371,11 +3440,14 @@ async function submitPettyCash() {
     hideLoading();
     if (d.status === 'success') {
       alert('Submitted! Voucher No: ' + d.voucherNo);
-      document.getElementById('pc-shop-name').value    = '';
-      document.getElementById('pc-receipt-date').value = '';
-      document.getElementById('pc-amount').value        = '';
-      document.getElementById('pc-description').value  = '';
+      document.getElementById('pc-shop-name').value              = '';
+      document.getElementById('pc-receipt-date-text').textContent = 'DD-MMM-YYYY';
+      document.getElementById('pc-receipt-date').value            = '';
+      document.getElementById('pc-amount').value                  = '';
+      document.getElementById('pc-description').value             = '';
       document.getElementById('pc-receipt-preview').style.display = 'none';
+      document.getElementById('pc-ocr-result-card').style.display = 'none';
+      document.getElementById('pc-upload-area').style.border      = '';
       pcReceiptBase64 = '';
       loadPettyCashHistory();
     } else {
@@ -3384,9 +3456,6 @@ async function submitPettyCash() {
   } catch(err) {
     hideLoading();
     alert('Error: ' + err.message);
-  } finally {
-    btn.disabled    = false;
-    btn.textContent = 'Submit Petty Cash';
   }
 }
 
