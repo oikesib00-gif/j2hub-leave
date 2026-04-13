@@ -1298,13 +1298,13 @@
   .bday-overlay.show { display: block; }
   .bday-road-dash {
     position: absolute;
-    bottom: calc(50% - 20px); left: 0; right: 0; height: 2px;
+    bottom: calc(50% - 90px); left: 0; right: 0; height: 2px;
     background: repeating-linear-gradient(90deg,rgba(255,255,255,0.8) 0,rgba(255,255,255,0.8) 24px,transparent 24px,transparent 48px);
     animation: j2road 0.35s linear infinite;
   }
   .bday-road-line {
     position: absolute;
-    bottom: calc(50% - 22px); left: 0; right: 0; height: 6px; background: #002070;
+    bottom: calc(50% - 92px); left: 0; right: 0; height: 6px; background: #002070;
   }
   .bday-truck-wrap {
     position: absolute;
@@ -1325,13 +1325,13 @@
   .bday-cake { position: absolute; top: -26px; left: 38px; font-size: 20px; }
   .bday-bouquet { position: absolute; bottom: 0; right: 8px; height: 110px; width: auto; }
   .bday-msg {
-    position: absolute; bottom: 40px; left: 0; right: 0;
+    position: absolute; bottom: calc(50% - 150px); left: 0; right: 0;
     color: #FFD700; font-size: 20px; font-weight: 800;
     text-align: center; z-index: 2;
     animation: bdayMsg 0.8s ease-out 2.2s both;
   }
   .bday-sub {
-    position: absolute; bottom: 18px; left: 0; right: 0;
+    position: absolute; bottom: calc(50% - 172px); left: 0; right: 0;
     color: rgba(255,255,255,0.8); font-size: 12px;
     text-align: center; z-index: 2;
     animation: bdayMsg 0.8s ease-out 2.4s both;
@@ -2778,7 +2778,7 @@ function checkBirthday(name) {
     .then(d => {
       if (!d.birthday) return;
       if (d.birthday.toUpperCase() === todayStr.toUpperCase()) {
-        document.getElementById('bday-msg').textContent = '🎉 Happy Birthday, ' + name.split(' ')[0] + '! 🎉';
+        document.getElementById('bday-msg').textContent = '🎉 Happy Birthday, ' + name + '! 🎉';
         localStorage.setItem(shownKey, todayStr);
         setTimeout(() => { document.getElementById('bday-overlay').classList.add('show'); }, 1500);
       }
