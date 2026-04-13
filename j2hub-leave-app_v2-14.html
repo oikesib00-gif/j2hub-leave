@@ -1353,6 +1353,57 @@
     100% { transform: translateY(800px) rotate(720deg); opacity: 0; }
   }
 
+  /* ── Home Screen（Jennifer Ho / Shige Oike） ────────────────── */
+  .home-screen {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: #f8faff;
+    z-index: 200;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+  }
+  .home-screen.show { display: flex; }
+  .home-greeting {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: #003087;
+    text-align: center;
+  }
+  .home-icons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 0 20px;
+  }
+  .home-icon-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100px;
+    height: 100px;
+    background: #003087;
+    border-radius: 20px;
+    border: none;
+    cursor: pointer;
+    gap: 8px;
+    box-shadow: 0 4px 12px rgba(0,48,135,0.2);
+    transition: transform 0.1s;
+  }
+  .home-icon-btn:active { transform: scale(0.95); }
+  .home-icon-btn .icon { font-size: 32px; }
+  .home-icon-btn .label {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.5px;
+  }
   /* ── Sticky Submit Button ───────────────────────────────────── */
   .sticky-submit-bar {
     position: sticky;
@@ -1391,6 +1442,25 @@
     <div class="loading-sub" id="loading-sub">Please wait</div>
   </div>
 
+
+  <!-- ── ホーム画面（Jennifer Ho / Shige Oike） ── -->
+  <div class="home-screen" id="home-screen">
+    <div class="home-greeting" id="home-greeting">Hello, !</div>
+    <div class="home-icons">
+      <button class="home-icon-btn" onclick="goToApp('leave')">
+        <span class="icon">🌿</span>
+        <span class="label">LEAVE</span>
+      </button>
+      <button class="home-icon-btn" onclick="goToApp('medical')">
+        <span class="icon">🏥</span>
+        <span class="label">MEDICAL</span>
+      </button>
+      <button class="home-icon-btn" onclick="goToApp('pettycash')">
+        <span class="icon">💰</span>
+        <span class="label">PETTY CASH</span>
+      </button>
+    </div>
+  </div>
 
   <!-- ── 通知許可ポップアップ ── -->
   <div id="notif-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:250;align-items:center;justify-content:center;">
@@ -1493,6 +1563,11 @@
         <span data-key="nav_history">History</span>
         <span class="hist-badge" id="hist-badge"></span>
       </div>
+    </button>
+    <!-- ── Petty Cash タブ（Jennifer Ho / Shige Oike のみ表示） ── -->
+    <button id="nav-pettycash-btn" class="nav-tab" onclick="showPage('pettycash',this)" style="display:none;">
+      <span class="icon">💰</span>
+      <span>Petty Cash</span>
     </button>
     <!-- NOTICES tab hidden — Phase 2 -->
     <!-- <button class="nav-tab" onclick="showPage('notices',this)">
@@ -1758,6 +1833,59 @@
         </div>
         <div class="notice-text" data-key="ntc_3">📅 <strong>Public holiday:</strong> Hari Raya Aidilfitri — office will be closed. Please plan leave applications accordingly.</div>
       </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       PAGE: PETTY CASH
+  ══════════════════════════════════════════ -->
+  <div id="page-pettycash" class="page">
+    <div class="page-header">
+      <div class="page-title">Petty Cash</div>
+      <div class="page-title-main">Submit <em>Petty Cash</em></div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">Receipt Details</div>
+
+      <div class="form-row">
+        <label class="form-label">Shop / Vendor</label>
+        <input class="form-input" id="pc-shop-name" type="text" placeholder="e.g. Popular Bookstore">
+      </div>
+
+      <div class="form-row">
+        <label class="form-label">Receipt Date</label>
+        <input class="form-input" id="pc-receipt-date" type="date">
+      </div>
+
+      <div class="form-row">
+        <label class="form-label">Amount (SGD)</label>
+        <input class="form-input" id="pc-amount" type="number" step="0.01" placeholder="0.00">
+      </div>
+
+      <div class="form-row">
+        <label class="form-label">Description</label>
+        <input class="form-input" id="pc-description" type="text" placeholder="e.g. A4 paper, stapler">
+      </div>
+
+      <div class="form-row">
+        <label class="form-label">Receipt Photo</label>
+        <input type="file" id="pc-receipt-file" accept="image/*" capture="environment" style="display:none;" onchange="pcPreviewReceipt(this)">
+        <button class="submit-btn" style="background:#6b7280;margin:0;" onclick="document.getElementById('pc-receipt-file').click()">📷 Take / Upload Photo</button>
+      </div>
+      <div id="pc-receipt-preview" style="margin-top:8px;display:none;">
+        <img id="pc-receipt-img" style="max-width:100%;border-radius:8px;border:1px solid #e5e7eb;">
+      </div>
+    </div>
+
+    <div class="sticky-submit-bar">
+      <button class="submit-btn" id="pc-submit-btn" onclick="submitPettyCash()">Submit Petty Cash</button>
+    </div>
+
+    <!-- 履歴 -->
+    <div class="form-section" style="margin-top:20px;">
+      <div class="form-section-title">My History</div>
+      <div id="pc-history-list"><div style="color:#9ca3af;font-size:13px;text-align:center;padding:16px;">Loading...</div></div>
     </div>
   </div>
 
@@ -2748,14 +2876,22 @@ function launchApp(name) {
   const sel = document.getElementById('employee-name');
   sel.value    = name;
   sel.disabled = true;
-  // Shige OikeのみMedicalタブを表示
+  // Jennifer Ho・Shige OikeはMedical・Petty Cashタブを表示
   const medBtn = document.getElementById('nav-medical-btn');
-  if (medBtn) medBtn.style.display = (name === 'Shige Oike') ? 'flex' : 'none';
+  const pcBtn  = document.getElementById('nav-pettycash-btn');
+  const isAdmin = (name === 'Jennifer Ho' || name === 'Shige Oike');
+  if (medBtn) medBtn.style.display = isAdmin ? 'flex' : 'none';
+  if (pcBtn)  pcBtn.style.display  = isAdmin ? 'flex' : 'none';
   // データ取得中はローディング表示
   showLoading('Loading your data…', 'Please wait while we load your information.');
   // 初回データを1回のリクエストでまとめて取得
   loadInitialData(name);
   checkBirthday(name);
+  // Jennifer Ho・Shige Oikeはホーム画面を表示
+  if (isAdmin) {
+    document.getElementById('home-greeting').textContent = 'Hello, ' + name + '!';
+    document.getElementById('home-screen').classList.add('show');
+  }
   // Firebase Cloud Messaging初期化
   if ('serviceWorker' in navigator && 'Notification' in window) {
     if (Notification.permission === 'granted') {
@@ -2764,6 +2900,18 @@ function launchApp(name) {
       document.getElementById('notif-overlay').style.display = 'flex';
     }
   }
+}
+
+function goToApp(page) {
+  document.getElementById('home-screen').classList.remove('show');
+  // 該当タブを選択
+  const tabs = document.querySelectorAll('.nav-tab');
+  tabs.forEach(t => t.classList.remove('active'));
+  const pages = document.querySelectorAll('.page');
+  pages.forEach(p => p.classList.remove('active'));
+  const targetPage = document.getElementById('page-' + page);
+  if (targetPage) targetPage.classList.add('active');
+  if (page === 'pettycash') loadPettyCashHistory();
 }
 
 function checkBirthday(name) {
@@ -3168,6 +3316,113 @@ async function initFirebaseMessaging(userName) {
 }
 // ============================================================
 // Firebase Cloud Messaging ここまで
+// ============================================================
+
+// ============================================================
+// Petty Cash機能
+// ============================================================
+let pcReceiptBase64 = '';
+let pcReceiptMime   = '';
+
+function pcPreviewReceipt(input) {
+  if (!input.files || !input.files[0]) return;
+  const file   = input.files[0];
+  pcReceiptMime = file.type;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const dataUrl = e.target.result;
+    pcReceiptBase64 = dataUrl.split(',')[1];
+    document.getElementById('pc-receipt-img').src = dataUrl;
+    document.getElementById('pc-receipt-preview').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function submitPettyCash() {
+  const name        = document.getElementById('employee-name').value;
+  const shopName    = document.getElementById('pc-shop-name').value.trim();
+  const receiptDate = document.getElementById('pc-receipt-date').value;
+  const amount      = document.getElementById('pc-amount').value;
+  const description = document.getElementById('pc-description').value.trim();
+  if (!shopName || !receiptDate || !amount || !description) {
+    alert('Please fill in all fields.');
+    return;
+  }
+  const btn = document.getElementById('pc-submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+  showLoading('Submitting…', 'Please wait.');
+  try {
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      cache: 'no-store',
+      body: JSON.stringify({
+        action:      'submitPettyCash',
+        name:        name,
+        shopName:    shopName,
+        receiptDate: receiptDate,
+        amount:      parseFloat(amount),
+        description: description,
+        base64Image: pcReceiptBase64,
+        mimeType:    pcReceiptMime
+      })
+    });
+    const d = await res.json();
+    hideLoading();
+    if (d.status === 'success') {
+      alert('Submitted! Voucher No: ' + d.voucherNo);
+      document.getElementById('pc-shop-name').value    = '';
+      document.getElementById('pc-receipt-date').value = '';
+      document.getElementById('pc-amount').value        = '';
+      document.getElementById('pc-description').value  = '';
+      document.getElementById('pc-receipt-preview').style.display = 'none';
+      pcReceiptBase64 = '';
+      loadPettyCashHistory();
+    } else {
+      alert('Error: ' + (d.message || 'Unknown error'));
+    }
+  } catch(err) {
+    hideLoading();
+    alert('Error: ' + err.message);
+  } finally {
+    btn.disabled    = false;
+    btn.textContent = 'Submit Petty Cash';
+  }
+}
+
+async function loadPettyCashHistory() {
+  const name = document.getElementById('employee-name').value;
+  if (!name) return;
+  const listEl = document.getElementById('pc-history-list');
+  if (!listEl) return;
+  listEl.innerHTML = '<div style="color:#9ca3af;font-size:13px;text-align:center;padding:16px;">Loading...</div>';
+  try {
+    const res  = await fetch(GAS_URL + '?action=getPettyCashHistory&name=' + encodeURIComponent(name), { cache: 'no-store' });
+    const data = await res.json();
+    if (!data.history || data.history.length === 0) {
+      listEl.innerHTML = '<div style="color:#9ca3af;font-size:13px;text-align:center;padding:16px;">No records found.</div>';
+      return;
+    }
+    listEl.innerHTML = data.history.reverse().map(function(h) {
+      const statusColor = h.status.includes('✅') ? '#16a34a' : '#d97706';
+      const voucherLink = h.voucherUrl ? '<a href="' + h.voucherUrl + '" target="_blank" style="font-size:11px;color:#003087;">View Voucher</a>' : '';
+      return '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:8px;">' +
+        '<div style="display:flex;justify-content:space-between;margin-bottom:4px;">' +
+        '<span style="font-weight:700;font-size:13px;color:#003087;">' + h.voucherNo + '</span>' +
+        '<span style="font-size:12px;color:' + statusColor + ';font-weight:600;">' + h.status + '</span>' +
+        '</div>' +
+        '<div style="font-size:12px;color:#374151;">' + h.shopName + ' | ' + h.receiptDate + '</div>' +
+        '<div style="font-size:12px;color:#374151;">' + h.description + '</div>' +
+        '<div style="display:flex;justify-content:space-between;margin-top:4px;">' +
+        '<span style="font-weight:700;color:#003087;">$' + Number(h.amount).toFixed(2) + '</span>' +
+        voucherLink + '</div></div>';
+    }).join('');
+  } catch(err) {
+    listEl.innerHTML = '<div style="color:#ef4444;font-size:13px;text-align:center;padding:16px;">Error loading history.</div>';
+  }
+}
+// ============================================================
+// Petty Cash機能 ここまで
 // ============================================================
 </script>
 </body>
