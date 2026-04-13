@@ -1845,7 +1845,7 @@
       <div class="page-title-main">Submit <em>Petty Cash</em></div>
     </div>
 
-    <div class="form-main" id="pc-form-section">
+    <div class="form-main" id="pc-form-section" style="display:none;">
       <div class="form-card">
         <div class="form-section-label">Receipt Upload</div>
 
@@ -2894,6 +2894,11 @@ function launchApp(name) {
   const isAdmin = (name === 'Jennifer Ho' || name === 'Shige Oike');
   if (medBtn) medBtn.style.display = isAdmin ? 'flex' : 'none';
   if (pcBtn)  pcBtn.style.display  = isAdmin ? 'flex' : 'none';
+  // Jennifer Ho・Shige OikeはPetty Cashフォームを表示
+  if (isAdmin) {
+    const pcForm = document.getElementById('pc-form-section');
+    if (pcForm) pcForm.style.display = 'flex';
+  }
   // データ取得中はローディング表示
   showLoading('Loading your data…', 'Please wait while we load your information.');
   // 初回データを1回のリクエストでまとめて取得
@@ -3338,7 +3343,7 @@ let pcReceiptMime   = '';
 function onPcReceiptSelected(input) {
   if (!input.files || !input.files[0]) return;
   const file = input.files[0];
-  pcReceiptMime = file.type;
+  pcReceiptMime = file.type || 'image/jpeg';
   const reader = new FileReader();
   reader.onload = function(e) {
     const dataUrl = e.target.result;
@@ -3346,7 +3351,11 @@ function onPcReceiptSelected(input) {
     const preview = document.getElementById('pc-receipt-preview');
     preview.src   = dataUrl;
     preview.style.display = 'block';
-    document.getElementById('pc-upload-area').style.border = '2px solid var(--green)';
+    const area = document.getElementById('pc-upload-area');
+    area.classList.add('has-image');
+    area.querySelector('.receipt-upload-icon').style.display = 'none';
+    area.querySelector('.receipt-upload-text').textContent   = file.name;
+    document.getElementById('pc-scan-btn').classList.add('show');
   };
   reader.readAsDataURL(file);
 }
@@ -3365,7 +3374,8 @@ function updatePcReceiptDate() {
 
 async function scanPcReceipt() {
   if (!pcReceiptBase64) {
-    alert('Please take or select a receipt photo first.');
+    document.getElementById('error-detail').innerText = 'Please take or select a receipt photo first.';
+    document.getElementById('error-overlay').classList.add('show');
     return;
   }
   const btn = document.getElementById('pc-scan-btn');
@@ -3381,20 +3391,23 @@ async function scanPcReceipt() {
     const d = await res.json();
     hideLoading();
     if (d.status === 'success') {
-      if (d.clinicName)   document.getElementById('pc-shop-name').value   = d.clinicName;
-      if (d.amount)       document.getElementById('pc-amount').value       = d.amount;
-      if (d.receiptDate) {
-        document.getElementById('pc-receipt-date-text').textContent = d.receiptDate;
-        document.getElementById('pc-receipt-date').value            = d.receiptDate;
+      const ext = d.extracted;
+      if (ext.clinicName)  document.getElementById('pc-shop-name').value   = ext.clinicName;
+      if (ext.amount)      document.getElementById('pc-amount').value       = ext.amount;
+      if (ext.receiptDate) {
+        document.getElementById('pc-receipt-date-text').textContent = ext.receiptDate;
+        document.getElementById('pc-receipt-date').value            = ext.receiptDate;
       }
       document.getElementById('pc-ocr-result-card').classList.add('show');
     } else {
-      alert('Scan failed. Please enter details manually.');
+      document.getElementById('error-detail').innerText = 'Scan failed. Please enter details manually.';
+      document.getElementById('error-overlay').classList.add('show');
       document.getElementById('pc-ocr-result-card').classList.add('show');
     }
   } catch(err) {
     hideLoading();
-    alert('Error: ' + err.message);
+    document.getElementById('error-detail').innerText = 'Connection error. Please enter details manually.';
+    document.getElementById('error-overlay').classList.add('show');
     document.getElementById('pc-ocr-result-card').classList.add('show');
   } finally {
     btn.disabled    = false;
