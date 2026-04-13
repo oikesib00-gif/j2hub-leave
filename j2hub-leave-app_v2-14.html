@@ -3392,12 +3392,13 @@ async function scanPcReceipt() {
     hideLoading();
     if (d.status === 'success') {
       const ext = d.extracted;
-      if (ext.clinicName)  document.getElementById('pc-shop-name').value   = ext.clinicName;
-      if (ext.amount)      document.getElementById('pc-amount').value       = ext.amount;
+      if (ext.clinicName)   document.getElementById('pc-shop-name').value    = ext.clinicName;
+      if (ext.amount)       document.getElementById('pc-amount').value        = ext.amount;
       if (ext.receiptDate) {
         document.getElementById('pc-receipt-date-text').textContent = ext.receiptDate;
         document.getElementById('pc-receipt-date').value            = ext.receiptDate;
       }
+      if (ext.description)  document.getElementById('pc-description').value  = ext.description;
       document.getElementById('pc-ocr-result-card').classList.add('show');
     } else {
       document.getElementById('error-detail').innerText = 'Scan failed. Please enter details manually.';
@@ -3422,45 +3423,48 @@ async function submitPettyCash() {
   const amount      = document.getElementById('pc-amount').value;
   const description = document.getElementById('pc-description').value.trim();
   if (!shopName || !receiptDate || !amount) {
-    alert('Please fill in Shop, Date and Amount.');
+    document.getElementById('error-detail').innerText = 'Please fill in Shop, Date and Amount.';
+    document.getElementById('error-overlay').classList.add('show');
     return;
   }
-  showLoading('Submitting…', 'Please wait.');
-  try {
-    const res = await fetch(GAS_URL, {
-      method: 'POST',
-      cache: 'no-store',
-      body: JSON.stringify({
-        action:      'submitPettyCash',
-        name:        name,
-        shopName:    shopName,
-        receiptDate: receiptDate,
-        amount:      parseFloat(amount),
-        description: description,
-        base64Image: pcReceiptBase64,
-        mimeType:    pcReceiptMime
-      })
-    });
-    const d = await res.json();
-    hideLoading();
+  // すぐにSuccess画面を表示
+  document.getElementById('success-detail').innerText = 'Petty Cash submitted. Processing in background…';
+  document.getElementById('success-overlay').classList.add('show');
+  // フォームリセット
+  document.getElementById('pc-shop-name').value              = '';
+  document.getElementById('pc-receipt-date-text').textContent = 'DD-MMM-YYYY';
+  document.getElementById('pc-receipt-date').value            = '';
+  document.getElementById('pc-amount').value                  = '';
+  document.getElementById('pc-description').value             = '';
+  document.getElementById('pc-receipt-preview').style.display = 'none';
+  document.getElementById('pc-ocr-result-card').classList.remove('show');
+  document.getElementById('pc-upload-area').classList.remove('has-image');
+  const area = document.getElementById('pc-upload-area');
+  if (area.querySelector('.receipt-upload-icon')) area.querySelector('.receipt-upload-icon').style.display = '';
+  if (area.querySelector('.receipt-upload-text')) area.querySelector('.receipt-upload-text').textContent = 'Tap to take a photo or select from your gallery';
+  document.getElementById('pc-scan-btn').classList.remove('show');
+  const b64 = pcReceiptBase64;
+  const mime = pcReceiptMime;
+  pcReceiptBase64 = '';
+  // バックグラウンドでGASに送信
+  fetch(GAS_URL, {
+    method: 'POST',
+    cache: 'no-store',
+    body: JSON.stringify({
+      action:      'submitPettyCash',
+      name:        name,
+      shopName:    shopName,
+      receiptDate: receiptDate,
+      amount:      parseFloat(amount),
+      description: description,
+      base64Image: b64,
+      mimeType:    mime
+    })
+  }).then(r => r.json()).then(d => {
     if (d.status === 'success') {
-      alert('Submitted! Voucher No: ' + d.voucherNo);
-      document.getElementById('pc-shop-name').value              = '';
-      document.getElementById('pc-receipt-date-text').textContent = 'DD-MMM-YYYY';
-      document.getElementById('pc-receipt-date').value            = '';
-      document.getElementById('pc-amount').value                  = '';
-      document.getElementById('pc-description').value             = '';
-      document.getElementById('pc-receipt-preview').style.display = 'none';
-      document.getElementById('pc-ocr-result-card').classList.remove('show');
-      document.getElementById('pc-upload-area').style.border      = '';
-      pcReceiptBase64 = '';
-    } else {
-      alert('Error: ' + (d.message || 'Unknown error'));
+      Logger && Logger.log && Logger.log('PettyCash submitted: ' + d.voucherNo);
     }
-  } catch(err) {
-    hideLoading();
-    alert('Error: ' + err.message);
-  }
+  }).catch(() => {});
 }
 
 // ============================================================
