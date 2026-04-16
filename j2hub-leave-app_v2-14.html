@@ -1845,7 +1845,7 @@
       <div class="page-title-main">Submit <em>Petty Cash</em></div>
     </div>
 
-    <div class="form-main" id="pc-form-section" style="display:none;">
+    <div class="form-main" id="pc-form-section">
       <div class="form-card">
         <div class="form-section-label">Receipt Upload</div>
 
@@ -1866,11 +1866,6 @@
         <!-- OCR読み取り結果（確認・修正） -->
         <div class="ocr-result-card" id="pc-ocr-result-card">
           <div class="form-section-label" style="margin-bottom:12px;">Confirm Details</div>
-          <!-- 確認用Raw Text（後で削除） -->
-          <div class="ocr-field">
-            <label class="form-label" style="color:#ef4444;">📋 Raw OCR Text（確認用）</label>
-            <textarea id="pc-raw-text" style="width:100%;height:120px;font-size:11px;font-family:monospace;border:1px solid #ef4444;border-radius:6px;padding:6px;resize:vertical;" readonly></textarea>
-          </div>
 
           <div class="ocr-field">
             <label class="form-label">Shop / Vendor</label>
@@ -1904,6 +1899,13 @@
       </div>
     </div>
 
+    <!-- 履歴 -->
+    <div class="form-main" style="margin-top:8px;">
+      <div class="form-card">
+        <div class="form-section-label">My History</div>
+        <div id="pc-history-list"><div style="color:#9ca3af;font-size:13px;text-align:center;padding:16px;">No records found.</div></div>
+      </div>
+    </div>
   </div>
 
   <div class="install-hint">
@@ -2899,11 +2901,6 @@ function launchApp(name) {
   const isAdmin = (name === 'Jennifer Ho' || name === 'Shige Oike');
   if (medBtn) medBtn.style.display = isAdmin ? 'flex' : 'none';
   if (pcBtn)  pcBtn.style.display  = isAdmin ? 'flex' : 'none';
-  // Jennifer Ho・Shige OikeはPetty Cashフォームを表示
-  if (isAdmin) {
-    const pcForm = document.getElementById('pc-form-section');
-    if (pcForm) pcForm.style.display = 'flex';
-  }
   // データ取得中はローディング表示
   showLoading('Loading your data…', 'Please wait while we load your information.');
   // 初回データを1回のリクエストでまとめて取得
@@ -2933,6 +2930,7 @@ function goToApp(page) {
   pages.forEach(p => p.classList.remove('active'));
   const targetPage = document.getElementById('page-' + page);
   if (targetPage) targetPage.classList.add('active');
+  if (page === 'pettycash') loadPettyCashHistory();
 }
 
 function checkBirthday(name) {
@@ -3348,7 +3346,7 @@ let pcReceiptMime   = '';
 function onPcReceiptSelected(input) {
   if (!input.files || !input.files[0]) return;
   const file = input.files[0];
-  pcReceiptMime = file.type || 'image/jpeg';
+  pcReceiptMime = file.type;
   const reader = new FileReader();
   reader.onload = function(e) {
     const dataUrl = e.target.result;
@@ -3356,11 +3354,7 @@ function onPcReceiptSelected(input) {
     const preview = document.getElementById('pc-receipt-preview');
     preview.src   = dataUrl;
     preview.style.display = 'block';
-    const area = document.getElementById('pc-upload-area');
-    area.classList.add('has-image');
-    area.querySelector('.receipt-upload-icon').style.display = 'none';
-    area.querySelector('.receipt-upload-text').textContent   = file.name;
-    document.getElementById('pc-scan-btn').classList.add('show');
+    document.getElementById('pc-upload-area').style.border = '2px solid var(--green)';
   };
   reader.readAsDataURL(file);
 }
@@ -3379,8 +3373,7 @@ function updatePcReceiptDate() {
 
 async function scanPcReceipt() {
   if (!pcReceiptBase64) {
-    document.getElementById('error-detail').innerText = 'Please take or select a receipt photo first.';
-    document.getElementById('error-overlay').classList.add('show');
+    alert('Please take or select a receipt photo first.');
     return;
   }
   const btn = document.getElementById('pc-scan-btn');
@@ -3391,30 +3384,28 @@ async function scanPcReceipt() {
     const res = await fetch(GAS_URL, {
       method: 'POST',
       cache: 'no-store',
-      body: JSON.stringify({ action: 'scanReceipt', base64Image: pcReceiptBase64, mimeType: pcReceiptMime })
+      body: JSON.stringify({ action: 'scanPcReceipt', base64Image: pcReceiptBase64, mimeType: pcReceiptMime })
     });
     const d = await res.json();
     hideLoading();
     if (d.status === 'success') {
-      const ext = d.extracted;
-      if (ext.clinicName)   document.getElementById('pc-shop-name').value    = ext.clinicName;
-      if (ext.amount)       document.getElementById('pc-amount').value        = ext.amount;
+      const ext = d.extracted || {};
+      if (ext.shopName)    document.getElementById('pc-shop-name').value   = ext.shopName;
+      if (ext.amount)      document.getElementById('pc-amount').value       = ext.amount;
+      if (ext.description) document.getElementById('pc-description').value  = ext.description;
       if (ext.receiptDate) {
         document.getElementById('pc-receipt-date-text').textContent = ext.receiptDate;
         document.getElementById('pc-receipt-date').value            = ext.receiptDate;
       }
-      if (ext.description)  document.getElementById('pc-description').value  = ext.description;
-      document.getElementById('pc-ocr-result-card').classList.add('show');
+      document.getElementById('pc-ocr-result-card').style.display = 'block';
     } else {
-      document.getElementById('error-detail').innerText = 'Scan failed. Please enter details manually.';
-      document.getElementById('error-overlay').classList.add('show');
-      document.getElementById('pc-ocr-result-card').classList.add('show');
+      alert('Scan failed. Please enter details manually.');
+      document.getElementById('pc-ocr-result-card').style.display = 'block';
     }
   } catch(err) {
     hideLoading();
-    document.getElementById('error-detail').innerText = 'Connection error. Please enter details manually.';
-    document.getElementById('error-overlay').classList.add('show');
-    document.getElementById('pc-ocr-result-card').classList.add('show');
+    alert('Error: ' + err.message);
+    document.getElementById('pc-ocr-result-card').style.display = 'block';
   } finally {
     btn.disabled    = false;
     btn.textContent = '🔍 Scan Receipt';
@@ -3428,50 +3419,79 @@ async function submitPettyCash() {
   const amount      = document.getElementById('pc-amount').value;
   const description = document.getElementById('pc-description').value.trim();
   if (!shopName || !receiptDate || !amount) {
-    document.getElementById('error-detail').innerText = 'Please fill in Shop, Date and Amount.';
-    document.getElementById('error-overlay').classList.add('show');
+    alert('Please fill in Shop, Date and Amount.');
     return;
   }
-  // すぐにSuccess画面を表示
-  document.getElementById('success-detail').innerText = 'Petty Cash submitted. Processing in background…';
-  document.getElementById('success-overlay').classList.add('show');
-  // フォームリセット
-  document.getElementById('pc-shop-name').value              = '';
-  document.getElementById('pc-receipt-date-text').textContent = 'DD-MMM-YYYY';
-  document.getElementById('pc-receipt-date').value            = '';
-  document.getElementById('pc-amount').value                  = '';
-  document.getElementById('pc-description').value             = '';
-  document.getElementById('pc-receipt-preview').style.display = 'none';
-  document.getElementById('pc-ocr-result-card').classList.remove('show');
-  document.getElementById('pc-upload-area').classList.remove('has-image');
-  const area = document.getElementById('pc-upload-area');
-  if (area.querySelector('.receipt-upload-icon')) area.querySelector('.receipt-upload-icon').style.display = '';
-  if (area.querySelector('.receipt-upload-text')) area.querySelector('.receipt-upload-text').textContent = 'Tap to take a photo or select from your gallery';
-  document.getElementById('pc-scan-btn').classList.remove('show');
-  const b64 = pcReceiptBase64;
-  const mime = pcReceiptMime;
-  pcReceiptBase64 = '';
-  // バックグラウンドでGASに送信
-  fetch(GAS_URL, {
-    method: 'POST',
-    cache: 'no-store',
-    body: JSON.stringify({
-      action:      'submitPettyCash',
-      name:        name,
-      shopName:    shopName,
-      receiptDate: receiptDate,
-      amount:      parseFloat(amount),
-      description: description,
-      base64Image: b64,
-      mimeType:    mime
-    })
-  }).then(r => r.json()).then(d => {
+  showLoading('Submitting…', 'Please wait.');
+  try {
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      cache: 'no-store',
+      body: JSON.stringify({
+        action:      'submitPettyCash',
+        name:        name,
+        shopName:    shopName,
+        receiptDate: receiptDate,
+        amount:      parseFloat(amount),
+        description: description,
+        base64Image: pcReceiptBase64,
+        mimeType:    pcReceiptMime
+      })
+    });
+    const d = await res.json();
+    hideLoading();
     if (d.status === 'success') {
-      Logger && Logger.log && Logger.log('PettyCash submitted: ' + d.voucherNo);
+      alert('Submitted! Voucher No: ' + d.voucherNo);
+      document.getElementById('pc-shop-name').value              = '';
+      document.getElementById('pc-receipt-date-text').textContent = 'DD-MMM-YYYY';
+      document.getElementById('pc-receipt-date').value            = '';
+      document.getElementById('pc-amount').value                  = '';
+      document.getElementById('pc-description').value             = '';
+      document.getElementById('pc-receipt-preview').style.display = 'none';
+      document.getElementById('pc-ocr-result-card').style.display = 'none';
+      document.getElementById('pc-upload-area').style.border      = '';
+      pcReceiptBase64 = '';
+      loadPettyCashHistory();
+    } else {
+      alert('Error: ' + (d.message || 'Unknown error'));
     }
-  }).catch(() => {});
+  } catch(err) {
+    hideLoading();
+    alert('Error: ' + err.message);
+  }
 }
 
+async function loadPettyCashHistory() {
+  const name = document.getElementById('employee-name').value;
+  if (!name) return;
+  const listEl = document.getElementById('pc-history-list');
+  if (!listEl) return;
+  listEl.innerHTML = '<div style="color:#9ca3af;font-size:13px;text-align:center;padding:16px;">Loading...</div>';
+  try {
+    const res  = await fetch(GAS_URL + '?action=getPettyCashHistory&name=' + encodeURIComponent(name), { cache: 'no-store' });
+    const data = await res.json();
+    if (!data.history || data.history.length === 0) {
+      listEl.innerHTML = '<div style="color:#9ca3af;font-size:13px;text-align:center;padding:16px;">No records found.</div>';
+      return;
+    }
+    listEl.innerHTML = data.history.reverse().map(function(h) {
+      const statusColor = h.status.includes('✅') ? '#16a34a' : '#d97706';
+      const voucherLink = h.voucherUrl ? '<a href="' + h.voucherUrl + '" target="_blank" style="font-size:11px;color:#003087;">View Voucher</a>' : '';
+      return '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:8px;">' +
+        '<div style="display:flex;justify-content:space-between;margin-bottom:4px;">' +
+        '<span style="font-weight:700;font-size:13px;color:#003087;">' + h.voucherNo + '</span>' +
+        '<span style="font-size:12px;color:' + statusColor + ';font-weight:600;">' + h.status + '</span>' +
+        '</div>' +
+        '<div style="font-size:12px;color:#374151;">' + h.shopName + ' | ' + h.receiptDate + '</div>' +
+        '<div style="font-size:12px;color:#374151;">' + h.description + '</div>' +
+        '<div style="display:flex;justify-content:space-between;margin-top:4px;">' +
+        '<span style="font-weight:700;color:#003087;">$' + Number(h.amount).toFixed(2) + '</span>' +
+        voucherLink + '</div></div>';
+    }).join('');
+  } catch(err) {
+    listEl.innerHTML = '<div style="color:#ef4444;font-size:13px;text-align:center;padding:16px;">Error loading history.</div>';
+  }
+}
 // ============================================================
 // Petty Cash機能 ここまで
 // ============================================================
