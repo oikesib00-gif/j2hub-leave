@@ -3355,6 +3355,7 @@ function onPcReceiptSelected(input) {
     preview.src   = dataUrl;
     preview.style.display = 'block';
     document.getElementById('pc-upload-area').style.border = '2px solid var(--green)';
+    document.getElementById('pc-scan-btn').classList.add('show');
   };
   reader.readAsDataURL(file);
 }
@@ -3450,6 +3451,7 @@ async function submitPettyCash() {
       document.getElementById('pc-receipt-preview').style.display = 'none';
       document.getElementById('pc-ocr-result-card').style.display = 'none';
       document.getElementById('pc-upload-area').style.border      = '';
+      document.getElementById('pc-scan-btn').classList.remove('show');
       pcReceiptBase64 = '';
       loadPettyCashHistory();
     } else {
