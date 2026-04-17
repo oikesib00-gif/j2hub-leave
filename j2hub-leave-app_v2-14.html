@@ -1404,6 +1404,247 @@
     color: #fff;
     letter-spacing: 0.5px;
   }
+  /* ── Home Screen Category（第1階層） ── */
+  .home-category-icons {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 0 20px;
+  }
+  .home-cat-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 120px;
+    height: 120px;
+    background: #003087;
+    border-radius: 24px;
+    border: none;
+    cursor: pointer;
+    gap: 8px;
+    box-shadow: 0 4px 16px rgba(0,48,135,0.25);
+    transition: transform 0.1s;
+  }
+  .home-cat-btn:active { transform: scale(0.95); }
+  .home-cat-btn .icon { font-size: 38px; }
+  .home-cat-btn .label {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.5px;
+  }
+  /* ── Lorry Submenu（第2階層） ── */
+  .lorry-submenu {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: #f0f4ff;
+    z-index: 210;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+  }
+  .lorry-submenu.show { display: flex; }
+  .lorry-submenu-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    color: #003087;
+    text-align: center;
+  }
+  .lorry-submenu-icons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 0 20px;
+  }
+  .lorry-sub-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100px;
+    height: 100px;
+    background: #003087;
+    border-radius: 20px;
+    border: none;
+    cursor: pointer;
+    gap: 8px;
+    box-shadow: 0 4px 12px rgba(0,48,135,0.2);
+    transition: transform 0.1s;
+  }
+  .lorry-sub-btn:active { transform: scale(0.95); }
+  .lorry-sub-btn .icon { font-size: 30px; }
+  .lorry-sub-btn .label {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.5px;
+  }
+  .lorry-back-btn {
+    background: none;
+    border: 2px solid #003087;
+    color: #003087;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 10px 28px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .lorry-back-btn:active { transform: scale(0.96); }
+  /* ── Inspection Page ── */
+  .insp-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--blue-dark);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--blue-light);
+  }
+  .insp-info-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 14px;
+  }
+  .insp-info-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+  .insp-info-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    background: var(--blue-light);
+    border-radius: 8px;
+    padding: 9px 12px;
+  }
+  .insp-select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    background: #fff;
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+  }
+  .insp-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+  }
+  .insp-checklist-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .insp-checklist-item:last-child { border-bottom: none; }
+  .insp-item-name {
+    font-size: 13px;
+    color: var(--text);
+    flex: 1;
+    padding-right: 10px;
+  }
+  .insp-check-btns { display: flex; gap: 6px; flex-shrink: 0; }
+  .insp-ok-btn, .insp-attn-btn {
+    padding: 6px 12px;
+    border-radius: 16px;
+    border: 1.5px solid var(--border);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    background: #fff;
+    color: var(--text-muted);
+    transition: all 0.15s;
+    font-family: 'Open Sans', sans-serif;
+  }
+  .insp-ok-btn.active { background: #00875a; border-color: #00875a; color: #fff; }
+  .insp-attn-btn.active { background: #dc2626; border-color: #dc2626; color: #fff; }
+  .insp-submit-btn {
+    display: block;
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 12px;
+    background: #003087;
+    color: #fff;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: 0.3px;
+    transition: all 0.18s;
+    margin-top: 8px;
+  }
+  .insp-submit-btn:active { transform: scale(0.98); }
+  /* ── Inspection Success Overlay ── */
+  .insp-success-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 350;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #003087 0%, #1a6fd4 100%);
+    text-align: center;
+    padding: 32px;
+  }
+  .insp-success-overlay.show { display: flex; }
+  .insp-success-icon { font-size: 64px; margin-bottom: 16px; }
+  .insp-success-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 24px;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 10px;
+  }
+  .insp-success-msg {
+    font-size: 15px;
+    color: rgba(255,255,255,0.85);
+    margin-bottom: 10px;
+    line-height: 1.6;
+  }
+  .insp-success-sub {
+    font-size: 13px;
+    color: rgba(255,255,255,0.65);
+    margin-bottom: 28px;
+    line-height: 1.5;
+  }
+  .insp-success-close {
+    padding: 14px 36px;
+    border: none;
+    border-radius: 12px;
+    background: #fff;
+    color: #003087;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+  }
   /* ── Sticky Submit Button ───────────────────────────────────── */
   .sticky-submit-bar {
     position: sticky;
@@ -1446,20 +1687,39 @@
   <!-- ── ホーム画面（Jennifer Ho / Shige Oike） ── -->
   <div class="home-screen" id="home-screen">
     <div class="home-greeting" id="home-greeting">Hello, !</div>
-    <div class="home-icons">
-      <button class="home-icon-btn" onclick="goToApp('leave')">
-        <span class="icon">🌿</span>
-        <span class="label">LEAVE</span>
+    <!-- 第1階層：カテゴリ選択 -->
+    <div class="home-category-icons">
+      <button class="home-cat-btn" onclick="goToCategoryApp()">
+        <span class="icon">📋</span>
+        <span class="label">APPLICATION</span>
       </button>
-      <button class="home-icon-btn" onclick="goToApp('medical')">
-        <span class="icon">🏥</span>
-        <span class="label">MEDICAL</span>
-      </button>
-      <button class="home-icon-btn" onclick="goToApp('pettycash')">
-        <span class="icon">💰</span>
-        <span class="label">PETTY CASH</span>
+      <button class="home-cat-btn" onclick="goToLorryMenu()">
+        <span class="icon">🚛</span>
+        <span class="label">LORRY</span>
       </button>
     </div>
+  </div>
+
+  <!-- ── Lorry サブメニュー（第2階層） ── -->
+  <div class="lorry-submenu" id="lorry-submenu">
+    <div class="lorry-submenu-title">🚛 Lorry</div>
+    <div class="lorry-submenu-icons">
+      <!-- ============================================================ -->
+      <!-- LAUNCHED フラグ管理 — ローンチ時にここを更新 -->
+      <!-- inspection: true → 表示 / false → 非表示 -->
+      <!-- ============================================================ -->
+      <button class="lorry-sub-btn" onclick="goToInspection()">
+        <span class="icon">🔍</span>
+        <span class="label">INSPECTION</span>
+      </button>
+      <!-- 将来追加予定
+      <button class="lorry-sub-btn" onclick="">
+        <span class="icon">🔧</span>
+        <span class="label">MAINTENANCE</span>
+      </button>
+      -->
+    </div>
+    <button class="lorry-back-btn" onclick="goBackToHome()">← Back</button>
   </div>
 
   <!-- ── 通知許可ポップアップ ── -->
@@ -1906,6 +2166,106 @@
         <div id="pc-history-list"><div style="color:#9ca3af;font-size:13px;text-align:center;padding:16px;">No records found.</div></div>
       </div>
     </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       PAGE: INSPECTION（運行前点検）
+  ══════════════════════════════════════════ -->
+  <div id="page-inspection" class="page">
+    <div class="page-header">
+      <div class="page-title">Daily Check</div>
+      <div class="page-title-main">Pre-Trip <em>Inspection</em></div>
+    </div>
+
+    <div class="form-main">
+
+      <!-- Vehicle & Driver Info -->
+      <div class="form-card">
+        <div class="insp-section-title">Vehicle & Driver Info</div>
+
+        <div class="insp-info-row">
+          <div class="insp-info-label">Driver</div>
+          <div class="insp-info-value" id="insp-driver">—</div>
+        </div>
+
+        <div class="insp-info-row">
+          <div class="insp-info-label">Vehicle No.</div>
+          <select class="insp-select" id="insp-vehicle">
+            <option value="">— Select vehicle —</option>
+            <!-- !! VEHICLE LIST — DO NOT TOUCH — 変更禁止 !! -->
+            <option>GBG2468K</option>
+            <option>YP6184H</option>
+            <option>YP6551G</option>
+            <option>YQ1089C</option>
+            <option>YQ1765J</option>
+            <option>YQ2169Z</option>
+            <option>YQ6075J</option>
+            <option>YR5434H</option>
+            <option>YR6279H</option>
+            <option>YR6470X</option>
+            <!-- !! VEHICLE LIST END !! -->
+          </select>
+        </div>
+
+        <div class="insp-info-row">
+          <div class="insp-info-label">Odometer Reading</div>
+          <input type="number" class="insp-input" id="insp-odometer" placeholder="e.g. 123456" min="0">
+        </div>
+
+        <div class="insp-info-row">
+          <div class="insp-info-label">Date / Time</div>
+          <div class="insp-info-value" id="insp-datetime">—</div>
+        </div>
+      </div>
+
+      <!-- Section A: Vehicle Security -->
+      <div class="form-card">
+        <div class="insp-section-title">A. Vehicle Security</div>
+        <div id="insp-section-a"></div>
+      </div>
+
+      <!-- Section B: Engine Check -->
+      <div class="form-card">
+        <div class="insp-section-title">B. Engine Check</div>
+        <div id="insp-section-b"></div>
+      </div>
+
+      <!-- Section C: Lights -->
+      <div class="form-card">
+        <div class="insp-section-title">C. Lights</div>
+        <div id="insp-section-c"></div>
+      </div>
+
+      <!-- Section D: Others -->
+      <div class="form-card">
+        <div class="insp-section-title">D. Others</div>
+        <div id="insp-section-d"></div>
+      </div>
+
+      <!-- Section E: Tires -->
+      <div class="form-card">
+        <div class="insp-section-title">E. Tires</div>
+        <div id="insp-section-e"></div>
+      </div>
+
+      <!-- Remarks -->
+      <div class="form-card">
+        <div class="insp-section-title">Remarks</div>
+        <textarea class="insp-input" id="insp-remarks" rows="3" placeholder="Note any issues or observations…" style="resize:none;"></textarea>
+      </div>
+
+      <button class="insp-submit-btn" id="insp-submit-btn" onclick="submitInspection()">Submit Inspection</button>
+
+    </div>
+  </div>
+
+  <!-- ── Inspection 成功オーバーレイ ── -->
+  <div class="insp-success-overlay" id="insp-success-overlay">
+    <div class="insp-success-icon">✅</div>
+    <div class="insp-success-title" id="insp-success-title">Thank you!</div>
+    <div class="insp-success-msg" id="insp-success-msg"></div>
+    <div class="insp-success-sub">Your inspection record has been received.<br>Drive safe and have a good day!</div>
+    <button class="insp-success-close" onclick="closeInspSuccess()">Back to Form</button>
   </div>
 
   <div class="install-hint">
@@ -2910,6 +3270,11 @@ function launchApp(name) {
   if (isAdmin) {
     document.getElementById('home-greeting').textContent = 'Hello, ' + name + '!';
     document.getElementById('home-screen').classList.add('show');
+    // Inspection初期化
+    const inspDriverEl = document.getElementById('insp-driver');
+    if (inspDriverEl) inspDriverEl.textContent = name;
+    inspResetChecklist();
+    inspUpdateDateTime();
   }
   // Firebase Cloud Messaging初期化
   if ('serviceWorker' in navigator && 'Notification' in window) {
@@ -2931,6 +3296,195 @@ function goToApp(page) {
   const targetPage = document.getElementById('page-' + page);
   if (targetPage) targetPage.classList.add('active');
   if (page === 'pettycash') loadPettyCashHistory();
+}
+
+// ── ホーム画面：APPLICATIONカテゴリへ ─────────────────────────
+function goToCategoryApp() {
+  document.getElementById('home-screen').classList.remove('show');
+  // Leaveページを表示（既存のgoToAppの動作）
+  const tabs = document.querySelectorAll('.nav-tab');
+  tabs.forEach(t => t.classList.remove('active'));
+  const pages = document.querySelectorAll('.page');
+  pages.forEach(p => p.classList.remove('active'));
+  const leaveTab = document.querySelector('.nav-tab');
+  if (leaveTab) leaveTab.classList.add('active');
+  const leavePage = document.getElementById('page-leave');
+  if (leavePage) leavePage.classList.add('active');
+}
+
+// ── ホーム画面：LORRYサブメニューへ ─────────────────────────
+function goToLorryMenu() {
+  document.getElementById('home-screen').classList.remove('show');
+  document.getElementById('lorry-submenu').classList.add('show');
+}
+
+// ── Lorryサブメニュー：ホームへ戻る ─────────────────────────
+function goBackToHome() {
+  document.getElementById('lorry-submenu').classList.remove('show');
+  document.getElementById('home-screen').classList.add('show');
+}
+
+// ── Lorryサブメニュー：Inspectionへ ─────────────────────────
+function goToInspection() {
+  document.getElementById('lorry-submenu').classList.remove('show');
+  const pages = document.querySelectorAll('.page');
+  pages.forEach(p => p.classList.remove('active'));
+  const tabs = document.querySelectorAll('.nav-tab');
+  tabs.forEach(t => t.classList.remove('active'));
+  document.getElementById('page-inspection').classList.add('active');
+  // 日時を更新
+  inspUpdateDateTime();
+}
+
+// ============================================================
+// ── Inspection 機能 ──────────────────────────────────────────
+// ============================================================
+
+// !! INSPECTION GAS URL — デプロイ後に設定 !!
+const INSP_GAS_URL = 'https://script.google.com/macros/s/AKfycbynoXNjgS1swI8BCoNiYGzpIAWP3xmDoDTMHH5L88hYn8lUV1u8zYVd9HlL5nKGfSS0/exec';
+
+// 点検チェックリスト定義（PDFより）
+const INSP_CHECKLIST = {
+  a: [
+    { key: 'a1', label: 'Locks / tampered check' },
+    { key: 'a2', label: 'Foreign objects — Near vehicle' },
+    { key: 'a3', label: 'Foreign objects — Exterior of vehicle' },
+    { key: 'a4', label: 'Interior — Passenger Cabin' },
+    { key: 'a5', label: 'Interior — Cargo Hold' },
+    { key: 'a6', label: 'Interior — Glove Box' },
+    { key: 'a7', label: 'Vehicle Undercarriage' },
+  ],
+  b: [
+    { key: 'b1', label: 'Noises' },
+    { key: 'b2', label: 'Signs of leakage' },
+    { key: 'b3', label: 'Gauge — Fuel' },
+    { key: 'b4', label: 'Gauge — Temperature' },
+    { key: 'b5', label: 'Dashboard Warning Light' },
+  ],
+  c: [
+    { key: 'c1', label: 'Headlights' },
+    { key: 'c2', label: 'Brake Lights' },
+    { key: 'c3', label: 'Signal Lights' },
+    { key: 'c4', label: 'Hazard Lights' },
+  ],
+  d: [
+    { key: 'd1', label: 'Windshield wipers' },
+    { key: 'd2', label: 'Fans and defroster' },
+    { key: 'd3', label: 'Brakes' },
+    { key: 'd4', label: 'Parking brakes' },
+    { key: 'd5', label: 'Mirrors' },
+    { key: 'd6', label: 'Horn' },
+    { key: 'd7', label: 'Exhaust (muffler, tailpipe)' },
+    { key: 'd8', label: 'Fire Extinguisher' },
+  ],
+  e: [
+    { key: 'e1', label: 'Proper inflation' },
+    { key: 'e2', label: 'Adequate tread' },
+    { key: 'e3', label: 'Spare inflated' },
+  ]
+};
+
+let inspState = {};
+
+function inspBuildSection(sectionId, items) {
+  const container = document.getElementById(sectionId);
+  if (!container) return;
+  container.innerHTML = '';
+  items.forEach(item => {
+    inspState[item.key] = null;
+    const row = document.createElement('div');
+    row.className = 'insp-checklist-item';
+    row.innerHTML =
+      '<span class="insp-item-name">' + item.label + '</span>' +
+      '<div class="insp-check-btns">' +
+        '<button class="insp-ok-btn" id="iok-' + item.key + '" onclick="inspSetCheck(\'' + item.key + '\',\'OK\')">OK</button>' +
+        '<button class="insp-attn-btn" id="iat-' + item.key + '" onclick="inspSetCheck(\'' + item.key + '\',\'Attention\')">Attn</button>' +
+      '</div>';
+    container.appendChild(row);
+  });
+}
+
+function inspSetCheck(key, value) {
+  inspState[key] = value;
+  const okBtn   = document.getElementById('iok-' + key);
+  const attnBtn = document.getElementById('iat-' + key);
+  if (okBtn)   okBtn.classList.toggle('active',   value === 'OK');
+  if (attnBtn) attnBtn.classList.toggle('active', value === 'Attention');
+}
+
+function inspResetChecklist() {
+  inspState = {};
+  inspBuildSection('insp-section-a', INSP_CHECKLIST.a);
+  inspBuildSection('insp-section-b', INSP_CHECKLIST.b);
+  inspBuildSection('insp-section-c', INSP_CHECKLIST.c);
+  inspBuildSection('insp-section-d', INSP_CHECKLIST.d);
+  inspBuildSection('insp-section-e', INSP_CHECKLIST.e);
+}
+
+function inspUpdateDateTime() {
+  const now = new Date();
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const d  = String(now.getDate()).padStart(2,'0');
+  const m  = months[now.getMonth()].toUpperCase();
+  const y  = now.getFullYear();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  const el = document.getElementById('insp-datetime');
+  if (el) el.textContent = d + '-' + m + '-' + y + '  ' + hh + ':' + mm;
+}
+
+async function submitInspection() {
+  const driver    = document.getElementById('insp-driver').textContent.trim();
+  const vehicleNo = document.getElementById('insp-vehicle').value;
+  const odometer  = document.getElementById('insp-odometer').value;
+  const remarks   = document.getElementById('insp-remarks').value.trim();
+
+  if (!vehicleNo) { alert('Please select a vehicle.'); return; }
+
+  // 未チェック項目の確認
+  const unchecked = Object.keys(inspState).filter(k => !inspState[k]);
+  if (unchecked.length > 0) {
+    if (!confirm(unchecked.length + ' item(s) not checked yet. Submit anyway?')) return;
+  }
+
+  const btn = document.getElementById('insp-submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+
+  // ── 即座に完了画面を表示（ユーザーを待たせない） ──
+  const failedItems = Object.keys(inspState).filter(k => inspState[k] === 'Attention');
+  const resultText  = failedItems.length > 0
+    ? 'Attention needed on ' + failedItems.length + ' item(s).'
+    : 'All items checked OK.';
+
+  document.getElementById('insp-success-title').textContent = 'Thank you, ' + driver.split(' ')[0] + '!';
+  document.getElementById('insp-success-msg').textContent   = vehicleNo + ' — ' + resultText;
+  document.getElementById('insp-success-overlay').classList.add('show');
+
+  // ── バックグラウンドでGASに送信 ──
+  fetch(INSP_GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify({
+      action:    'submitInspection',
+      driver:    driver,
+      vehicleNo: vehicleNo,
+      odometer:  odometer,
+      checklist: inspState,
+      remarks:   remarks
+    })
+  }).catch(() => {}); // エラーはサイレント（ユーザーには影響させない）
+
+  btn.disabled    = false;
+  btn.textContent = 'Submit Inspection';
+}
+
+function closeInspSuccess() {
+  document.getElementById('insp-success-overlay').classList.remove('show');
+  document.getElementById('insp-vehicle').value  = '';
+  document.getElementById('insp-odometer').value = '';
+  document.getElementById('insp-remarks').value  = '';
+  inspResetChecklist();
+  inspUpdateDateTime();
 }
 
 function checkBirthday(name) {
