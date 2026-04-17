@@ -1687,55 +1687,72 @@
   <!-- ── ホーム画面（Jennifer Ho / Shige Oike） ── -->
   <div class="home-screen" id="home-screen">
     <div class="home-greeting" id="home-greeting">Hello, !</div>
-    <!-- 第1階層：カテゴリ選択 -->
     <div class="home-category-icons">
+
+      <!-- APPLICATION -->
       <button class="home-cat-btn" onclick="goToCategoryApp()">
         <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="6" y="10" width="36" height="26" rx="3" fill="#e8f0fe"/>
-          <rect x="9" y="13" width="8" height="3" rx="1" fill="#003087"/>
-          <rect x="9" y="18" width="30" height="2" rx="1" fill="#003087"/>
-          <rect x="9" y="22" width="30" height="2" rx="1" fill="#003087"/>
-          <rect x="9" y="26" width="20" height="2" rx="1" fill="#003087"/>
-          <rect x="14" y="32" width="6" height="1.5" rx="0.75" fill="#003087"/>
+          <rect x="6" y="8" width="36" height="28" rx="3" fill="#e8f0fe"/>
+          <rect x="10" y="12" width="10" height="3" rx="1" fill="#003087"/>
+          <rect x="10" y="18" width="28" height="2" rx="1" fill="#003087"/>
+          <rect x="10" y="22" width="28" height="2" rx="1" fill="#003087"/>
+          <rect x="10" y="26" width="18" height="2" rx="1" fill="#003087"/>
+          <rect x="10" y="30" width="12" height="2" rx="1" fill="#003087"/>
         </svg>
         <span class="label">APPLICATION</span>
       </button>
-      <button class="home-cat-btn" onclick="goToLorryMenu()">
-        <svg width="56" height="40" viewBox="0 0 56 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="2" y="10" width="32" height="20" rx="3" fill="#e8f0fe" stroke="#003087" stroke-width="1.5"/>
-          <path d="M34 16 L50 16 L54 24 L54 30 L34 30 Z" fill="#b3c8f0" stroke="#003087" stroke-width="1.5"/>
-          <rect x="36" y="18" width="10" height="8" rx="1" fill="#003087" opacity="0.3"/>
-          <circle cx="10" cy="32" r="5" fill="#003087"/>
-          <circle cx="10" cy="32" r="2.5" fill="#e8f0fe"/>
-          <circle cx="42" cy="32" r="5" fill="#003087"/>
-          <circle cx="42" cy="32" r="2.5" fill="#e8f0fe"/>
-          <rect x="2" y="14" width="32" height="3" rx="1" fill="#003087" opacity="0.15"/>
+
+      <!-- LORRY（頭右向き・頭のみ青） -->
+      <button class="home-cat-btn" onclick="goToLorry()">
+        <svg width="64" height="44" viewBox="0 0 64 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- 荷台（左側・白） -->
+          <rect x="2" y="10" width="30" height="22" rx="2" fill="#fff" stroke="#003087" stroke-width="1.5"/>
+          <!-- 荷台の横線 -->
+          <line x1="2" y1="18" x2="32" y2="18" stroke="#003087" stroke-width="0.8" opacity="0.4"/>
+          <line x1="2" y1="24" x2="32" y2="24" stroke="#003087" stroke-width="0.8" opacity="0.4"/>
+          <!-- キャブ（右側・青・頭） -->
+          <path d="M32 14 L32 32 L58 32 L58 20 L50 14 Z" fill="#003087"/>
+          <!-- キャブ窓 -->
+          <path d="M34 16 L34 26 L50 26 L50 20 L44 16 Z" fill="#e8f0fe" opacity="0.9"/>
+          <!-- フロントグリル -->
+          <rect x="54" y="22" width="4" height="8" rx="1" fill="#1a6fd4"/>
+          <!-- タイヤ左後 -->
+          <circle cx="10" cy="34" r="6" fill="#1a1a2e"/>
+          <circle cx="10" cy="34" r="3" fill="#6b7280"/>
+          <!-- タイヤ左前 -->
+          <circle cx="22" cy="34" r="6" fill="#1a1a2e"/>
+          <circle cx="22" cy="34" r="3" fill="#6b7280"/>
+          <!-- タイヤ右（キャブ） -->
+          <circle cx="48" cy="34" r="6" fill="#1a1a2e"/>
+          <circle cx="48" cy="34" r="3" fill="#6b7280"/>
         </svg>
         <span class="label">LORRY</span>
       </button>
-    </div>
-  </div>
 
-  <!-- ── Lorry サブメニュー（第2階層） ── -->
-  <div class="lorry-submenu" id="lorry-submenu">
-    <div class="lorry-submenu-title">🚛 Lorry</div>
-    <div class="lorry-submenu-icons">
-      <!-- ============================================================ -->
-      <!-- LAUNCHED フラグ管理 — ローンチ時にここを更新 -->
-      <!-- inspection: true → 表示 / false → 非表示 -->
-      <!-- ============================================================ -->
-      <button class="lorry-sub-btn" onclick="goToInspection()">
-        <span class="icon">🔍</span>
-        <span class="label">INSPECTION</span>
+      <!-- J2Hub INFO -->
+      <button class="home-cat-btn" onclick="goToInfo()" style="position:relative;">
+        <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="4" y="4" width="36" height="36" rx="4" fill="#e8f0fe"/>
+          <rect x="8" y="10" width="28" height="3" rx="1" fill="#003087"/>
+          <rect x="8" y="16" width="28" height="2" rx="1" fill="#003087" opacity="0.6"/>
+          <rect x="8" y="20" width="20" height="2" rx="1" fill="#003087" opacity="0.6"/>
+          <circle cx="32" cy="30" r="7" fill="#003087"/>
+          <rect x="31" y="27" width="2" height="6" rx="1" fill="#fff"/>
+          <circle cx="32" cy="25.5" r="1.2" fill="#fff"/>
+        </svg>
+        <span class="label">J2Hub INFO</span>
+        <!-- 新着バッジ -->
+        <span id="info-badge" style="
+          display:none; position:absolute; top:6px; right:6px;
+          background:#dc2626; color:#fff;
+          font-family:'Montserrat',sans-serif; font-size:10px; font-weight:800;
+          border-radius:10px; min-width:18px; height:18px;
+          padding:0 5px; align-items:center; justify-content:center;
+          line-height:1;
+        ">0</span>
       </button>
-      <!-- 将来追加予定
-      <button class="lorry-sub-btn" onclick="">
-        <span class="icon">🔧</span>
-        <span class="label">MAINTENANCE</span>
-      </button>
-      -->
+
     </div>
-    <button class="lorry-back-btn" onclick="goBackToHome()">← Back</button>
   </div>
 
   <!-- ── 通知許可ポップアップ ── -->
@@ -1822,8 +1839,8 @@
     </div>
   </header>
 
-  <!-- ── Nav ── -->
-  <div class="nav-tabs">
+  <!-- ── Nav（申請系） ── -->
+  <div class="nav-tabs" id="nav-application">
     <button class="nav-tab active" onclick="showPage('leave',this)">
       <span class="icon">🌿</span>
       <span data-key="nav_leave">Leave</span>
@@ -1845,11 +1862,20 @@
       <span class="icon">💰</span>
       <span>Petty Cash</span>
     </button>
-    <!-- NOTICES tab hidden — Phase 2 -->
-    <!-- <button class="nav-tab" onclick="showPage('notices',this)">
-      <span class="icon">📣</span>
-      <span data-key="nav_notices">Notices</span>
-    </button> -->
+  </div>
+
+  <!-- ── Nav（トラック系）── -->
+  <div class="nav-tabs" id="nav-lorry" style="display:none;">
+    <button class="nav-tab active" id="nav-insp-btn" onclick="showLorryPage('inspection',this)">
+      <span class="icon">🔍</span>
+      <span>Inspection</span>
+    </button>
+    <!-- 将来追加
+    <button class="nav-tab" onclick="showLorryPage('maintenance',this)">
+      <span class="icon">🔧</span>
+      <span>Maintenance</span>
+    </button>
+    -->
   </div>
 
   <!-- ══════════════════════════════════════════
@@ -2318,20 +2344,21 @@
         </div>
       </div>
 
-      <button class="insp-submit-btn" id="insp-submit-btn" onclick="submitInspection()">
+      <button class="insp-submit-btn" id="insp-submit-btn" onclick="submitInspection()"
+              disabled style="background:#e5e7eb;color:#9ca3af;cursor:not-allowed;">
         Submit Inspection
       </button>
 
     </div>
   </div>
 
-  <!-- ── Inspection 成功オーバーレイ ── -->
-  <div class="insp-success-overlay" id="insp-success-overlay">
-    <div class="insp-success-icon">✅</div>
-    <div class="insp-success-title" id="insp-success-title">Thank you!</div>
-    <div class="insp-success-msg" id="insp-success-msg"></div>
-    <div class="insp-success-sub" id="insp-success-sub">Your inspection record has been received.<br>Drive safe and have a good day!</div>
-    <button class="insp-success-close" onclick="closeInspSuccess()" id="insp-success-close-btn">Back to Form</button>
+  <!-- ── Inspection 成功オーバーレイ（Leave完了画面と同じデザイン） ── -->
+  <div class="success-overlay" id="insp-success-overlay">
+    <div class="success-icon">✓</div>
+    <div class="success-title" id="insp-success-title">Thank you!</div>
+    <div class="success-sub" id="insp-success-msg" style="font-size:15px;font-weight:700;color:#fff;margin-bottom:4px;"></div>
+    <div class="success-sub" id="insp-success-sub" style="white-space:pre-line;"></div>
+    <button class="success-close" onclick="closeInspSuccess()" id="insp-success-close-btn">Back to Form</button>
   </div>
 
   <div class="install-hint">
@@ -2893,7 +2920,7 @@ function updateSubmitBtn() {
 
 
 
-// ── ロゴ5回タップでReset Passkeyを表示 ──────────────────────────
+// ── ロゴタップ：管理者はホームへ戻る。5回タップでPasskeyリセット表示 ──
 let logoTapCount = 0;
 let logoTapTimer = null;
 function logoTap() {
@@ -2907,7 +2934,10 @@ function logoTap() {
       btn.style.display = 'inline-block';
       setTimeout(() => { btn.style.display = 'none'; }, 10000);
     }
+    return;
   }
+  // 管理者のみ1回タップでホームへ
+  goHome();
 }
 
 // ── Loading Overlay ──────────────────────────────────────────────
@@ -3313,7 +3343,9 @@ async function passkeyAuthenticate() {
 }
 
 // ── アプリ起動（Passkey認証成功後）──────────────────────────
+let _currentUser = '';
 function launchApp(name) {
+  _currentUser = name;
   document.querySelector('.app').style.display = 'flex';
   // Hello表示
   const helloEl = document.getElementById('header-hello');
@@ -3328,6 +3360,16 @@ function launchApp(name) {
   const isAdmin = (name === 'Jennifer Ho' || name === 'Shige Oike');
   if (medBtn) medBtn.style.display = isAdmin ? 'flex' : 'none';
   if (pcBtn)  pcBtn.style.display  = isAdmin ? 'flex' : 'none';
+  // 初期ナビ状態：管理者はホーム画面から入るので両ナビ非表示、従業員は申請系ナビのみ表示
+  const navApp   = document.getElementById('nav-application');
+  const navLorry = document.getElementById('nav-lorry');
+  if (isAdmin) {
+    if (navApp)   navApp.style.display   = 'none';
+    if (navLorry) navLorry.style.display = 'none';
+  } else {
+    if (navApp)   navApp.style.display   = '';
+    if (navLorry) navLorry.style.display = 'none';
+  }
   // データ取得中はローディング表示
   showLoading('Loading your data…', 'Please wait while we load your information.');
   // 初回データを1回のリクエストでまとめて取得
@@ -3356,7 +3398,6 @@ function launchApp(name) {
 
 function goToApp(page) {
   document.getElementById('home-screen').classList.remove('show');
-  // 該当タブを選択
   const tabs = document.querySelectorAll('.nav-tab');
   tabs.forEach(t => t.classList.remove('active'));
   const pages = document.querySelectorAll('.page');
@@ -3366,43 +3407,77 @@ function goToApp(page) {
   if (page === 'pettycash') loadPettyCashHistory();
 }
 
-// ── ホーム画面：APPLICATIONカテゴリへ ─────────────────────────
-function goToCategoryApp() {
-  document.getElementById('home-screen').classList.remove('show');
-  // Leaveページを表示（既存のgoToAppの動作）
-  const tabs = document.querySelectorAll('.nav-tab');
-  tabs.forEach(t => t.classList.remove('active'));
-  const pages = document.querySelectorAll('.page');
-  pages.forEach(p => p.classList.remove('active'));
-  const leaveTab = document.querySelector('.nav-tab');
-  if (leaveTab) leaveTab.classList.add('active');
-  const leavePage = document.getElementById('page-leave');
-  if (leavePage) leavePage.classList.add('active');
-}
-
-// ── ホーム画面：LORRYサブメニューへ ─────────────────────────
-function goToLorryMenu() {
-  document.getElementById('home-screen').classList.remove('show');
-  document.getElementById('lorry-submenu').classList.add('show');
-}
-
-// ── Lorryサブメニュー：ホームへ戻る ─────────────────────────
-function goBackToHome() {
-  document.getElementById('lorry-submenu').classList.remove('show');
+// ── ホームへ戻る（ロゴクリック・管理者のみ） ─────────────────
+function goHome() {
+  const isAdmin = _currentUser === 'Jennifer Ho' || _currentUser === 'Shige Oike';
+  if (!isAdmin) return;
+  // 全ページ非アクティブ
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  // 両ナビ非表示
+  const navApp   = document.getElementById('nav-application');
+  const navLorry = document.getElementById('nav-lorry');
+  if (navApp)   navApp.style.display   = 'none';
+  if (navLorry) navLorry.style.display = 'none';
+  // ホーム画面表示
   document.getElementById('home-screen').classList.add('show');
 }
 
-// ── Lorryサブメニュー：Inspectionへ ─────────────────────────
-function goToInspection() {
-  document.getElementById('lorry-submenu').classList.remove('show');
-  const pages = document.querySelectorAll('.page');
-  pages.forEach(p => p.classList.remove('active'));
-  const tabs = document.querySelectorAll('.nav-tab');
-  tabs.forEach(t => t.classList.remove('active'));
-  document.getElementById('page-inspection').classList.add('active');
-  // 日時を更新
+// ── APPLICATION タップ → 申請系タブ画面 ─────────────────────
+function goToCategoryApp() {
+  document.getElementById('home-screen').classList.remove('show');
+  // 申請系ナビ表示・Lorry系ナビ非表示
+  const navApp   = document.getElementById('nav-application');
+  const navLorry = document.getElementById('nav-lorry');
+  if (navApp)   navApp.style.display   = '';
+  if (navLorry) navLorry.style.display = 'none';
+  // Leaveページをアクティブに
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('#nav-application .nav-tab').forEach(t => t.classList.remove('active'));
+  const leaveTab  = document.querySelector('#nav-application .nav-tab');
+  const leavePage = document.getElementById('page-leave');
+  if (leaveTab)  leaveTab.classList.add('active');
+  if (leavePage) leavePage.classList.add('active');
+}
+
+// ── LORRY タップ → トラック系タブ画面（直接） ───────────────
+function goToLorry() {
+  document.getElementById('home-screen').classList.remove('show');
+  // Lorry系ナビ表示・申請系ナビ非表示
+  const navApp   = document.getElementById('nav-application');
+  const navLorry = document.getElementById('nav-lorry');
+  if (navApp)   navApp.style.display   = 'none';
+  if (navLorry) navLorry.style.display = '';
+  // Inspectionページをアクティブに
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('#nav-lorry .nav-tab').forEach(t => t.classList.remove('active'));
+  const inspTab  = document.getElementById('nav-insp-btn');
+  const inspPage = document.getElementById('page-inspection');
+  if (inspTab)  inspTab.classList.add('active');
+  if (inspPage) inspPage.classList.add('active');
   inspUpdateDateTime();
 }
+
+// ── トラック系ページ切替 ─────────────────────────────────────
+function showLorryPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('#nav-lorry .nav-tab').forEach(t => t.classList.remove('active'));
+  const targetPage = document.getElementById('page-' + name);
+  if (targetPage) targetPage.classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (name === 'inspection') inspUpdateDateTime();
+}
+
+// ── J2Hub INFO ───────────────────────────────────────────────
+function goToInfo() {
+  // Phase 2実装予定 — 現在は準備中メッセージをオーバーレイで表示
+  showInfoOverlay();
+}
+
+// 後方互換
+function goToLorryMenu() { goToLorry(); }
+function goBackToHome()   { goHome(); }
+function goToInspection() { goToLorry(); }
 
 // ============================================================
 // ── Inspection 機能 ──────────────────────────────────────────
@@ -3499,48 +3574,132 @@ const INSP_T = {
   }
 };
 
-// PDFに忠実な点検項目定義
-const INSP_CHECKLIST = {
-  s1: [
-    { key: 's1a', label: 'Locks / tampered check' }
-  ],
-  s2: [
-    { key: 's2a', label: 'Near the vehicle',        indent: false },
-    { key: 's2b', label: 'Exterior of vehicle',     indent: false },
-    { key: 's2c', label: 'Passenger Cabin',         indent: true  },
-    { key: 's2d', label: 'Cargo Hold',              indent: true  },
-    { key: 's2e', label: 'Glove Box',               indent: true  },
-    { key: 's2f', label: 'Vehicle Undercarriage',   indent: false }
-  ],
-  s3: [
-    { key: 's3a', label: 'Noises',                  indent: false },
-    { key: 's3b', label: 'Signs of leakage',        indent: false },
-    { key: 's3c', label: 'Gauge — Fuel',            indent: true  },
-    { key: 's3d', label: 'Gauge — Temperature',     indent: true  },
-    { key: 's3e', label: 'Dashboard Warning Light', indent: true  }
-  ],
-  s4: [
-    { key: 's4a', label: 'Headlights',   indent: true },
-    { key: 's4b', label: 'Brake Lights', indent: true },
-    { key: 's4c', label: 'Signal Lights',indent: true },
-    { key: 's4d', label: 'Hazard Lights',indent: true }
-  ],
-  s5: [
-    { key: 's5a', label: 'Windshield wipers',       indent: true },
-    { key: 's5b', label: 'Fans and defroster',      indent: true },
-    { key: 's5c', label: 'Brakes',                  indent: true },
-    { key: 's5d', label: 'Parking brakes',          indent: true },
-    { key: 's5e', label: 'Mirrors',                 indent: true },
-    { key: 's5f', label: 'Horn',                    indent: true },
-    { key: 's5g', label: 'Exhaust (muffler, tailpipe)', indent: true },
-    { key: 's5h', label: 'Fire Extinguisher',       indent: true }
-  ],
-  s6: [
-    { key: 's6a', label: 'Proper inflation', indent: true },
-    { key: 's6b', label: 'Adequate tread',   indent: true },
-    { key: 's6c', label: 'Spare inflated',   indent: true }
-  ]
+// PDFに忠実な点検項目定義（3言語対応）
+const INSP_ITEMS = {
+  en: {
+    s1: [ { key:'s1a', label:'Locks / tampered check', indent:false } ],
+    s2: [
+      { key:'s2a', label:'Near the vehicle',       indent:false },
+      { key:'s2b', label:'Exterior of vehicle',    indent:false },
+      { key:'s2c', label:'Passenger Cabin',        indent:true  },
+      { key:'s2d', label:'Cargo Hold',             indent:true  },
+      { key:'s2e', label:'Glove Box',              indent:true  },
+      { key:'s2f', label:'Vehicle Undercarriage',  indent:false }
+    ],
+    s3: [
+      { key:'s3a', label:'Noises',                 indent:false },
+      { key:'s3b', label:'Signs of leakage',       indent:false },
+      { key:'s3c', label:'Gauge — Fuel',           indent:true  },
+      { key:'s3d', label:'Gauge — Temperature',    indent:true  },
+      { key:'s3e', label:'Dashboard Warning Light',indent:true  }
+    ],
+    s4: [
+      { key:'s4a', label:'Headlights',   indent:true },
+      { key:'s4b', label:'Brake Lights', indent:true },
+      { key:'s4c', label:'Signal Lights',indent:true },
+      { key:'s4d', label:'Hazard Lights',indent:true }
+    ],
+    s5: [
+      { key:'s5a', label:'Windshield wipers',            indent:true },
+      { key:'s5b', label:'Fans and defroster',           indent:true },
+      { key:'s5c', label:'Brakes',                       indent:true },
+      { key:'s5d', label:'Parking brakes',               indent:true },
+      { key:'s5e', label:'Mirrors',                      indent:true },
+      { key:'s5f', label:'Horn',                         indent:true },
+      { key:'s5g', label:'Exhaust (muffler, tailpipe)',  indent:true },
+      { key:'s5h', label:'Fire Extinguisher',            indent:true }
+    ],
+    s6: [
+      { key:'s6a', label:'Proper inflation', indent:true },
+      { key:'s6b', label:'Adequate tread',   indent:true },
+      { key:'s6c', label:'Spare inflated',   indent:true }
+    ]
+  },
+  zh: {
+    s1: [ { key:'s1a', label:'确认车门锁及安全装置未被篡改', indent:false } ],
+    s2: [
+      { key:'s2a', label:'车辆周围',      indent:false },
+      { key:'s2b', label:'车辆外部',      indent:false },
+      { key:'s2c', label:'乘客舱内部',    indent:true  },
+      { key:'s2d', label:'货舱内部',      indent:true  },
+      { key:'s2e', label:'手套箱',        indent:true  },
+      { key:'s2f', label:'车辆底盘',      indent:false }
+    ],
+    s3: [
+      { key:'s3a', label:'异常噪音',          indent:false },
+      { key:'s3b', label:'是否有泄漏迹象',    indent:false },
+      { key:'s3c', label:'仪表 — 燃油',       indent:true  },
+      { key:'s3d', label:'仪表 — 水温',       indent:true  },
+      { key:'s3e', label:'仪表盘警告灯',      indent:true  }
+    ],
+    s4: [
+      { key:'s4a', label:'大灯',      indent:true },
+      { key:'s4b', label:'刹车灯',    indent:true },
+      { key:'s4c', label:'转向灯',    indent:true },
+      { key:'s4d', label:'危险警示灯',indent:true }
+    ],
+    s5: [
+      { key:'s5a', label:'挡风玻璃雨刷',   indent:true },
+      { key:'s5b', label:'风扇和除霜装置', indent:true },
+      { key:'s5c', label:'刹车',           indent:true },
+      { key:'s5d', label:'手刹',           indent:true },
+      { key:'s5e', label:'后视镜',         indent:true },
+      { key:'s5f', label:'喇叭',           indent:true },
+      { key:'s5g', label:'排气管',         indent:true },
+      { key:'s5h', label:'灭火器',         indent:true }
+    ],
+    s6: [
+      { key:'s6a', label:'胎压是否正常', indent:true },
+      { key:'s6b', label:'胎纹是否充足', indent:true },
+      { key:'s6c', label:'备用轮胎胎压', indent:true }
+    ]
+  },
+  ta: {
+    s1: [ { key:'s1a', label:'பூட்டுகள் சேதமடையவில்லை என்று உறுதிப்படுத்தவும்', indent:false } ],
+    s2: [
+      { key:'s2a', label:'வாகனத்திற்கு அருகில்',     indent:false },
+      { key:'s2b', label:'வாகனத்தின் வெளிப்புறம்',   indent:false },
+      { key:'s2c', label:'பயணி அறை',                 indent:true  },
+      { key:'s2d', label:'சரக்கு இடம்',              indent:true  },
+      { key:'s2e', label:'கையுறை பெட்டி',            indent:true  },
+      { key:'s2f', label:'வாகனத்தின் கீழ்',          indent:false }
+    ],
+    s3: [
+      { key:'s3a', label:'அசாதாரண சத்தங்கள்',        indent:false },
+      { key:'s3b', label:'கசிவுகள் உள்ளதா',          indent:false },
+      { key:'s3c', label:'மீட்டர் — எரிபொருள்',      indent:true  },
+      { key:'s3d', label:'மீட்டர் — வெப்பநிலை',     indent:true  },
+      { key:'s3e', label:'டாஷ்போர்டு எச்சரிக்கை விளக்கு', indent:true }
+    ],
+    s4: [
+      { key:'s4a', label:'முன் விளக்குகள்',    indent:true },
+      { key:'s4b', label:'பிரேக் விளக்குகள்',  indent:true },
+      { key:'s4c', label:'திசை விளக்குகள்',    indent:true },
+      { key:'s4d', label:'அபாய விளக்குகள்',   indent:true }
+    ],
+    s5: [
+      { key:'s5a', label:'விண்ட்ஷீல்டு துடைப்பான்', indent:true },
+      { key:'s5b', label:'மின்விசிறி மற்றும் டீஃப்ரோஸ்டர்', indent:true },
+      { key:'s5c', label:'பிரேக்',                   indent:true },
+      { key:'s5d', label:'பார்க்கிங் பிரேக்',        indent:true },
+      { key:'s5e', label:'கண்ணாடிகள்',              indent:true },
+      { key:'s5f', label:'ஹார்ன்',                   indent:true },
+      { key:'s5g', label:'கழிவுக்குழாய்',            indent:true },
+      { key:'s5h', label:'தீயணைப்பான்',              indent:true }
+    ],
+    s6: [
+      { key:'s6a', label:'சரியான காற்று அழுத்தம்',  indent:true },
+      { key:'s6b', label:'போதுமான டயர் ஆழம்',      indent:true },
+      { key:'s6c', label:'மிதவை டயர் காற்று',       indent:true }
+    ]
+  }
 };
+
+// 現在言語のチェックリストを返す
+function getInspChecklist() {
+  const l = (typeof lang !== 'undefined' && INSP_ITEMS[lang]) ? lang : 'en';
+  return INSP_ITEMS[l];
+}
 
 let inspState    = {};
 let inspPhotoB64 = '';
@@ -3574,24 +3733,47 @@ function inspSetCheck(key, value) {
   const attnBtn = document.getElementById('iat-' + key);
   if (okBtn)   okBtn.classList.toggle('active',   value === 'OK');
   if (attnBtn) attnBtn.classList.toggle('active', value === 'Attention');
+  inspCheckSubmitReady();
+}
+
+// ── Submit条件チェック：全満たしたら青、それ以外はグレー ─────
+function inspCheckSubmitReady() {
+  const vehicleNo = document.getElementById('insp-vehicle').value;
+  const odometer  = document.getElementById('insp-odometer').value;
+  const allChecked = Object.keys(inspState).every(k => !!inspState[k]);
+  const hasPhoto   = !!inspPhotoB64;
+  const ready = vehicleNo && odometer && allChecked && hasPhoto;
+  const btn = document.getElementById('insp-submit-btn');
+  if (!btn) return;
+  btn.disabled = !ready;
+  btn.style.background   = ready ? '#003087' : '#e5e7eb';
+  btn.style.color        = ready ? '#fff'    : '#9ca3af';
+  btn.style.cursor       = ready ? 'pointer' : 'not-allowed';
 }
 
 function inspResetChecklist() {
+  const cl = getInspChecklist();
   inspState     = {};
   inspPhotoB64  = '';
   inspPhotoMime = '';
-  inspBuildSection('insp-section-1', INSP_CHECKLIST.s1);
-  inspBuildSection('insp-section-2', INSP_CHECKLIST.s2);
-  inspBuildSection('insp-section-3', INSP_CHECKLIST.s3);
-  inspBuildSection('insp-section-4', INSP_CHECKLIST.s4);
-  inspBuildSection('insp-section-5', INSP_CHECKLIST.s5);
-  inspBuildSection('insp-section-6', INSP_CHECKLIST.s6);
+  inspBuildSection('insp-section-1', cl.s1);
+  inspBuildSection('insp-section-2', cl.s2);
+  inspBuildSection('insp-section-3', cl.s3);
+  inspBuildSection('insp-section-4', cl.s4);
+  inspBuildSection('insp-section-5', cl.s5);
+  inspBuildSection('insp-section-6', cl.s6);
   const preview = document.getElementById('insp-photo-preview');
   const label   = document.getElementById('insp-photo-label');
   if (preview) preview.style.display = 'none';
   if (label)   label.style.display   = 'flex';
   const inp = document.getElementById('insp-photo-input');
   if (inp) inp.value = '';
+  // 車番・Odometerのchangeイベントを設定
+  const veh = document.getElementById('insp-vehicle');
+  const odo = document.getElementById('insp-odometer');
+  if (veh) veh.onchange = inspCheckSubmitReady;
+  if (odo) odo.oninput  = inspCheckSubmitReady;
+  inspCheckSubmitReady();
 }
 
 function inspUpdateDateTime() {
@@ -3620,6 +3802,7 @@ function inspPhotoSelected(input) {
     if (img)     img.src            = e.target.result;
     if (preview) preview.style.display = 'block';
     if (label)   label.style.display   = 'none';
+    inspCheckSubmitReady();
   };
   reader.readAsDataURL(file);
 }
@@ -3634,6 +3817,7 @@ function inspPhotoClear() {
   if (preview) preview.style.display = 'none';
   if (label)   label.style.display   = 'flex';
   if (inp)     inp.value = '';
+  inspCheckSubmitReady();
 }
 
 // 言語に応じたInspectionテキスト更新
@@ -3665,6 +3849,16 @@ function inspApplyLang(l) {
     const el = document.getElementById(id);
     if (el) el.textContent = ids[id];
   }
+  // 点検項目のラベルも言語に合わせて再描画（チェック状態を保持）
+  const cl  = INSP_ITEMS[l] || INSP_ITEMS.en;
+  const saved = Object.assign({}, inspState);
+  ['s1','s2','s3','s4','s5','s6'].forEach(sec => {
+    inspBuildSection('insp-section-' + sec.slice(1), cl[sec]);
+  });
+  // チェック状態を復元
+  for (const key in saved) {
+    if (saved[key]) inspSetCheck(key, saved[key]);
+  }
 }
 
 // Submit
@@ -3676,18 +3870,16 @@ async function submitInspection() {
   const odometer  = document.getElementById('insp-odometer').value;
   const remarks   = document.getElementById('insp-remarks').value.trim();
 
-  if (!vehicleNo) { alert(t.alertVehicle); return; }
-
+  // Submit条件チェック（ボタンが青の時しか押せないが念のため）
+  if (!vehicleNo || !odometer || !inspPhotoB64) return;
   const unchecked = Object.keys(inspState).filter(k => !inspState[k]);
-  if (unchecked.length > 0) {
-    if (!confirm(unchecked.length + t.alertUncheck)) return;
-  }
+  if (unchecked.length > 0) return;
 
   const btn = document.getElementById('insp-submit-btn');
   btn.disabled    = true;
   btn.textContent = '…';
 
-  // 即座に完了画面表示（待たせない）
+  // 即座にLeaveと同じ成功オーバーレイ表示（待たせない）
   const failedItems = Object.keys(inspState).filter(k => inspState[k] === 'Attention');
   const resultText  = failedItems.length > 0
     ? t.attnNeeded + failedItems.length + t.attnItems
@@ -3722,6 +3914,21 @@ function closeInspSuccess() {
   document.getElementById('insp-remarks').value  = '';
   inspResetChecklist();
   inspUpdateDateTime();
+}
+
+// ── J2Hub INFO オーバーレイ（Phase 2実装予定） ───────────────
+function showInfoOverlay() {
+  // 既存のsuccess-overlayのデザインを流用して準備中メッセージを表示
+  const overlay = document.getElementById('insp-success-overlay');
+  const title   = document.getElementById('insp-success-title');
+  const msg     = document.getElementById('insp-success-msg');
+  const sub     = document.getElementById('insp-success-sub');
+  const closeBtn= document.getElementById('insp-success-close-btn');
+  if (title)    title.textContent   = '📰 J2Hub INFO';
+  if (msg)      msg.textContent     = 'Coming soon.';
+  if (sub)      sub.textContent     = 'Stay tuned for company news and updates.';
+  if (closeBtn) closeBtn.textContent= 'Close';
+  if (overlay)  overlay.classList.add('show');
 }
 
 function checkBirthday(name) {
