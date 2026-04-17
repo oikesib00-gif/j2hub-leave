@@ -1690,11 +1690,27 @@
     <!-- 第1階層：カテゴリ選択 -->
     <div class="home-category-icons">
       <button class="home-cat-btn" onclick="goToCategoryApp()">
-        <span class="icon">📋</span>
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="6" y="10" width="36" height="26" rx="3" fill="#e8f0fe"/>
+          <rect x="9" y="13" width="8" height="3" rx="1" fill="#003087"/>
+          <rect x="9" y="18" width="30" height="2" rx="1" fill="#003087"/>
+          <rect x="9" y="22" width="30" height="2" rx="1" fill="#003087"/>
+          <rect x="9" y="26" width="20" height="2" rx="1" fill="#003087"/>
+          <rect x="14" y="32" width="6" height="1.5" rx="0.75" fill="#003087"/>
+        </svg>
         <span class="label">APPLICATION</span>
       </button>
       <button class="home-cat-btn" onclick="goToLorryMenu()">
-        <span class="icon">🚛</span>
+        <svg width="56" height="40" viewBox="0 0 56 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="10" width="32" height="20" rx="3" fill="#e8f0fe" stroke="#003087" stroke-width="1.5"/>
+          <path d="M34 16 L50 16 L54 24 L54 30 L34 30 Z" fill="#b3c8f0" stroke="#003087" stroke-width="1.5"/>
+          <rect x="36" y="18" width="10" height="8" rx="1" fill="#003087" opacity="0.3"/>
+          <circle cx="10" cy="32" r="5" fill="#003087"/>
+          <circle cx="10" cy="32" r="2.5" fill="#e8f0fe"/>
+          <circle cx="42" cy="32" r="5" fill="#003087"/>
+          <circle cx="42" cy="32" r="2.5" fill="#e8f0fe"/>
+          <rect x="2" y="14" width="32" height="3" rx="1" fill="#003087" opacity="0.15"/>
+        </svg>
         <span class="label">LORRY</span>
       </button>
     </div>
@@ -2173,23 +2189,30 @@
   ══════════════════════════════════════════ -->
   <div id="page-inspection" class="page">
     <div class="page-header">
-      <div class="page-title">Daily Check</div>
+      <div class="page-title" id="insp-title-sub">Daily Check</div>
       <div class="page-title-main">Pre-Trip <em>Inspection</em></div>
     </div>
 
     <div class="form-main">
 
-      <!-- Vehicle & Driver Info -->
+      <!-- ① Driver（自動セット） -->
       <div class="form-card">
-        <div class="insp-section-title">Vehicle & Driver Info</div>
+        <div class="insp-section-title" id="insp-lbl-info">Vehicle & Driver Info</div>
 
         <div class="insp-info-row">
-          <div class="insp-info-label">Driver</div>
+          <div class="insp-info-label" id="insp-lbl-driver">Driver</div>
           <div class="insp-info-value" id="insp-driver">—</div>
         </div>
 
+        <!-- ② Date / Time（自動セット） -->
         <div class="insp-info-row">
-          <div class="insp-info-label">Vehicle No.</div>
+          <div class="insp-info-label" id="insp-lbl-datetime">Date / Time</div>
+          <div class="insp-info-value" id="insp-datetime">—</div>
+        </div>
+
+        <!-- ③ Vehicle No.（ここから選択） -->
+        <div class="insp-info-row">
+          <div class="insp-info-label" id="insp-lbl-vehicle">Vehicle No.</div>
           <select class="insp-select" id="insp-vehicle">
             <option value="">— Select vehicle —</option>
             <!-- !! VEHICLE LIST — DO NOT TOUCH — 変更禁止 !! -->
@@ -2207,54 +2230,97 @@
           </select>
         </div>
 
+        <!-- ④ Odometer（数字キーボード・短い枠・右にkm） -->
         <div class="insp-info-row">
-          <div class="insp-info-label">Odometer Reading</div>
-          <input type="number" class="insp-input" id="insp-odometer" placeholder="e.g. 123456" min="0">
+          <div class="insp-info-label" id="insp-lbl-odometer">Odometer</div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <input type="number" inputmode="numeric" pattern="[0-9]*"
+                   class="insp-input" id="insp-odometer"
+                   placeholder="0" min="0"
+                   style="width:140px; text-align:right;">
+            <span style="font-size:14px; font-weight:600; color:var(--text-muted);">km</span>
+          </div>
         </div>
+      </div>
 
-        <div class="insp-info-row">
-          <div class="insp-info-label">Date / Time</div>
-          <div class="insp-info-value" id="insp-datetime">—</div>
+      <!-- 注意書き -->
+      <div class="form-card" style="background:var(--orange-light); border-left:4px solid var(--orange);">
+        <div style="font-size:12px; color:var(--orange); font-weight:600; line-height:1.6;" id="insp-notice">
+          Check any item that needs attention and include the details under "comments". Don't drive the vehicle until the defects/irregularities discovered have been corrected or reported.
         </div>
       </div>
 
-      <!-- Section A: Vehicle Security -->
+      <!-- Section 1: Approach the vehicle -->
       <div class="form-card">
-        <div class="insp-section-title">A. Vehicle Security</div>
-        <div id="insp-section-a"></div>
+        <div class="insp-section-title" id="insp-s1-title">1. Approach the vehicle and confirm that locks, etc have not been tampered with</div>
+        <div id="insp-section-1"></div>
       </div>
 
-      <!-- Section B: Engine Check -->
+      <!-- Section 2: Foreign objects -->
       <div class="form-card">
-        <div class="insp-section-title">B. Engine Check</div>
-        <div id="insp-section-b"></div>
+        <div class="insp-section-title" id="insp-s2-title">2. Check for foreign or suspicious objects or items that have not been accounted for</div>
+        <div id="insp-section-2"></div>
       </div>
 
-      <!-- Section C: Lights -->
+      <!-- Section 3: Engine -->
       <div class="form-card">
-        <div class="insp-section-title">C. Lights</div>
-        <div id="insp-section-c"></div>
+        <div class="insp-section-title" id="insp-s3-title">3. Start the engine and test the following</div>
+        <div id="insp-section-3"></div>
       </div>
 
-      <!-- Section D: Others -->
+      <!-- Section 4: Lights -->
       <div class="form-card">
-        <div class="insp-section-title">D. Others</div>
-        <div id="insp-section-d"></div>
+        <div class="insp-section-title" id="insp-s4-title">4. Lights</div>
+        <div id="insp-section-4"></div>
       </div>
 
-      <!-- Section E: Tires -->
+      <!-- Section 5: Others -->
       <div class="form-card">
-        <div class="insp-section-title">E. Tires</div>
-        <div id="insp-section-e"></div>
+        <div class="insp-section-title" id="insp-s5-title">5. Others</div>
+        <div id="insp-section-5"></div>
       </div>
 
-      <!-- Remarks -->
+      <!-- Section 6: Tires -->
       <div class="form-card">
-        <div class="insp-section-title">Remarks</div>
-        <textarea class="insp-input" id="insp-remarks" rows="3" placeholder="Note any issues or observations…" style="resize:none;"></textarea>
+        <div class="insp-section-title" id="insp-s6-title">6. Tires</div>
+        <div id="insp-section-6"></div>
       </div>
 
-      <button class="insp-submit-btn" id="insp-submit-btn" onclick="submitInspection()">Submit Inspection</button>
+      <!-- Remarks / Comments -->
+      <div class="form-card">
+        <div class="insp-section-title" id="insp-lbl-remarks">Remarks / Comments</div>
+        <textarea class="insp-input" id="insp-remarks" rows="3"
+                  placeholder="Note any issues or observations…"
+                  style="resize:none;"></textarea>
+      </div>
+
+      <!-- Photo Upload -->
+      <div class="form-card">
+        <div class="insp-section-title" id="insp-lbl-photo">Photo (1 photo)</div>
+        <label for="insp-photo-input" id="insp-photo-label" style="
+          display:flex; align-items:center; justify-content:center;
+          width:100%; height:100px; border:2px dashed var(--border);
+          border-radius:10px; cursor:pointer; background:var(--surface2);
+          flex-direction:column; gap:6px; font-size:13px; color:var(--text-muted);
+        ">
+          <span style="font-size:28px;">📷</span>
+          <span id="insp-photo-label-text">Tap to take / select a photo</span>
+        </label>
+        <input type="file" id="insp-photo-input" accept="image/*" capture="environment"
+               style="display:none;" onchange="inspPhotoSelected(this)">
+        <div id="insp-photo-preview" style="display:none; margin-top:10px; text-align:center;">
+          <img id="insp-photo-img" src="" alt="preview"
+               style="max-width:100%; max-height:200px; border-radius:8px; border:1px solid var(--border);">
+          <button onclick="inspPhotoClear()" style="
+            display:block; margin:8px auto 0; background:none; border:none;
+            color:var(--red,#dc2626); font-size:12px; cursor:pointer;
+          " id="insp-photo-clear-btn">✕ Remove photo</button>
+        </div>
+      </div>
+
+      <button class="insp-submit-btn" id="insp-submit-btn" onclick="submitInspection()">
+        Submit Inspection
+      </button>
 
     </div>
   </div>
@@ -2264,8 +2330,8 @@
     <div class="insp-success-icon">✅</div>
     <div class="insp-success-title" id="insp-success-title">Thank you!</div>
     <div class="insp-success-msg" id="insp-success-msg"></div>
-    <div class="insp-success-sub">Your inspection record has been received.<br>Drive safe and have a good day!</div>
-    <button class="insp-success-close" onclick="closeInspSuccess()">Back to Form</button>
+    <div class="insp-success-sub" id="insp-success-sub">Your inspection record has been received.<br>Drive safe and have a good day!</div>
+    <button class="insp-success-close" onclick="closeInspSuccess()" id="insp-success-close-btn">Back to Form</button>
   </div>
 
   <div class="install-hint">
@@ -2471,6 +2537,7 @@ function setLang(l, btn) {
   document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   apply();
+  inspApplyLang(l);
 }
 
 function apply() {
@@ -3275,6 +3342,7 @@ function launchApp(name) {
     if (inspDriverEl) inspDriverEl.textContent = name;
     inspResetChecklist();
     inspUpdateDateTime();
+    inspApplyLang(lang || 'en');
   }
   // Firebase Cloud Messaging初期化
   if ('serviceWorker' in navigator && 'Notification' in window) {
@@ -3341,51 +3409,144 @@ function goToInspection() {
 // ============================================================
 
 // !! INSPECTION GAS URL — デプロイ後に設定 !!
+// !! INSPECTION GAS URL !!
 const INSP_GAS_URL = 'https://script.google.com/macros/s/AKfycbynoXNjgS1swI8BCoNiYGzpIAWP3xmDoDTMHH5L88hYn8lUV1u8zYVd9HlL5nKGfSS0/exec';
 
-// 点検チェックリスト定義（PDFより）
+// ============================================================
+// Inspection 3言語対応
+// ============================================================
+const INSP_T = {
+  en: {
+    titleSub:   'Daily Check',
+    lblInfo:    'Vehicle & Driver Info',
+    lblDriver:  'Driver',
+    lblDatetime:'Date / Time',
+    lblVehicle: 'Vehicle No.',
+    lblOdo:     'Odometer',
+    notice:     'Check any item that needs attention and include the details under "comments". Don\'t drive the vehicle until the defects/irregularities discovered have been corrected or reported.',
+    s1: '1. Approach the vehicle and confirm that locks, etc have not been tampered with',
+    s2: '2. Check for foreign or suspicious objects or items that have not been accounted for',
+    s3: '3. Start the engine and test the following',
+    s4: '4. Lights',
+    s5: '5. Others',
+    s6: '6. Tires',
+    lblRemarks: 'Remarks / Comments',
+    lblPhoto:   'Photo (1 photo)',
+    photoTap:   'Tap to take / select a photo',
+    photoRemove:'✕ Remove photo',
+    submitBtn:  'Submit Inspection',
+    successSub: 'Your inspection record has been received.\nDrive safe and have a good day!',
+    backBtn:    'Back to Form',
+    alertVehicle: 'Please select a vehicle.',
+    alertUncheck: ' item(s) not checked yet. Submit anyway?',
+    allOK:      'All items checked OK.',
+    attnNeeded: 'Attention needed on ',
+    attnItems:  ' item(s).'
+  },
+  zh: {
+    titleSub:   '每日检查',
+    lblInfo:    '车辆与司机信息',
+    lblDriver:  '司机',
+    lblDatetime:'日期 / 时间',
+    lblVehicle: '车牌号',
+    lblOdo:     '里程表',
+    notice:     '如发现任何需要注意的项目，请在"备注"中填写详情。在发现的缺陷/异常得到纠正或报告之前，请勿驾驶车辆。',
+    s1: '1. 接近车辆，确认锁具等未被篡改',
+    s2: '2. 检查是否有未经登记的可疑物品',
+    s3: '3. 启动引擎并测试以下项目',
+    s4: '4. 灯光',
+    s5: '5. 其他',
+    s6: '6. 轮胎',
+    lblRemarks: '备注 / 说明',
+    lblPhoto:   '照片（1张）',
+    photoTap:   '点击拍照或选择照片',
+    photoRemove:'✕ 删除照片',
+    submitBtn:  '提交检查',
+    successSub: '您的检查记录已收到。\n请安全驾驶，祝您一天愉快！',
+    backBtn:    '返回表单',
+    alertVehicle: '请选择车辆。',
+    alertUncheck: ' 个项目尚未检查。是否仍要提交？',
+    allOK:      '所有项目检查正常。',
+    attnNeeded: '需要注意 ',
+    attnItems:  ' 个项目。'
+  },
+  ta: {
+    titleSub:   'தினசரி சோதனை',
+    lblInfo:    'வாகன மற்றும் ஓட்டுநர் தகவல்',
+    lblDriver:  'ஓட்டுநர்',
+    lblDatetime:'தேதி / நேரம்',
+    lblVehicle: 'வாகன எண்',
+    lblOdo:     'ஓடோமீட்டர்',
+    notice:     'கவனிக்க வேண்டிய எந்த பொருளையும் சரிபார்த்து "கருத்துகள்" இல் விவரங்களை சேர்க்கவும். குறைபாடுகள் சரிசெய்யப்படும் வரை வாகனத்தை ஓட்டாதீர்கள்.',
+    s1: '1. வாகனை அணுகி, பூட்டுகள் சேதமடையவில்லை என்பதை உறுதிப்படுத்தவும்',
+    s2: '2. சந்தேகத்திற்குரிய பொருட்களை சரிபார்க்கவும்',
+    s3: '3. இஞ்சினை தொடங்கி பின்வருவனவற்றை சோதிக்கவும்',
+    s4: '4. விளக்குகள்',
+    s5: '5. மற்றவை',
+    s6: '6. டயர்கள்',
+    lblRemarks: 'குறிப்புகள் / கருத்துகள்',
+    lblPhoto:   'புகைப்படம் (1 படம்)',
+    photoTap:   'புகைப்படம் எடுக்க / தேர்ந்தெடுக்க தட்டவும்',
+    photoRemove:'✕ படம் நீக்கவும்',
+    submitBtn:  'சோதனை சமர்ப்பிக்கவும்',
+    successSub: 'உங்கள் சோதனை பதிவு பெறப்பட்டது.\nபாதுகாப்பாக ஓட்டுங்கள்!',
+    backBtn:    'படிவத்திற்கு திரும்பவும்',
+    alertVehicle: 'வாகனத்தை தேர்ந்தெடுக்கவும்.',
+    alertUncheck: ' உருப்படிகள் இன்னும் சரிபார்க்கப்படவில்லை. சமர்ப்பிக்கவா?',
+    allOK:      'அனைத்து உருப்படிகளும் சரி.',
+    attnNeeded: '',
+    attnItems:  ' உருப்படிகளில் கவனம் தேவை.'
+  }
+};
+
+// PDFに忠実な点検項目定義
 const INSP_CHECKLIST = {
-  a: [
-    { key: 'a1', label: 'Locks / tampered check' },
-    { key: 'a2', label: 'Foreign objects — Near vehicle' },
-    { key: 'a3', label: 'Foreign objects — Exterior of vehicle' },
-    { key: 'a4', label: 'Interior — Passenger Cabin' },
-    { key: 'a5', label: 'Interior — Cargo Hold' },
-    { key: 'a6', label: 'Interior — Glove Box' },
-    { key: 'a7', label: 'Vehicle Undercarriage' },
+  s1: [
+    { key: 's1a', label: 'Locks / tampered check' }
   ],
-  b: [
-    { key: 'b1', label: 'Noises' },
-    { key: 'b2', label: 'Signs of leakage' },
-    { key: 'b3', label: 'Gauge — Fuel' },
-    { key: 'b4', label: 'Gauge — Temperature' },
-    { key: 'b5', label: 'Dashboard Warning Light' },
+  s2: [
+    { key: 's2a', label: 'Near the vehicle',        indent: false },
+    { key: 's2b', label: 'Exterior of vehicle',     indent: false },
+    { key: 's2c', label: 'Passenger Cabin',         indent: true  },
+    { key: 's2d', label: 'Cargo Hold',              indent: true  },
+    { key: 's2e', label: 'Glove Box',               indent: true  },
+    { key: 's2f', label: 'Vehicle Undercarriage',   indent: false }
   ],
-  c: [
-    { key: 'c1', label: 'Headlights' },
-    { key: 'c2', label: 'Brake Lights' },
-    { key: 'c3', label: 'Signal Lights' },
-    { key: 'c4', label: 'Hazard Lights' },
+  s3: [
+    { key: 's3a', label: 'Noises',                  indent: false },
+    { key: 's3b', label: 'Signs of leakage',        indent: false },
+    { key: 's3c', label: 'Gauge — Fuel',            indent: true  },
+    { key: 's3d', label: 'Gauge — Temperature',     indent: true  },
+    { key: 's3e', label: 'Dashboard Warning Light', indent: true  }
   ],
-  d: [
-    { key: 'd1', label: 'Windshield wipers' },
-    { key: 'd2', label: 'Fans and defroster' },
-    { key: 'd3', label: 'Brakes' },
-    { key: 'd4', label: 'Parking brakes' },
-    { key: 'd5', label: 'Mirrors' },
-    { key: 'd6', label: 'Horn' },
-    { key: 'd7', label: 'Exhaust (muffler, tailpipe)' },
-    { key: 'd8', label: 'Fire Extinguisher' },
+  s4: [
+    { key: 's4a', label: 'Headlights',   indent: true },
+    { key: 's4b', label: 'Brake Lights', indent: true },
+    { key: 's4c', label: 'Signal Lights',indent: true },
+    { key: 's4d', label: 'Hazard Lights',indent: true }
   ],
-  e: [
-    { key: 'e1', label: 'Proper inflation' },
-    { key: 'e2', label: 'Adequate tread' },
-    { key: 'e3', label: 'Spare inflated' },
+  s5: [
+    { key: 's5a', label: 'Windshield wipers',       indent: true },
+    { key: 's5b', label: 'Fans and defroster',      indent: true },
+    { key: 's5c', label: 'Brakes',                  indent: true },
+    { key: 's5d', label: 'Parking brakes',          indent: true },
+    { key: 's5e', label: 'Mirrors',                 indent: true },
+    { key: 's5f', label: 'Horn',                    indent: true },
+    { key: 's5g', label: 'Exhaust (muffler, tailpipe)', indent: true },
+    { key: 's5h', label: 'Fire Extinguisher',       indent: true }
+  ],
+  s6: [
+    { key: 's6a', label: 'Proper inflation', indent: true },
+    { key: 's6b', label: 'Adequate tread',   indent: true },
+    { key: 's6c', label: 'Spare inflated',   indent: true }
   ]
 };
 
-let inspState = {};
+let inspState    = {};
+let inspPhotoB64 = '';
+let inspPhotoMime= '';
 
+// チェックリストをセクションに描画
 function inspBuildSection(sectionId, items) {
   const container = document.getElementById(sectionId);
   if (!container) return;
@@ -3394,8 +3555,11 @@ function inspBuildSection(sectionId, items) {
     inspState[item.key] = null;
     const row = document.createElement('div');
     row.className = 'insp-checklist-item';
+    if (item.indent) row.style.paddingLeft = '16px';
     row.innerHTML =
-      '<span class="insp-item-name">' + item.label + '</span>' +
+      '<span class="insp-item-name"' + (item.indent ? ' style="font-size:12px;color:var(--text-muted);"' : '') + '>' +
+        (item.indent ? '— ' : '') + item.label +
+      '</span>' +
       '<div class="insp-check-btns">' +
         '<button class="insp-ok-btn" id="iok-' + item.key + '" onclick="inspSetCheck(\'' + item.key + '\',\'OK\')">OK</button>' +
         '<button class="insp-attn-btn" id="iat-' + item.key + '" onclick="inspSetCheck(\'' + item.key + '\',\'Attention\')">Attn</button>' +
@@ -3413,16 +3577,25 @@ function inspSetCheck(key, value) {
 }
 
 function inspResetChecklist() {
-  inspState = {};
-  inspBuildSection('insp-section-a', INSP_CHECKLIST.a);
-  inspBuildSection('insp-section-b', INSP_CHECKLIST.b);
-  inspBuildSection('insp-section-c', INSP_CHECKLIST.c);
-  inspBuildSection('insp-section-d', INSP_CHECKLIST.d);
-  inspBuildSection('insp-section-e', INSP_CHECKLIST.e);
+  inspState     = {};
+  inspPhotoB64  = '';
+  inspPhotoMime = '';
+  inspBuildSection('insp-section-1', INSP_CHECKLIST.s1);
+  inspBuildSection('insp-section-2', INSP_CHECKLIST.s2);
+  inspBuildSection('insp-section-3', INSP_CHECKLIST.s3);
+  inspBuildSection('insp-section-4', INSP_CHECKLIST.s4);
+  inspBuildSection('insp-section-5', INSP_CHECKLIST.s5);
+  inspBuildSection('insp-section-6', INSP_CHECKLIST.s6);
+  const preview = document.getElementById('insp-photo-preview');
+  const label   = document.getElementById('insp-photo-label');
+  if (preview) preview.style.display = 'none';
+  if (label)   label.style.display   = 'flex';
+  const inp = document.getElementById('insp-photo-input');
+  if (inp) inp.value = '';
 }
 
 function inspUpdateDateTime() {
-  const now = new Date();
+  const now    = new Date();
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const d  = String(now.getDate()).padStart(2,'0');
   const m  = months[now.getMonth()].toUpperCase();
@@ -3433,49 +3606,113 @@ function inspUpdateDateTime() {
   if (el) el.textContent = d + '-' + m + '-' + y + '  ' + hh + ':' + mm;
 }
 
+// 写真選択
+function inspPhotoSelected(input) {
+  if (!input.files || !input.files[0]) return;
+  const file   = input.files[0];
+  inspPhotoMime = file.type;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    inspPhotoB64 = e.target.result;
+    const img    = document.getElementById('insp-photo-img');
+    const preview= document.getElementById('insp-photo-preview');
+    const label  = document.getElementById('insp-photo-label');
+    if (img)     img.src            = e.target.result;
+    if (preview) preview.style.display = 'block';
+    if (label)   label.style.display   = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+// 写真クリア
+function inspPhotoClear() {
+  inspPhotoB64  = '';
+  inspPhotoMime = '';
+  const preview = document.getElementById('insp-photo-preview');
+  const label   = document.getElementById('insp-photo-label');
+  const inp     = document.getElementById('insp-photo-input');
+  if (preview) preview.style.display = 'none';
+  if (label)   label.style.display   = 'flex';
+  if (inp)     inp.value = '';
+}
+
+// 言語に応じたInspectionテキスト更新
+function inspApplyLang(l) {
+  const t = INSP_T[l] || INSP_T.en;
+  const ids = {
+    'insp-title-sub':   t.titleSub,
+    'insp-lbl-info':    t.lblInfo,
+    'insp-lbl-driver':  t.lblDriver,
+    'insp-lbl-datetime':t.lblDatetime,
+    'insp-lbl-vehicle': t.lblVehicle,
+    'insp-lbl-odometer':t.lblOdo,
+    'insp-notice':      t.notice,
+    'insp-s1-title':    t.s1,
+    'insp-s2-title':    t.s2,
+    'insp-s3-title':    t.s3,
+    'insp-s4-title':    t.s4,
+    'insp-s5-title':    t.s5,
+    'insp-s6-title':    t.s6,
+    'insp-lbl-remarks': t.lblRemarks,
+    'insp-lbl-photo':   t.lblPhoto,
+    'insp-photo-label-text': t.photoTap,
+    'insp-photo-clear-btn':  t.photoRemove,
+    'insp-submit-btn':  t.submitBtn,
+    'insp-success-sub': t.successSub,
+    'insp-success-close-btn': t.backBtn
+  };
+  for (const id in ids) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = ids[id];
+  }
+}
+
+// Submit
 async function submitInspection() {
+  const l         = (typeof lang !== 'undefined') ? lang : 'en';
+  const t         = INSP_T[l] || INSP_T.en;
   const driver    = document.getElementById('insp-driver').textContent.trim();
   const vehicleNo = document.getElementById('insp-vehicle').value;
   const odometer  = document.getElementById('insp-odometer').value;
   const remarks   = document.getElementById('insp-remarks').value.trim();
 
-  if (!vehicleNo) { alert('Please select a vehicle.'); return; }
+  if (!vehicleNo) { alert(t.alertVehicle); return; }
 
-  // 未チェック項目の確認
   const unchecked = Object.keys(inspState).filter(k => !inspState[k]);
   if (unchecked.length > 0) {
-    if (!confirm(unchecked.length + ' item(s) not checked yet. Submit anyway?')) return;
+    if (!confirm(unchecked.length + t.alertUncheck)) return;
   }
 
   const btn = document.getElementById('insp-submit-btn');
-  btn.disabled = true;
-  btn.textContent = 'Submitting…';
+  btn.disabled    = true;
+  btn.textContent = '…';
 
-  // ── 即座に完了画面を表示（ユーザーを待たせない） ──
+  // 即座に完了画面表示（待たせない）
   const failedItems = Object.keys(inspState).filter(k => inspState[k] === 'Attention');
   const resultText  = failedItems.length > 0
-    ? 'Attention needed on ' + failedItems.length + ' item(s).'
-    : 'All items checked OK.';
+    ? t.attnNeeded + failedItems.length + t.attnItems
+    : t.allOK;
 
   document.getElementById('insp-success-title').textContent = 'Thank you, ' + driver.split(' ')[0] + '!';
   document.getElementById('insp-success-msg').textContent   = vehicleNo + ' — ' + resultText;
+  document.getElementById('insp-success-sub').textContent   = t.successSub;
   document.getElementById('insp-success-overlay').classList.add('show');
 
-  // ── バックグラウンドでGASに送信 ──
-  fetch(INSP_GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify({
-      action:    'submitInspection',
-      driver:    driver,
-      vehicleNo: vehicleNo,
-      odometer:  odometer,
-      checklist: inspState,
-      remarks:   remarks
-    })
-  }).catch(() => {}); // エラーはサイレント（ユーザーには影響させない）
+  // バックグラウンドでGAS送信
+  const payload = {
+    action:      'submitInspection',
+    driver:      driver,
+    vehicleNo:   vehicleNo,
+    odometer:    odometer,
+    checklist:   inspState,
+    remarks:     remarks,
+    photoBase64: inspPhotoB64  ? inspPhotoB64.replace(/^data:image\/(jpeg|png);base64,/, '') : '',
+    photoMime:   inspPhotoMime || ''
+  };
+  fetch(INSP_GAS_URL, { method: 'POST', body: JSON.stringify(payload) }).catch(() => {});
 
   btn.disabled    = false;
-  btn.textContent = 'Submit Inspection';
+  btn.textContent = t.submitBtn;
 }
 
 function closeInspSuccess() {
