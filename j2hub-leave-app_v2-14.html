@@ -2371,17 +2371,9 @@
         <div id="insp-section-6"></div>
       </div>
 
-      <!-- Remarks / Comments -->
+      <!-- Photo Upload（必須） -->
       <div class="form-card">
-        <div class="insp-section-title" id="insp-lbl-remarks">Remarks / Comments</div>
-        <textarea class="insp-input" id="insp-remarks" rows="3"
-                  placeholder="Note any issues or observations…"
-                  style="resize:none;"></textarea>
-      </div>
-
-      <!-- Photo Upload -->
-      <div class="form-card">
-        <div class="insp-section-title" id="insp-lbl-photo">Photo (1 photo)</div>
+        <div class="insp-section-title" id="insp-lbl-photo">Photo <span style="color:#dc2626;font-size:11px;font-weight:700;">* Required</span></div>
         <label for="insp-photo-input" id="insp-photo-label" style="
           display:flex; align-items:center; justify-content:center;
           width:100%; height:100px; border:2px dashed var(--border);
@@ -2401,6 +2393,14 @@
             color:var(--red,#dc2626); font-size:12px; cursor:pointer;
           " id="insp-photo-clear-btn">✕ Remove photo</button>
         </div>
+      </div>
+
+      <!-- Remarks / Comments（任意） -->
+      <div class="form-card">
+        <div class="insp-section-title" id="insp-lbl-remarks">Remarks / Comments <span style="color:var(--text-muted);font-size:11px;font-weight:400;">（Optional）</span></div>
+        <textarea class="insp-input" id="insp-remarks" rows="3"
+                  placeholder="Note any issues or observations…"
+                  style="resize:none;"></textarea>
       </div>
 
       <button class="insp-submit-btn" id="insp-submit-btn" onclick="submitInspection()"
