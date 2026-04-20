@@ -1645,6 +1645,64 @@
     font-weight: 800;
     cursor: pointer;
   }
+  /* ── Inspection History ─────────────────────────────────────── */
+  .insp-hist-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    box-shadow: var(--shadow-card);
+  }
+  .insp-hist-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .insp-hist-vehicle {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--blue-dark);
+  }
+  .insp-hist-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-family: 'Montserrat', sans-serif;
+  }
+  .insp-hist-badge.ok      { background: var(--green-light); color: var(--green); }
+  .insp-hist-badge.attn    { background: #fff0f0; color: #dc2626; }
+  .insp-hist-meta {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+  .insp-hist-failed {
+    font-size: 12px;
+    color: #dc2626;
+    margin-top: 4px;
+    line-height: 1.5;
+  }
+  .insp-hist-photo {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--blue);
+    margin-top: 6px;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .insp-hist-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1.8;
+  }
   /* ── Sticky Submit Button ───────────────────────────────────── */
   .sticky-submit-bar {
     position: sticky;
@@ -1689,56 +1747,53 @@
     <div class="home-greeting" id="home-greeting">Hello, !</div>
     <div class="home-category-icons">
 
-      <!-- APPLICATION -->
+      <!-- APPLICATION（元の絵文字📋に戻す） -->
       <button class="home-cat-btn" onclick="goToCategoryApp()">
-        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="6" y="8" width="36" height="28" rx="3" fill="#e8f0fe"/>
-          <rect x="10" y="12" width="10" height="3" rx="1" fill="#003087"/>
-          <rect x="10" y="18" width="28" height="2" rx="1" fill="#003087"/>
-          <rect x="10" y="22" width="28" height="2" rx="1" fill="#003087"/>
-          <rect x="10" y="26" width="18" height="2" rx="1" fill="#003087"/>
-          <rect x="10" y="30" width="12" height="2" rx="1" fill="#003087"/>
-        </svg>
+        <span class="icon">📋</span>
         <span class="label">APPLICATION</span>
       </button>
 
-      <!-- LORRY（頭右向き・頭のみ青） -->
+      <!-- LORRY（頭右向き・頭＝キャブのみ青・荷台は白） -->
       <button class="home-cat-btn" onclick="goToLorry()">
-        <svg width="64" height="44" viewBox="0 0 64 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <!-- 荷台（左側・白） -->
-          <rect x="2" y="10" width="30" height="22" rx="2" fill="#fff" stroke="#003087" stroke-width="1.5"/>
-          <!-- 荷台の横線 -->
-          <line x1="2" y1="18" x2="32" y2="18" stroke="#003087" stroke-width="0.8" opacity="0.4"/>
-          <line x1="2" y1="24" x2="32" y2="24" stroke="#003087" stroke-width="0.8" opacity="0.4"/>
-          <!-- キャブ（右側・青・頭） -->
-          <path d="M32 14 L32 32 L58 32 L58 20 L50 14 Z" fill="#003087"/>
-          <!-- キャブ窓 -->
-          <path d="M34 16 L34 26 L50 26 L50 20 L44 16 Z" fill="#e8f0fe" opacity="0.9"/>
-          <!-- フロントグリル -->
-          <rect x="54" y="22" width="4" height="8" rx="1" fill="#1a6fd4"/>
-          <!-- タイヤ左後 -->
-          <circle cx="10" cy="34" r="6" fill="#1a1a2e"/>
-          <circle cx="10" cy="34" r="3" fill="#6b7280"/>
-          <!-- タイヤ左前 -->
-          <circle cx="22" cy="34" r="6" fill="#1a1a2e"/>
-          <circle cx="22" cy="34" r="3" fill="#6b7280"/>
-          <!-- タイヤ右（キャブ） -->
-          <circle cx="48" cy="34" r="6" fill="#1a1a2e"/>
-          <circle cx="48" cy="34" r="3" fill="#6b7280"/>
+        <svg width="62" height="42" viewBox="0 0 62 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- 荷台（白・薄枠） -->
+          <rect x="1" y="8" width="30" height="22" rx="2" fill="#ffffff" stroke="#d0d7e8" stroke-width="1.2"/>
+          <line x1="1" y1="16" x2="31" y2="16" stroke="#d0d7e8" stroke-width="0.8"/>
+          <line x1="1" y1="22" x2="31" y2="22" stroke="#d0d7e8" stroke-width="0.8"/>
+          <!-- キャブ（頭・右・J2Hub青のみ） -->
+          <path d="M31 12 L31 30 L57 30 L57 20 L49 12 Z" fill="#003087"/>
+          <!-- キャブ窓（明るい） -->
+          <path d="M33 14 L33 24 L49 24 L49 20 L43 14 Z" fill="#e8f0fe"/>
+          <!-- フロントバンパー -->
+          <rect x="53" y="22" width="4" height="6" rx="1" fill="#1a6fd4"/>
+          <!-- タイヤ（荷台側・黒） -->
+          <circle cx="9"  cy="32" r="5.5" fill="#2c2c2c"/>
+          <circle cx="9"  cy="32" r="2.5" fill="#888"/>
+          <circle cx="21" cy="32" r="5.5" fill="#2c2c2c"/>
+          <circle cx="21" cy="32" r="2.5" fill="#888"/>
+          <!-- タイヤ（キャブ側・黒） -->
+          <circle cx="46" cy="32" r="5.5" fill="#2c2c2c"/>
+          <circle cx="46" cy="32" r="2.5" fill="#888"/>
         </svg>
         <span class="label">LORRY</span>
       </button>
 
-      <!-- J2Hub INFO -->
+      <!-- J2Hub INFO（白ベース・オレンジ新着・明るいデザイン） -->
       <button class="home-cat-btn" onclick="goToInfo()" style="position:relative;">
         <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="4" y="4" width="36" height="36" rx="4" fill="#e8f0fe"/>
-          <rect x="8" y="10" width="28" height="3" rx="1" fill="#003087"/>
-          <rect x="8" y="16" width="28" height="2" rx="1" fill="#003087" opacity="0.6"/>
-          <rect x="8" y="20" width="20" height="2" rx="1" fill="#003087" opacity="0.6"/>
-          <circle cx="32" cy="30" r="7" fill="#003087"/>
-          <rect x="31" y="27" width="2" height="6" rx="1" fill="#fff"/>
-          <circle cx="32" cy="25.5" r="1.2" fill="#fff"/>
+          <!-- 白い紙ベース -->
+          <rect x="4" y="4" width="36" height="36" rx="4" fill="#ffffff" stroke="#d0d7e8" stroke-width="1"/>
+          <!-- 折り角 -->
+          <path d="M30 4 L40 14 L30 14 Z" fill="#e8f0fe"/>
+          <path d="M30 4 L30 14 L40 14" stroke="#d0d7e8" stroke-width="1"/>
+          <!-- テキスト行 -->
+          <rect x="8" y="18" width="20" height="2.5" rx="1" fill="#003087"/>
+          <rect x="8" y="23" width="24" height="2" rx="1" fill="#9ca3af"/>
+          <rect x="8" y="27" width="18" height="2" rx="1" fill="#9ca3af"/>
+          <!-- 右下：オレンジの新着ドット -->
+          <circle cx="34" cy="32" r="5" fill="#e87722"/>
+          <rect x="33" y="29.5" width="2" height="5" rx="1" fill="#fff"/>
+          <circle cx="34" cy="28.2" r="1.1" fill="#fff"/>
         </svg>
         <span class="label">J2Hub INFO</span>
         <!-- 新着バッジ -->
@@ -1869,6 +1924,10 @@
     <button class="nav-tab active" id="nav-insp-btn" onclick="showLorryPage('inspection',this)">
       <span class="icon">🔍</span>
       <span>Inspection</span>
+    </button>
+    <button class="nav-tab" id="nav-insp-hist-btn" onclick="showLorryPage('insp-history',this);loadInspHistory()">
+      <span class="icon">📋</span>
+      <span>History</span>
     </button>
     <!-- 将来追加
     <button class="nav-tab" onclick="showLorryPage('maintenance',this)">
@@ -2349,6 +2408,22 @@
         Submit Inspection
       </button>
 
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       PAGE: INSPECTION HISTORY
+  ══════════════════════════════════════════ -->
+  <div id="page-insp-history" class="page">
+    <div class="page-header">
+      <div class="page-title">My Records</div>
+      <div class="page-title-main">Inspection <em>History</em></div>
+    </div>
+    <div class="form-main">
+      <div id="insp-hist-loading" style="text-align:center;padding:32px;color:var(--text-muted);font-size:14px;">
+        Loading…
+      </div>
+      <div id="insp-hist-list"></div>
     </div>
   </div>
 
@@ -3929,6 +4004,60 @@ function showInfoOverlay() {
   if (sub)      sub.textContent     = 'Stay tuned for company news and updates.';
   if (closeBtn) closeBtn.textContent= 'Close';
   if (overlay)  overlay.classList.add('show');
+}
+
+// ── Inspection History ────────────────────────────────────────
+async function loadInspHistory() {
+  const driver = _currentUser;
+  const listEl = document.getElementById('insp-hist-list');
+  const loadEl = document.getElementById('insp-hist-loading');
+  if (!listEl) return;
+  if (loadEl) loadEl.style.display = 'block';
+  listEl.innerHTML = '';
+
+  try {
+    const res  = await fetch(INSP_GAS_URL + '?action=getAllInspections&name=' + encodeURIComponent(driver), { cache: 'no-store' });
+    const data = await res.json();
+    if (loadEl) loadEl.style.display = 'none';
+
+    const records = (data.records || []).filter(r => r.driver === driver);
+
+    if (records.length === 0) {
+      listEl.innerHTML = '<div class="insp-hist-empty">📋<br>No inspection records yet.<br>Submit your first inspection!</div>';
+      return;
+    }
+
+    records.forEach(r => {
+      const isOK     = r.result === 'OK';
+      const failTxt  = r.failedItems || '';
+      const photoHtml = r.photoUrl
+        ? '<a class="insp-hist-photo" href="' + r.photoUrl + '" target="_blank">📷 View Photo</a>'
+        : '';
+
+      const card = document.createElement('div');
+      card.className = 'insp-hist-card';
+      card.innerHTML =
+        '<div class="insp-hist-header">' +
+          '<span class="insp-hist-vehicle">' + (r.vehicleNo || '—') + '</span>' +
+          '<span class="insp-hist-badge ' + (isOK ? 'ok' : 'attn') + '">' +
+            (isOK ? '✅ OK' : '⚠️ Attention') +
+          '</span>' +
+        '</div>' +
+        '<div class="insp-hist-meta">' +
+          (r.date || '') + '&nbsp;&nbsp;' + (r.time || '') +
+          (r.odometer ? '&nbsp;·&nbsp;' + r.odometer + ' km' : '') +
+        '</div>' +
+        (failTxt ? '<div class="insp-hist-failed">⚠️ ' + failTxt + '</div>' : '') +
+        (r.remarks ? '<div style="font-size:12px;color:var(--text-muted);margin-top:4px;">📝 ' + r.remarks + '</div>' : '') +
+        photoHtml;
+
+      listEl.appendChild(card);
+    });
+
+  } catch (err) {
+    if (loadEl) loadEl.style.display = 'none';
+    listEl.innerHTML = '<div class="insp-hist-empty">Could not load records.<br>Please try again.</div>';
+  }
 }
 
 function checkBirthday(name) {
