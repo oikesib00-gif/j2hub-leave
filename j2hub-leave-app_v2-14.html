@@ -3803,7 +3803,8 @@ function inspBuildSection(sectionId, items) {
   if (!container) return;
   container.innerHTML = '';
   items.forEach(item => {
-    inspState[item.key] = null;
+    // 既存のinspStateを上書きしない（新規keyのみnullセット）
+    if (!(item.key in inspState)) inspState[item.key] = null;
     const row = document.createElement('div');
     row.className = 'insp-checklist-item';
     row.id = 'row-' + item.key;
@@ -4056,7 +4057,16 @@ async function submitInspection() {
     remarks:   remarks,
     photos:    photos
   };
-  fetch(INSP_GAS_URL, { method: 'POST', body: JSON.stringify(payload) }).catch(() => {});
+
+  try {
+    await fetch(INSP_GAS_URL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body:    JSON.stringify(payload)
+    });
+  } catch (err) {
+    // ネットワークエラーはサイレントに無視（成功画面は既に表示済み）
+  }
 
   btn.disabled    = false;
   btn.textContent = t.submitBtn;
