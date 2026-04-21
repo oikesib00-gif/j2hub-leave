@@ -1703,47 +1703,6 @@
     font-size: 14px;
     line-height: 1.8;
   }
-  /* ── Attn Photo（項目直下に出現） ──────────────────────────── */
-  .insp-attn-photo {
-    margin-top: 8px;
-    padding: 10px 12px;
-    background: #fff8f8;
-    border: 1.5px dashed #dc2626;
-    border-radius: 10px;
-  }
-  .insp-attn-photo-title {
-    font-size: 11px;
-    font-weight: 700;
-    color: #dc2626;
-    margin-bottom: 8px;
-    letter-spacing: 0.3px;
-  }
-  .insp-attn-photo-label {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 80px;
-    border: 1.5px dashed #dc2626;
-    border-radius: 8px;
-    cursor: pointer;
-    background: #fff;
-    flex-direction: column;
-    gap: 4px;
-    font-size: 12px;
-    color: #dc2626;
-  }
-  .insp-attn-photo-preview {
-    display: none;
-    margin-top: 8px;
-    text-align: center;
-  }
-  .insp-attn-photo-preview img {
-    max-width: 100%;
-    max-height: 160px;
-    border-radius: 8px;
-    border: 1px solid #dc2626;
-  }
   /* ── Sticky Submit Button ───────────────────────────────────── */
   .sticky-submit-bar {
     position: sticky;
@@ -2410,6 +2369,30 @@
       <div class="form-card">
         <div class="insp-section-title" id="insp-s6-title">6. Tires</div>
         <div id="insp-section-6"></div>
+      </div>
+
+      <!-- Photo Upload（必須） -->
+      <div class="form-card">
+        <div class="insp-section-title" id="insp-lbl-photo">Photo <span style="color:#dc2626;font-size:11px;font-weight:700;">* Required</span></div>
+        <label for="insp-photo-input" id="insp-photo-label" style="
+          display:flex; align-items:center; justify-content:center;
+          width:100%; height:100px; border:2px dashed var(--border);
+          border-radius:10px; cursor:pointer; background:var(--surface2);
+          flex-direction:column; gap:6px; font-size:13px; color:var(--text-muted);
+        ">
+          <span style="font-size:28px;">📷</span>
+          <span id="insp-photo-label-text">Tap to take / select a photo</span>
+        </label>
+        <input type="file" id="insp-photo-input" accept="image/*" capture="environment"
+               style="display:none;" onchange="inspPhotoSelected(this)">
+        <div id="insp-photo-preview" style="display:none; margin-top:10px; text-align:center;">
+          <img id="insp-photo-img" src="" alt="preview"
+               style="max-width:100%; max-height:200px; border-radius:8px; border:1px solid var(--border);">
+          <button onclick="inspPhotoClear()" style="
+            display:block; margin:8px auto 0; background:none; border:none;
+            color:var(--red,#dc2626); font-size:12px; cursor:pointer;
+          " id="insp-photo-clear-btn">✕ Remove photo</button>
+        </div>
       </div>
 
       <!-- Remarks / Comments（任意） -->
@@ -3794,8 +3777,8 @@ function getInspChecklist() {
 }
 
 let inspState    = {};
-let inspPhotoMap  = {};  // { key: { b64, mime, label } } Attn項目ごとの写真
-let inspPhotoMime = '';  // 後方互換用（未使用）
+let inspPhotoB64 = '';
+let inspPhotoMime= '';
 
 // チェックリストをセクションに描画
 function inspBuildSection(sectionId, items) {
@@ -3803,111 +3786,41 @@ function inspBuildSection(sectionId, items) {
   if (!container) return;
   container.innerHTML = '';
   items.forEach(item => {
-    // 既存のinspStateを上書きしない（新規keyのみnullセット）
-    if (!(item.key in inspState)) inspState[item.key] = null;
+    inspState[item.key] = null;
     const row = document.createElement('div');
     row.className = 'insp-checklist-item';
-    row.id = 'row-' + item.key;
     if (item.indent) row.style.paddingLeft = '16px';
     row.innerHTML =
       '<span class="insp-item-name"' + (item.indent ? ' style="font-size:12px;color:var(--text-muted);"' : '') + '>' +
         (item.indent ? '— ' : '') + item.label +
       '</span>' +
       '<div class="insp-check-btns">' +
-        '<button class="insp-ok-btn" id="iok-' + item.key + '" onclick="inspSetCheck(\'' + item.key + '\',\'OK\',\'' + item.label.replace(/'/g,"\\'") + '\')">OK</button>' +
-        '<button class="insp-attn-btn" id="iat-' + item.key + '" onclick="inspSetCheck(\'' + item.key + '\',\'Attention\',\'' + item.label.replace(/'/g,"\\'") + '\')">Attn</button>' +
+        '<button class="insp-ok-btn" id="iok-' + item.key + '" onclick="inspSetCheck(\'' + item.key + '\',\'OK\')">OK</button>' +
+        '<button class="insp-attn-btn" id="iat-' + item.key + '" onclick="inspSetCheck(\'' + item.key + '\',\'Attention\')">Attn</button>' +
       '</div>';
     container.appendChild(row);
-
-    // Attn写真欄（初期非表示）
-    const photoDiv = document.createElement('div');
-    photoDiv.className = 'insp-attn-photo';
-    photoDiv.id = 'attn-photo-' + item.key;
-    photoDiv.style.display = 'none';
-    photoDiv.innerHTML =
-      '<div class="insp-attn-photo-title">📷 ' + item.label + ' — Photo Required</div>' +
-      '<label class="insp-attn-photo-label" for="attn-file-' + item.key + '">' +
-        '<span style="font-size:22px;">📷</span>' +
-        '<span>Tap to take / select photo</span>' +
-      '</label>' +
-      '<input type="file" id="attn-file-' + item.key + '" accept="image/*" capture="environment"' +
-        ' style="display:none;" onchange="inspAttnPhotoSelected(this,\'' + item.key + '\')">' +
-      '<div class="insp-attn-photo-preview" id="attn-preview-' + item.key + '">' +
-        '<img id="attn-img-' + item.key + '" src="" alt="preview">' +
-        '<button onclick="inspAttnPhotoClear(\'' + item.key + '\')" style="' +
-          'display:block;margin:6px auto 0;background:none;border:none;' +
-          'color:#dc2626;font-size:12px;cursor:pointer;">✕ Remove</button>' +
-      '</div>';
-    container.appendChild(photoDiv);
   });
 }
 
-function inspSetCheck(key, value, label) {
+function inspSetCheck(key, value) {
   inspState[key] = value;
   const okBtn   = document.getElementById('iok-' + key);
   const attnBtn = document.getElementById('iat-' + key);
   if (okBtn)   okBtn.classList.toggle('active',   value === 'OK');
   if (attnBtn) attnBtn.classList.toggle('active', value === 'Attention');
-
-  // Attn写真欄の表示/非表示
-  const photoDiv = document.getElementById('attn-photo-' + key);
-  if (photoDiv) {
-    if (value === 'Attention') {
-      photoDiv.style.display = 'block';
-    } else {
-      // OKに戻したら写真欄を非表示＋写真クリア
-      photoDiv.style.display = 'none';
-      inspAttnPhotoClear(key);
-    }
-  }
   inspCheckSubmitReady();
 }
 
-// Attn写真選択
-function inspAttnPhotoSelected(input, key) {
-  if (!input.files || !input.files[0]) return;
-  const file = input.files[0];
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const dataUrl = e.target.result;
-    inspPhotoMap[key] = { b64: dataUrl.split(',')[1], mime: file.type };
-    const img     = document.getElementById('attn-img-' + key);
-    const preview = document.getElementById('attn-preview-' + key);
-    const label   = document.querySelector('#attn-photo-' + key + ' .insp-attn-photo-label');
-    if (img)     img.src             = e.target.result;
-    if (preview) preview.style.display = 'block';
-    if (label)   label.style.display   = 'none';
-    inspCheckSubmitReady();
-  };
-  reader.readAsDataURL(file);
-}
-
-// Attn写真クリア
-function inspAttnPhotoClear(key) {
-  delete inspPhotoMap[key];
-  const preview = document.getElementById('attn-preview-' + key);
-  const label   = document.querySelector('#attn-photo-' + key + ' .insp-attn-photo-label');
-  const inp     = document.getElementById('attn-file-' + key);
-  if (preview) preview.style.display = 'none';
-  if (label)   label.style.display   = 'flex';
-  if (inp)     inp.value = '';
-  inspCheckSubmitReady();
-}
-
-// ── Submit条件チェック ─────────────────────────────────────────
-// 車番＋Odometer＋全チェック済み＋全Attn項目に写真
+// ── Submit条件チェック：全満たしたら青、それ以外はグレー ─────
 function inspCheckSubmitReady() {
-  const vehicleNo  = document.getElementById('insp-vehicle').value;
-  const odometer   = document.getElementById('insp-odometer').value;
+  const vehicleNo = document.getElementById('insp-vehicle').value;
+  const odometer  = document.getElementById('insp-odometer').value;
   const allChecked = Object.keys(inspState).every(k => !!inspState[k]);
-  // Attn項目の抽出
-  const attnKeys   = Object.keys(inspState).filter(k => inspState[k] === 'Attention');
-  // 全Attn項目に写真が揃っているか
-  const allAttnPhotos = attnKeys.every(k => !!inspPhotoMap[k]);
-  const ready = vehicleNo && odometer && allChecked && allAttnPhotos;
+  const hasPhoto   = !!inspPhotoB64;
+  const ready = vehicleNo && odometer && allChecked && hasPhoto;
   const btn = document.getElementById('insp-submit-btn');
   if (!btn) return;
-  btn.disabled           = !ready;
+  btn.disabled = !ready;
   btn.style.background   = ready ? '#003087' : '#e5e7eb';
   btn.style.color        = ready ? '#fff'    : '#9ca3af';
   btn.style.cursor       = ready ? 'pointer' : 'not-allowed';
@@ -3915,14 +3828,22 @@ function inspCheckSubmitReady() {
 
 function inspResetChecklist() {
   const cl = getInspChecklist();
-  inspState    = {};
-  inspPhotoMap = {};
+  inspState     = {};
+  inspPhotoB64  = '';
+  inspPhotoMime = '';
   inspBuildSection('insp-section-1', cl.s1);
   inspBuildSection('insp-section-2', cl.s2);
   inspBuildSection('insp-section-3', cl.s3);
   inspBuildSection('insp-section-4', cl.s4);
   inspBuildSection('insp-section-5', cl.s5);
   inspBuildSection('insp-section-6', cl.s6);
+  const preview = document.getElementById('insp-photo-preview');
+  const label   = document.getElementById('insp-photo-label');
+  if (preview) preview.style.display = 'none';
+  if (label)   label.style.display   = 'flex';
+  const inp = document.getElementById('insp-photo-input');
+  if (inp) inp.value = '';
+  // 車番・Odometerのchangeイベントを設定
   const veh = document.getElementById('insp-vehicle');
   const odo = document.getElementById('insp-odometer');
   if (veh) veh.onchange = inspCheckSubmitReady;
@@ -3991,6 +3912,10 @@ function inspApplyLang(l) {
     'insp-s4-title':    t.s4,
     'insp-s5-title':    t.s5,
     'insp-s6-title':    t.s6,
+    'insp-lbl-remarks': t.lblRemarks,
+    'insp-lbl-photo':   t.lblPhoto,
+    'insp-photo-label-text': t.photoTap,
+    'insp-photo-clear-btn':  t.photoRemove,
     'insp-submit-btn':  t.submitBtn,
     'insp-success-sub': t.successSub,
     'insp-success-close-btn': t.backBtn
@@ -4015,7 +3940,7 @@ function inspApplyLang(l) {
 async function submitInspection() {
   const l         = (typeof lang !== 'undefined') ? lang : 'en';
   const t         = INSP_T[l] || INSP_T.en;
-  const driver    = document.getElementById('insp-driver').textContent.trim();
+  const driver    = _currentUser || document.getElementById('insp-driver').textContent.trim();
   const vehicleNo = document.getElementById('insp-vehicle').value;
   const odometer  = document.getElementById('insp-odometer').value;
   const remarks   = document.getElementById('insp-remarks').value.trim();
@@ -4028,9 +3953,16 @@ async function submitInspection() {
   btn.disabled    = true;
   btn.textContent = '…';
 
-  const failedItems = Object.keys(inspState).filter(k => inspState[k] === 'Attention');
-  const resultText  = failedItems.length > 0
-    ? t.attnNeeded + failedItems.length + t.attnItems
+  // Attn項目のラベル名を英語で取得
+  const cl = INSP_ITEMS['en'];
+  const allItems = [...cl.s1, ...cl.s2, ...cl.s3, ...cl.s4, ...cl.s5, ...cl.s6];
+  const failedKeys   = Object.keys(inspState).filter(k => inspState[k] === 'Attention');
+  const failedLabels = failedKeys.map(k => {
+    const found = allItems.find(item => item.key === k);
+    return found ? found.label : k;
+  });
+  const resultText = failedKeys.length > 0
+    ? t.attnNeeded + failedKeys.length + t.attnItems
     : t.allOK;
 
   document.getElementById('insp-success-title').textContent = 'Thank you, ' + driver.split(' ')[0] + '!';
@@ -4050,25 +3982,23 @@ async function submitInspection() {
   }
 
   const payload = {
-    action:    'submitInspection',
-    driver:    driver,
-    vehicleNo: vehicleNo,
-    odometer:  odometer,
-    checklist: inspState,
-    remarks:   remarks,
-    photos:    photos
+    action:       'submitInspection',
+    driver:       driver,
+    vehicleNo:    vehicleNo,
+    odometer:     odometer,
+    checklist:    inspState,
+    failedLabels: failedLabels,
+    remarks:      remarks,
+    photos:       photos
   };
 
   try {
-    const res = await fetch(INSP_GAS_URL, {
+    await fetch(INSP_GAS_URL, {
       method: 'POST',
       cache:  'no-store',
       body:   JSON.stringify(payload)
     });
-    await res.json();
-  } catch (err) {
-    // サイレント
-  }
+  } catch(err) {}
 
   btn.disabled    = false;
   btn.textContent = t.submitBtn;
@@ -4081,6 +4011,10 @@ function closeInspSuccess() {
   document.getElementById('insp-remarks').value  = '';
   inspResetChecklist();
   inspUpdateDateTime();
+  // 常に画面トップから開始
+  const page = document.getElementById('page-inspection');
+  if (page) page.scrollTop = 0;
+  window.scrollTo(0, 0);
 }
 
 // ── J2Hub INFO オーバーレイ（Phase 2実装予定） ───────────────
