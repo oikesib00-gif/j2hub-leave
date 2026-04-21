@@ -3970,6 +3970,21 @@ async function submitInspection() {
   document.getElementById('insp-success-sub').textContent   = t.successSub;
   document.getElementById('insp-success-overlay').classList.add('show');
 
+  // 裏側でフォームをリセット・スクロール準備（完了画面の裏で静かに）
+  setTimeout(function() {
+    document.getElementById('insp-vehicle').value  = '';
+    document.getElementById('insp-odometer').value = '';
+    document.getElementById('insp-remarks').value  = '';
+    inspResetChecklist();
+    inspUpdateDateTime();
+    const page = document.getElementById('page-inspection');
+    if (page) page.scrollTop = 0;
+    const app = document.querySelector('.app');
+    if (app) app.scrollTop = 0;
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, 300);
+
   // 複数写真をkey:b64形式で送信
   const photos = {};
   for (const key in inspPhotoMap) {
@@ -4006,15 +4021,6 @@ async function submitInspection() {
 
 function closeInspSuccess() {
   document.getElementById('insp-success-overlay').classList.remove('show');
-  document.getElementById('insp-vehicle').value  = '';
-  document.getElementById('insp-odometer').value = '';
-  document.getElementById('insp-remarks').value  = '';
-  inspResetChecklist();
-  inspUpdateDateTime();
-  // 常に画面トップから開始
-  const page = document.getElementById('page-inspection');
-  if (page) page.scrollTop = 0;
-  window.scrollTo(0, 0);
 }
 
 // ── J2Hub INFO オーバーレイ（Phase 2実装予定） ───────────────
