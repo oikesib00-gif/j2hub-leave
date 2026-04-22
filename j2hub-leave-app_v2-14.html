@@ -4195,6 +4195,12 @@ async function submitInspection() {
 
 function closeInspSuccess() {
   document.getElementById('insp-success-overlay').classList.remove('show');
+  // フォームを即リセット
+  document.getElementById('insp-vehicle').value  = '';
+  document.getElementById('insp-odometer').value = '';
+  document.getElementById('insp-remarks').value  = '';
+  inspResetChecklist();
+  inspUpdateDateTime();
   // Home画面に戻る
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('home-screen').classList.add('show');
@@ -4257,7 +4263,7 @@ async function loadInspHistory() {
           '</span>' +
         '</div>' +
         '<div class="insp-hist-meta">' +
-          (r.date || '') + '&nbsp;&nbsp;' + (r.time || '') +
+          (function(){ var d=r.timestamp?new Date(r.timestamp):null; if(!d||isNaN(d))return r.date||''; var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return String(d.getDate()).padStart(2,'0')+'-'+months[d.getMonth()]+'-'+d.getFullYear()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); })() +
           (r.odometer ? '&nbsp;·&nbsp;' + r.odometer + ' km' : '') +
         '</div>' +
         (failTxt ? '<div class="insp-hist-failed">⚠️ ' + failTxt + '</div>' : '') +
