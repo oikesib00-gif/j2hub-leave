@@ -3869,10 +3869,10 @@ function inspSetCheck(key, value, label) {
   if (okBtn)   okBtn.classList.toggle('active',   value === 'OK');
   if (attnBtn) attnBtn.classList.toggle('active', value === 'Attention');
 
-  // Attn写真欄の表示/非表示
+  // Attn写真欄の表示/非表示（s3a=Noisesは写真不要・録音のみ）
   const photoDiv = document.getElementById('attn-photo-' + key);
   if (photoDiv) {
-    if (value === 'Attention') {
+    if (value === 'Attention' && key !== 's3a') {
       photoDiv.style.display = 'block';
     } else {
       photoDiv.style.display = 'none';
@@ -4004,8 +4004,8 @@ function inspCheckSubmitReady() {
   const allChecked = Object.keys(inspState).every(k => !!inspState[k]);
   // Attn項目の抽出
   const attnKeys   = Object.keys(inspState).filter(k => inspState[k] === 'Attention');
-  // 全Attn項目に写真が揃っているか
-  const allAttnPhotos = attnKeys.every(k => !!inspPhotoMap[k]);
+  // 全Attn項目に写真/音声が揃っているか（s3a=Noisesは音声で確認）
+  const allAttnPhotos = attnKeys.every(k => k === 's3a' ? !!inspAudioMap[k] : !!inspPhotoMap[k]);
   const ready = vehicleNo && odometer && allChecked && allAttnPhotos;
   const btn = document.getElementById('insp-submit-btn');
   if (!btn) return;
