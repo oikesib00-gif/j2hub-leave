@@ -2450,7 +2450,7 @@
     <div class="success-title" id="insp-success-title">Thank you!</div>
     <div class="success-sub" id="insp-success-msg" style="font-size:15px;font-weight:700;color:#fff;margin-bottom:4px;"></div>
     <div class="success-sub" id="insp-success-sub" style="white-space:pre-line;"></div>
-    <button class="success-close" onclick="closeInspSuccess()" id="insp-success-close-btn">Back to Form</button>
+    <button class="success-close" onclick="closeInspSuccess()" id="insp-success-close-btn">Back to Home</button>
   </div>
 
   <div class="install-hint">
@@ -3603,7 +3603,7 @@ const INSP_T = {
     photoRemove:'✕ Remove photo',
     submitBtn:  'Submit Inspection',
     successSub: 'Your inspection record has been received.\nDrive safe and have a good day!',
-    backBtn:    'Back to Form',
+    backBtn:    'Back to Home',
     alertVehicle: 'Please select a vehicle.',
     alertUncheck: ' item(s) not checked yet. Submit anyway?',
     allOK:      'All items checked OK.',
@@ -3630,7 +3630,7 @@ const INSP_T = {
     photoRemove:'✕ 删除照片',
     submitBtn:  '提交检查',
     successSub: '您的检查记录已收到。\n请安全驾驶，祝您一天愉快！',
-    backBtn:    '返回表单',
+    backBtn:    '返回主页',
     alertVehicle: '请选择车辆。',
     alertUncheck: ' 个项目尚未检查。是否仍要提交？',
     allOK:      '所有项目检查正常。',
@@ -3657,7 +3657,7 @@ const INSP_T = {
     photoRemove:'✕ படம் நீக்கவும்',
     submitBtn:  'சோதனை சமர்ப்பிக்கவும்',
     successSub: 'உங்கள் சோதனை பதிவு பெறப்பட்டது.\nபாதுகாப்பாக ஓட்டுங்கள்!',
-    backBtn:    'படிவத்திற்கு திரும்பவும்',
+    backBtn:    'முகப்புக்கு திரும்பவும்',
     alertVehicle: 'வாகனத்தை தேர்ந்தெடுக்கவும்.',
     alertUncheck: ' உருப்படிகள் இன்னும் சரிபார்க்கப்படவில்லை. சமர்ப்பிக்கவா?',
     allOK:      'அனைத்து உருப்படிகளும் சரி.',
@@ -4195,6 +4195,13 @@ async function submitInspection() {
 
 function closeInspSuccess() {
   document.getElementById('insp-success-overlay').classList.remove('show');
+  // Home画面に戻る
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('home-screen').classList.add('show');
+  const navApp   = document.getElementById('nav-application');
+  const navLorry = document.getElementById('nav-lorry');
+  if (navApp)   navApp.style.display   = 'none';
+  if (navLorry) navLorry.style.display = 'none';
 }
 
 // ── J2Hub INFO オーバーレイ（Phase 2実装予定） ───────────────
