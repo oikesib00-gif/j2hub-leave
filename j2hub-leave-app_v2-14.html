@@ -2256,6 +2256,17 @@
     -->
   </div>
 
+  <div class="nav-tabs" id="nav-attendance" style="display:none;">
+    <button class="nav-tab active" id="nav-att-btn" onclick="showAttPage('attendance',this)">
+      <span class="icon">&#x1F550;</span>
+      <span>Attendance</span>
+    </button>
+    <button class="nav-tab" id="nav-att-hist-btn" onclick="showAttPage('att-history',this);openAttHistory()">
+      <span class="icon">&#x1F4CB;</span>
+      <span>History</span>
+    </button>
+  </div>
+
   <!-- ══════════════════════════════════════════
        PAGE: LEAVE
   ══════════════════════════════════════════ -->
@@ -2719,6 +2730,34 @@
         Loading…
       </div>
       <div id="insp-hist-list"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       PAGE: ATTENDANCE
+  ══════════════════════════════════════════ -->
+  <div id="page-attendance" class="page">
+    <div class="page-header">
+      <div class="page-title">Clock In / Out</div>
+      <div class="page-title-main">Attendance <em>Scan</em></div>
+    </div>
+    <div class="form-main" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:24px;">
+      <div style="font-family:'Open Sans',sans-serif;font-size:15px;color:#6b7280;text-align:center;line-height:1.8;">Scan the QR code posted at your workplace.</div>
+      <button onclick="openQRScanner()" style="width:180px;padding:18px 0;background:#003087;color:#fff;border:none;border-radius:50px;font-family:'Montserrat',sans-serif;font-size:16px;font-weight:800;cursor:pointer;">&#x1F4F7; Scan QR</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       PAGE: ATTENDANCE HISTORY
+  ══════════════════════════════════════════ -->
+  <div id="page-att-history" class="page">
+    <div class="page-header">
+      <div class="page-title">My Records</div>
+      <div class="page-title-main">Attendance <em>History</em></div>
+    </div>
+    <div class="form-main">
+      <select class="att-month-select" id="att-month-select" onchange="loadAttHistory()" style="margin:16px 0;padding:10px 14px;border-radius:10px;border:1.5px solid #dde3ee;font-family:'Open Sans',sans-serif;font-size:14px;background:#fff;color:#1a1a2e;width:100%;"></select>
+      <div id="att-history-list"><div style="text-align:center;color:#9ca3af;padding:40px;font-size:14px;">Loading&#8230;</div></div>
     </div>
   </div>
 
@@ -3808,11 +3847,13 @@ function goHome() {
   // 全ページ非アクティブ
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  // 両ナビ非表示
+  // 全ナビ非表示
   const navApp   = document.getElementById('nav-application');
   const navLorry = document.getElementById('nav-lorry');
+  const navAtt   = document.getElementById('nav-attendance');
   if (navApp)   navApp.style.display   = 'none';
   if (navLorry) navLorry.style.display = 'none';
+  if (navAtt)   navAtt.style.display   = 'none';
   // ホーム画面表示
   document.getElementById('home-screen').classList.add('show');
 }
@@ -3871,12 +3912,26 @@ function goToInfo() {
 // ── ATTENDANCE ───────────────────────────────────────────────
 function goToAttendance() {
   document.getElementById('home-screen').classList.remove('show');
-  document.getElementById('att-submenu').classList.add('show');
+  const navApp  = document.getElementById('nav-application');
+  const navLorry= document.getElementById('nav-lorry');
+  const navAtt  = document.getElementById('nav-attendance');
+  if (navApp)   navApp.style.display   = 'none';
+  if (navLorry) navLorry.style.display = 'none';
+  if (navAtt)   navAtt.style.display   = '';
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('#nav-attendance .nav-tab').forEach(t => t.classList.remove('active'));
+  const attTab  = document.getElementById('nav-att-btn');
+  const attPage = document.getElementById('page-attendance');
+  if (attTab)  attTab.classList.add('active');
+  if (attPage) attPage.classList.add('active');
 }
 
-function closeAttSubmenu() {
-  document.getElementById('att-submenu').classList.remove('show');
-  document.getElementById('home-screen').classList.add('show');
+function showAttPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('#nav-attendance .nav-tab').forEach(t => t.classList.remove('active'));
+  const targetPage = document.getElementById('page-' + name);
+  if (targetPage) targetPage.classList.add('active');
+  if (btn) btn.classList.add('active');
 }
 
 // 後方互換
