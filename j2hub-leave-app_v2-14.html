@@ -11,6 +11,7 @@
 <title>J2Hub – Staff Portal</title>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -1538,6 +1539,57 @@
     font-weight: 700; color: #00875a;
   }
   .att-record-flag { font-size: 16px; }
+  /* ── QR Scanner Screen ── */
+  .qr-scanner-screen {
+    display: none; position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: #000; z-index: 225;
+    flex-direction: column; align-items: center; justify-content: center;
+  }
+  .qr-scanner-screen.show { display: flex; }
+  .qr-scanner-header {
+    position: absolute; top: 0; left: 0; right: 0;
+    padding: 20px; display: flex; align-items: center; gap: 12px;
+    background: rgba(0,0,0,0.5); z-index: 10;
+  }
+  .qr-scanner-back {
+    background: none; border: none; color: #fff;
+    font-size: 22px; cursor: pointer; padding: 4px 8px;
+  }
+  .qr-scanner-title {
+    font-family: 'Montserrat', sans-serif; font-size: 18px;
+    font-weight: 700; color: #fff;
+  }
+  .qr-video-wrap {
+    position: relative; width: 100%; height: 100%; overflow: hidden;
+  }
+  #qr-video {
+    width: 100%; height: 100%; object-fit: cover;
+  }
+  #qr-canvas { display: none; }
+  .qr-overlay {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 220px; height: 220px;
+    border: 3px solid #00c853; border-radius: 16px;
+    box-shadow: 0 0 0 9999px rgba(0,0,0,0.5);
+  }
+  .qr-status {
+    position: absolute; bottom: 40px; left: 0; right: 0;
+    text-align: center; color: rgba(255,255,255,0.8);
+    font-family: 'Open Sans', sans-serif; font-size: 14px;
+    padding: 0 20px;
+  }
+  /* ── Scan QR Button（スタッフ向けホームに追加） ── */
+  .scan-qr-fab {
+    position: fixed; bottom: 90px; right: 20px;
+    width: 60px; height: 60px; border-radius: 50%;
+    background: #003087; border: none;
+    box-shadow: 0 4px 12px rgba(0,48,135,0.4);
+    display: none; align-items: center; justify-content: center;
+    cursor: pointer; z-index: 100;
+  }
+  .scan-qr-fab.show { display: flex; }
   /* ── Lorry Submenu（第2階層） ── */
   .lorry-submenu {
     display: none;
@@ -2017,6 +2069,21 @@
       <div style="text-align:center;color:#9ca3af;padding:40px;font-size:14px;">Loading&#8230;</div>
     </div>
   </div>
+
+  <!-- ── QR Scanner Screen ── -->
+  <div class="qr-scanner-screen" id="qr-scanner-screen">
+    <div class="qr-scanner-header">
+      <button class="qr-scanner-back" onclick="closeQRScanner()">&#8592;</button>
+      <div class="qr-scanner-title" id="qr-scanner-title">Scan QR Code</div>
+    </div>
+    <div class="qr-video-wrap">
+      <video id="qr-video" playsinline></video>
+      <canvas id="qr-canvas"></canvas>
+      <div class="qr-overlay"></div>
+      <div class="qr-status" id="qr-status">Point camera at QR code</div>
+    </div>
+  </div>
+
 
   <!-- ── 通知許可ポップアップ ── -->
   <div id="notif-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:250;align-items:center;justify-content:center;">
@@ -2625,6 +2692,23 @@
   </div>
 
 </div><!-- .app -->
+
+<!-- ── Scan QR FAB（スタッフ向け） ── -->
+<button class="scan-qr-fab" id="scan-qr-fab" onclick="openQRScanner()">
+  <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+    <rect x="2" y="2" width="10" height="10" rx="2" stroke="#fff" stroke-width="2"/>
+    <rect x="16" y="2" width="10" height="10" rx="2" stroke="#fff" stroke-width="2"/>
+    <rect x="2" y="16" width="10" height="10" rx="2" stroke="#fff" stroke-width="2"/>
+    <rect x="5" y="5" width="4" height="4" fill="#fff"/>
+    <rect x="19" y="5" width="4" height="4" fill="#fff"/>
+    <rect x="5" y="19" width="4" height="4" fill="#fff"/>
+    <line x1="16" y1="16" x2="26" y2="16" stroke="#fff" stroke-width="2"/>
+    <line x1="26" y1="16" x2="26" y2="26" stroke="#fff" stroke-width="2"/>
+    <line x1="16" y1="26" x2="26" y2="26" stroke="#fff" stroke-width="2"/>
+    <line x1="16" y1="21" x2="21" y2="21" stroke="#fff" stroke-width="2"/>
+  </svg>
+</button>
+
 
 <!-- ── Pending Popup ── -->
 <div class="pending-popup-overlay" id="pending-popup-overlay" onclick="if(event.target===this)closePendingPopup()">
@@ -3657,6 +3741,9 @@ function launchApp(name) {
   if (window._pendingPunch && !isAdmin) {
     setTimeout(() => { openPunchScreen(window._pendingPunch); window._pendingPunch = null; }, 800);
   }
+  // スタッフ向けScan QR FABを表示
+  const fabEl = document.getElementById('scan-qr-fab');
+  if (fabEl) fabEl.classList.toggle('show', !isAdmin);
 }
 
 function goToApp(page) {
@@ -5196,28 +5283,97 @@ function closePunchSuccess() {
 }
 
 // ── 打刻履歴画面 ───────────────────────────────────────────
-function openAttHistory() {
+async function openAttHistory() {
+  const name = localStorage.getItem('j2hub_passkey_name') || '';
   const lang = localStorage.getItem('j2hub_lang') || 'en';
   const t    = ATT_T[lang] || ATT_T.en;
   document.getElementById('att-history-title').textContent = t.my_attendance;
 
-  // 月プルダウン生成（当月 〜 6ヶ月前）
+  // GASから実績のある月一覧を取得
   const sel = document.getElementById('att-month-select');
-  sel.innerHTML = '';
-  const now = new Date();
-  const sgt = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Singapore' }));
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  for (let i = 0; i < 6; i++) {
-    const d = new Date(sgt.getFullYear(), sgt.getMonth() - i, 1);
-    const val = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
-    const lbl = months[d.getMonth()] + '-' + d.getFullYear();
-    const opt = document.createElement('option');
-    opt.value = val; opt.textContent = lbl;
-    sel.appendChild(opt);
-  }
-
+  sel.innerHTML = '<option>Loading…</option>';
   document.getElementById('att-history-screen').classList.add('show');
-  loadAttHistory();
+
+  try {
+    const res  = await fetch(ATT_GAS_URL + '?action=getAttMonths&name=' + encodeURIComponent(name));
+    const data = await res.json();
+    sel.innerHTML = '';
+    if (data.months && data.months.length > 0) {
+      data.months.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.value; opt.textContent = m.label;
+        sel.appendChild(opt);
+      });
+      loadAttHistory();
+    } else {
+      sel.innerHTML = '<option value="">No records yet</option>';
+      document.getElementById('att-history-list').innerHTML =
+        '<div style="text-align:center;color:#9ca3af;padding:40px;font-size:14px;">No records found.</div>';
+    }
+  } catch(e) {
+    sel.innerHTML = '<option value="">Error loading</option>';
+  }
+}
+
+// ── QRスキャン画面を開く ───────────────────────────────────
+function openQRScanner() {
+  const screen = document.getElementById('qr-scanner-screen');
+  if (screen) screen.classList.add('show');
+  startQRCamera();
+}
+
+function closeQRScanner() {
+  stopQRCamera();
+  const screen = document.getElementById('qr-scanner-screen');
+  if (screen) screen.classList.remove('show');
+}
+
+let _qrStream = null;
+let _qrTimer  = null;
+
+async function startQRCamera() {
+  const video  = document.getElementById('qr-video');
+  const canvas = document.getElementById('qr-canvas');
+  const ctx    = canvas.getContext('2d');
+  try {
+    _qrStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    video.srcObject = _qrStream;
+    video.play();
+    _qrTimer = setInterval(() => {
+      if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        canvas.height = video.videoHeight;
+        canvas.width  = video.videoWidth;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        // jsQRライブラリで解析
+        if (typeof jsQR !== 'undefined') {
+          const code = jsQR(imageData.data, imageData.width, imageData.height);
+          if (code && code.data) {
+            handleQRResult(code.data);
+          }
+        }
+      }
+    }, 300);
+  } catch(e) {
+    document.getElementById('qr-status').textContent = 'Camera not available. Please allow camera access.';
+  }
+}
+
+function stopQRCamera() {
+  if (_qrTimer) { clearInterval(_qrTimer); _qrTimer = null; }
+  if (_qrStream) { _qrStream.getTracks().forEach(t => t.stop()); _qrStream = null; }
+}
+
+function handleQRResult(url) {
+  stopQRCamera();
+  closeQRScanner();
+  try {
+    const u     = new URL(url);
+    const punch = u.searchParams.get('punch');
+    if (punch === 'in' || punch === 'out') {
+      openPunchScreen(punch);
+    }
+  } catch(e) {}
 }
 
 function closeAttHistory() {
