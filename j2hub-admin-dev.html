@@ -12857,7 +12857,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       <div class="page-title-main">Attendance <em>Scan</em></div>
     </div>
     <div class="form-main" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:24px;">
-      <div style="font-family:'Open Sans',sans-serif;font-size:15px;color:#6b7280;text-align:center;line-height:1.8;">Scan the QR code posted at your workplace.</div>
+      <div id="att-scan-desc" style="font-family:'Open Sans',sans-serif;font-size:15px;color:#6b7280;text-align:center;line-height:1.8;">Scan the QR code posted at your workplace.</div>
       <button onclick="openQRScanner()" style="width:180px;padding:18px 0;background:#003087;color:#fff;border:none;border-radius:50px;font-family:'Montserrat',sans-serif;font-size:16px;font-weight:800;cursor:pointer;">📷 Scan QR</button>
     </div>
   </div>
@@ -14041,6 +14041,12 @@ function showAttPage(name, btn) {
   const targetPage = document.getElementById('page-' + name);
   if (targetPage) targetPage.classList.add('active');
   if (btn) btn.classList.add('active');
+  if (name === 'attendance') {
+    const lang = localStorage.getItem('j2hub_lang') || 'en';
+    const t    = ATT_T[lang] || ATT_T.en;
+    const descEl = document.getElementById('att-scan-desc');
+    if (descEl) descEl.textContent = t.scan_desc;
+  }
 }
 
 function closeAttSubmenu() {
@@ -15348,6 +15354,7 @@ const ATT_T = {
     clocked_out: 'Clocked Out!',
     msg_in: "Let's have a great day together!",
     msg_out: 'Thank you for your hard work today. Now it is time to take a rest.',
+    scan_desc: 'Scan the QR code posted at your workplace.',
     scan_title: 'Scan QR Code',
     scan_msg_in:  'Please scan the QR Code to Clock In.',
     scan_msg_out: 'Please scan the QR Code to Clock Out.',
@@ -15371,6 +15378,7 @@ const ATT_T = {
     clocked_out: '下班已打卡！',
     msg_in: '今天也请多多加油！',
     msg_out: '辛苦了！好好休息吧。',
+    scan_desc: '请扫描张贴在工作场所的二维码。',
     scan_title: '扫描二维码',
     scan_msg_in:  '请扫描二维码打上班卡。',
     scan_msg_out: '请扫描二维码打下班卡。',
@@ -15394,6 +15402,7 @@ const ATT_T = {
     clocked_out: 'புறப்பாடு பதிவு செய்யப்பட்டது!',
     msg_in: 'இன்றும் சிறப்பாக பணியாற்றுவோம்!',
     msg_out: 'இன்றைய உழைப்பிற்கு நன்றி. இப்போது ஓய்வெடுங்கள்.',
+    scan_desc: 'உங்கள் பணியிடத்தில் ஒட்டப்பட்ட QR குறியீட்டை ஸ்கேன் செய்யவும்.',
     scan_title: 'QR குறியீட்டை ஸ்கேன் செய்யவும்',
     scan_msg_in:  'வருகை பதிவு செய்ய QR குறியீட்டை ஸ்கேன் செய்யவும்.',
     scan_msg_out: 'புறப்பாடு பதிவு செய்ய QR குறியீட்டை ஸ்கேன் செய்யவும்.',
