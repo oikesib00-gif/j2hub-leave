@@ -12195,7 +12195,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     <button class="lorry-back-btn" onclick="closeAttSubmenu()">&#8592; Home</button>
     <div class="lorry-submenu-title">ATTENDANCE</div>
     <div class="lorry-submenu-icons">
-      <button class="lorry-sub-btn" onclick="goToAttendance()">
+      <button class="lorry-sub-btn" onclick="openQRScanner()">
         <svg width="36" height="42" viewBox="0 0 52 62" fill="none">
           <rect x="6" y="0" width="40" height="6" rx="2" fill="#ffffff" opacity="0.8"/>
           <rect x="16" y="0" width="20" height="18" rx="2" fill="none" stroke="#ffffff" stroke-width="1.5"/>
@@ -12221,7 +12221,18 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   </div>
 
   <!-- ── QR Scanner Screen ── -->
-
+  <div class="qr-scanner-screen" id="qr-scanner-screen">
+    <div class="qr-scanner-header">
+      <button class="qr-scanner-back" onclick="closeQRScanner()">&#8592;</button>
+      <div class="qr-scanner-title" id="qr-scanner-title">Scan QR Code</div>
+    </div>
+    <div class="qr-video-wrap">
+      <video id="qr-video" autoplay playsinline muted></video>
+      <canvas id="qr-canvas"></canvas>
+      <div class="qr-overlay"></div>
+      <div class="qr-status" id="qr-scan-msg"></div>
+    </div>
+  </div>
 
 
   <!-- ── 通知許可ポップアップ ── -->
@@ -12845,15 +12856,9 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       <div class="page-title">Clock In / Out</div>
       <div class="page-title-main">Attendance <em>Scan</em></div>
     </div>
-    <div class="form-main">
-      <div class="form-card">
-        <div id="att-scan-msg" style="font-family:'Open Sans',sans-serif;font-size:15px;color:#6b7280;text-align:center;line-height:1.8;margin-bottom:16px;"></div>
-        <input type="file" id="qr-file-input" accept="image/*" capture="environment" style="display:none;" onchange="onQRFileSelected(this)">
-        <div class="receipt-upload-area" id="att-upload-area" onclick="document.getElementById('qr-file-input').click()">
-          <div class="receipt-upload-icon">📷</div>
-          <div class="receipt-upload-text">Tap to take a photo or select from your gallery</div>
-        </div>
-      </div>
+    <div class="form-main" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:24px;">
+      <div style="font-family:'Open Sans',sans-serif;font-size:15px;color:#6b7280;text-align:center;line-height:1.8;">Scan the QR code posted at your workplace.</div>
+      <button onclick="openQRScanner()" style="width:180px;padding:18px 0;background:#003087;color:#fff;border:none;border-radius:50px;font-family:'Montserrat',sans-serif;font-size:16px;font-weight:800;cursor:pointer;">📷 Scan QR</button>
     </div>
   </div>
 
@@ -12877,7 +12882,21 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 
 </div><!-- .app -->
 
-
+<!-- ── Scan QR FAB（スタッフ向け） ── -->
+<button class="scan-qr-fab" id="scan-qr-fab" onclick="openQRScanner()">
+  <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+    <rect x="2" y="2" width="10" height="10" rx="2" stroke="#fff" stroke-width="2"/>
+    <rect x="16" y="2" width="10" height="10" rx="2" stroke="#fff" stroke-width="2"/>
+    <rect x="2" y="16" width="10" height="10" rx="2" stroke="#fff" stroke-width="2"/>
+    <rect x="5" y="5" width="4" height="4" fill="#fff"/>
+    <rect x="19" y="5" width="4" height="4" fill="#fff"/>
+    <rect x="5" y="19" width="4" height="4" fill="#fff"/>
+    <line x1="16" y1="16" x2="26" y2="16" stroke="#fff" stroke-width="2"/>
+    <line x1="26" y1="16" x2="26" y2="26" stroke="#fff" stroke-width="2"/>
+    <line x1="16" y1="26" x2="26" y2="26" stroke="#fff" stroke-width="2"/>
+    <line x1="16" y1="21" x2="21" y2="21" stroke="#fff" stroke-width="2"/>
+  </svg>
+</button>
 
 
 <!-- ── Pending Popup ── -->
@@ -13911,6 +13930,10 @@ function launchApp(name) {
   if (window._pendingPunch && !isAdmin) {
     setTimeout(() => { openPunchScreen(window._pendingPunch); window._pendingPunch = null; }, 800);
   }
+  // スタッフ向けScan QR FABを表示
+  const fabEl = document.getElementById('scan-qr-fab');
+  if (fabEl) fabEl.classList.toggle('show', !isAdmin);
+
   // Attendance History事前取得（バックグラウンド）
   prefetchAttHistory(name);
 }
@@ -14018,7 +14041,6 @@ function showAttPage(name, btn) {
   const targetPage = document.getElementById('page-' + name);
   if (targetPage) targetPage.classList.add('active');
   if (btn) btn.classList.add('active');
-  if (name === 'attendance') initAttScanMsg();
 }
 
 function closeAttSubmenu() {
@@ -15534,8 +15556,8 @@ function openAttHistory() {
   loadAttHistory();
 }
 
-// ── Attendance画面表示時にメッセージを設定 ───────────────────
-function initAttScanMsg() {
+// ── QRスキャン画面を開く ───────────────────────────────────
+function openQRScanner() {
   const lang = localStorage.getItem('j2hub_lang') || 'en';
   const name = localStorage.getItem('j2hub_passkey_name') || '';
   const t    = ATT_T[lang] || ATT_T.en;
@@ -15548,47 +15570,72 @@ function initAttScanMsg() {
   const cached   = localStorage.getItem(cacheKey);
   const type     = cached === 'in' ? 'out' : 'in';
 
-  const msgEl = document.getElementById('att-scan-msg');
-  if (msgEl) msgEl.textContent = type === 'in' ? t.scan_msg_in : t.scan_msg_out;
+  const msgEl   = document.getElementById('qr-scan-msg');
+  const titleEl = document.getElementById('qr-scanner-title');
+  if (msgEl)   msgEl.textContent   = type === 'in' ? t.scan_msg_in  : t.scan_msg_out;
+  if (titleEl) titleEl.textContent = t.scan_title || 'Scan QR Code';
 
-  // ファイル入力リセット
-  const inp = document.getElementById('qr-file-input');
-  if (inp) inp.value = '';
+  document.getElementById('qr-scanner-screen').classList.add('show');
+  startQRCamera();
 }
 
-// ── QR画像を選択・解析 ────────────────────────────────────
-function onQRFileSelected(input) {
-  if (!input.files || !input.files[0]) return;
-  const file   = input.files[0];
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const img = new Image();
-    img.onload = function() {
-      const canvas = document.createElement('canvas');
-      canvas.width  = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0);
+function closeQRScanner() {
+  stopQRCamera();
+  document.getElementById('qr-scanner-screen').classList.remove('show');
+}
+
+let _qrStream = null;
+let _qrRAF   = null;
+
+function startQRCamera() {
+  const video  = document.getElementById('qr-video');
+  const canvas = document.getElementById('qr-canvas');
+  const ctx    = canvas.getContext('2d');
+
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+    .then(function(stream) {
+      _qrStream      = stream;
+      video.srcObject = stream;
+      video.play();
+      video.addEventListener('loadedmetadata', function() {
+        canvas.width  = video.videoWidth;
+        canvas.height = video.videoHeight;
+        scanFrame();
+      });
+    })
+    .catch(function(err) {
+      const msgEl = document.getElementById('qr-scan-msg');
+      if (msgEl) msgEl.textContent = 'Camera not available.';
+    });
+
+  function scanFrame() {
+    if (!_qrStream) return;
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       if (typeof jsQR !== 'undefined') {
         const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
         if (code && code.data) {
+          closeQRScanner();
           handleQRResult(code.data);
           return;
         }
       }
-      // 読み取れなかった場合
-      const area = document.getElementById('att-upload-area');
-      if (area) {
-        area.querySelector('.receipt-upload-text').textContent = 'QR code not found. Please try again.';
-      }
-    };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
+    }
+    _qrRAF = requestAnimationFrame(scanFrame);
+  }
+}
+
+function stopQRCamera() {
+  if (_qrRAF)    { cancelAnimationFrame(_qrRAF); _qrRAF = null; }
+  if (_qrStream) { _qrStream.getTracks().forEach(t => t.stop()); _qrStream = null; }
+  const video = document.getElementById('qr-video');
+  if (video) { video.srcObject = null; }
 }
 
 function handleQRResult(url) {
+  stopQRCamera();
+  closeQRScanner();
   try { new URL(url); } catch(e) { return; }
   if (url.indexOf('j2hub-admin-dev.html') === -1 && url.indexOf('j2hub-leave-app') === -1) return;
 
