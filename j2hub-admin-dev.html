@@ -15631,6 +15631,20 @@ function handleQRResult(url) {
   // キャッシュ更新
   localStorage.setItem(cacheKey, type);
 
+  // Historyキャッシュを即更新（GASレスポンスを待たずに表示を反映）
+  const histCacheKey = 'att_hist_' + name + '_' + dateStr.slice(7, 11) + '-' + String(['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].indexOf(dateStr.slice(3,6)) + 1).padStart(2,'0');
+  try {
+    const existing = JSON.parse(localStorage.getItem(histCacheKey) || '[]');
+    const idx = existing.findIndex(r => r.date === dateStr);
+    if (idx >= 0) {
+      if (type === 'in')  existing[idx].clockIn  = timeStr;
+      if (type === 'out') existing[idx].clockOut = timeStr;
+    } else {
+      existing.unshift({ date: dateStr, clockIn: type === 'in' ? timeStr : '', clockOut: type === 'out' ? timeStr : '', hours: '', flag: false });
+    }
+    localStorage.setItem(histCacheKey, JSON.stringify(existing));
+  } catch(e) {}
+
   // バックグラウンドでGASに送信
   fetch(ATT_GAS_URL, {
     method: 'POST',
@@ -15682,17 +15696,18 @@ function renderAttHistory(records, listEl, t) {
     const outTime = r.clockOut || '—';
     const hasOut  = !!r.clockOut;
     const flag    = r.flag;
-    let badge, badgeClass;
+    let badge, badgeClass, cardBg;
     if (flag) {
-      badge = '🚩 Missing'; badgeClass = 'attn';
+      badge = '🚩 Missing'; badgeClass = 'attn'; cardBg = '#fff0f0';
     } else if (hasOut) {
-      badge = 'Clocked Out'; badgeClass = 'att-out';
+      badge = 'Clocked Out'; badgeClass = 'att-out'; cardBg = '#e8f5e9';
     } else {
-      badge = 'Clocked In'; badgeClass = 'att-in';
+      badge = 'Clocked In'; badgeClass = 'att-in'; cardBg = '#fff3e0';
     }
     const hours = r.hours ? r.hours : '';
     const card  = document.createElement('div');
     card.className = 'insp-hist-card';
+    card.style.background = cardBg;
     card.innerHTML =
       '<div class="insp-hist-header">' +
         '<span class="insp-hist-vehicle">' + r.date + '</span>' +
