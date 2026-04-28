@@ -14616,7 +14616,7 @@ async function submitInspection() {
     ? t.attnNeeded + failedKeys.length + t.attnItems
     : t.allOK;
 
-  document.getElementById('insp-success-title').textContent = 'Thank you, ' + driver.split(' ')[0] + '!';
+  document.getElementById('insp-success-title').textContent = 'Thank you, ' + driver + '!';
   document.getElementById('insp-success-msg').textContent   = vehicleNo + ' — ' + resultText;
   document.getElementById('insp-success-sub').textContent   = t.successSub;
   document.getElementById('insp-success-overlay').classList.add('show');
@@ -15338,6 +15338,8 @@ const ATT_T = {
     cancel: 'Cancel',
     clocked_in: 'Clocked In!',
     clocked_out: 'Clocked Out!',
+    msg_in: "Let's have a great day together!",
+    msg_out: 'Thank you for your hard work today. Now it is time to take a rest.',
     back_home: 'Back to Home',
     my_attendance: 'My Attendance',
     clock_in_lbl: 'Clock In',
@@ -15356,6 +15358,8 @@ const ATT_T = {
     cancel: '取消',
     clocked_in: '上班已打卡！',
     clocked_out: '下班已打卡！',
+    msg_in: '今天也请多多加油！',
+    msg_out: '辛苦了！好好休息吧。',
     back_home: '返回主页',
     my_attendance: '我的出勤记录',
     clock_in_lbl: '上班',
@@ -15374,6 +15378,8 @@ const ATT_T = {
     cancel: 'ரத்து செய்',
     clocked_in: 'வருகை பதிவு செய்யப்பட்டது!',
     clocked_out: 'புறப்பாடு பதிவு செய்யப்பட்டது!',
+    msg_in: 'இன்றும் சிறப்பாக பணியாற்றுவோம்!',
+    msg_out: 'இன்றைய உழைப்பிற்கு நன்றி. இப்போது ஓய்வெடுங்கள்.',
     back_home: 'முகப்புக்கு திரும்பவும்',
     my_attendance: 'என் வருகை பதிவு',
     clock_in_lbl: 'வருகை',
@@ -15577,7 +15583,6 @@ function stopQRCamera() {
 function handleQRResult(url) {
   stopQRCamera();
   closeQRScanner();
-  // QRコードのURLを検証（j2hub-admin-dev.htmlのURLか確認）
   try {
     new URL(url);
   } catch(e) { return; }
@@ -15595,18 +15600,25 @@ function handleQRResult(url) {
   const mm      = String(sgt.getMinutes()).padStart(2,'0');
   const timeStr = hh + ':' + mm;
 
-  // 即時完了画面表示
-  const overlay = document.getElementById('punch-success-overlay');
-  document.getElementById('punch-success-title').textContent  = name.split(' ')[0] + '!';
+  // 即時完了画面表示（GASの応答を待たない）
+  document.getElementById('punch-success-title').textContent  = name + '!';
   document.getElementById('punch-success-detail').textContent = dateStr + '  ' + timeStr;
   document.getElementById('punch-success-close-lbl').textContent = t.back_home;
-  if (overlay) overlay.classList.add('show');
+  document.getElementById('punch-success-overlay').classList.add('show');
 
-  // バックグラウンドでGASに送信（自動判断）
+  // バックグラウンドでGASに送信（自動判断）→ 結果でメッセージを更新
   fetch(ATT_GAS_URL, {
     method: 'POST',
     cache:  'no-store',
     body:   JSON.stringify({ action: 'punchAttendance', name, type: 'auto', date: dateStr, time: timeStr })
+  }).then(r => r.json()).then(data => {
+    const type = data.type || 'in';
+    const title = type === 'in' ? t.clocked_in : t.clocked_out;
+    const msg   = type === 'in' ? t.msg_in : t.msg_out;
+    const el = document.getElementById('punch-success-title');
+    const det = document.getElementById('punch-success-detail');
+    if (el)  el.textContent  = title;
+    if (det) det.textContent = name + '\n' + dateStr + '  ' + timeStr + '\n' + msg;
   }).catch(() => {});
 }
 
@@ -15620,32 +15632,41 @@ async function loadAttHistory() {
   const t      = ATT_T[lang] || ATT_T.en;
   const month  = document.getElementById('att-month-select').value;
   const listEl = document.getElementById('att-history-list');
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-  listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;padding:40px;font-size:14px;">Loading…</div>';
+  listEl.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-muted);font-size:14px;">Loading…</div>';
 
   try {
     const res  = await fetch(ATT_GAS_URL + '?action=getAttHistory&name=' + encodeURIComponent(name) + '&month=' + month);
     const data = await res.json();
     if (!data.records || data.records.length === 0) {
-      listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;padding:40px;font-size:14px;">No records found.</div>';
+      listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:32px;font-size:14px;">No records found.</div>';
       return;
     }
-    listEl.innerHTML = data.records.map(r => {
-      const inTime  = r.clockIn  || '<span style="color:#ef4444;">' + t.not_recorded + '</span>';
-      const outTime = r.clockOut || '<span style="color:#ef4444;">' + t.not_recorded + '</span>';
-      const flag    = r.flag ? '<div class="att-record-flag">' + t.flag_missing + '</div>' : '';
-      const hours   = r.hours ? '<div class="att-record-hours">' + r.hours + '</div>' : '';
-      return '<div class="att-record">' +
-        '<div class="att-record-left">' +
-          '<div class="att-record-date">' + r.date + '</div>' +
-          '<div class="att-record-times">' + t.clock_in_lbl + ': ' + inTime + '　' + t.clock_out_lbl + ': ' + outTime + '</div>' +
+    listEl.innerHTML = '';
+    data.records.forEach(r => {
+      const inTime  = r.clockIn  || '—';
+      const outTime = r.clockOut || '—';
+      const isOK    = !r.flag;
+      const badge   = isOK
+        ? '<span class="insp-hist-badge ok">OK</span>'
+        : '<span class="insp-hist-badge attn">🚩 Missing</span>';
+      const hours   = r.hours ? r.hours : '—';
+      const card    = document.createElement('div');
+      card.className = 'insp-hist-card';
+      card.innerHTML =
+        '<div class="insp-hist-header">' +
+          '<span class="insp-hist-vehicle">' + r.date + '</span>' +
+          badge +
         '</div>' +
-        '<div class="att-record-right">' + hours + flag + '</div>' +
+        '<div class="insp-hist-meta">' +
+          t.clock_in_lbl + ': ' + inTime + '　' +
+          t.clock_out_lbl + ': ' + outTime + '　' +
+          hours +
         '</div>';
-    }).join('');
+      listEl.appendChild(card);
+    });
   } catch(e) {
-    listEl.innerHTML = '<div style="text-align:center;color:#ef4444;padding:40px;font-size:13px;">' + t.error_load + '</div>';
+    listEl.innerHTML = '<div style="text-align:center;color:#dc2626;padding:32px;font-size:13px;">' + t.error_load + '</div>';
   }
 }
 
