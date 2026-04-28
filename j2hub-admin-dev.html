@@ -13943,6 +13943,9 @@ function launchApp(name) {
   // スタッフ向けScan QR FABを表示
   const fabEl = document.getElementById('scan-qr-fab');
   if (fabEl) fabEl.classList.toggle('show', !isAdmin);
+
+  // Attendance History事前取得（バックグラウンド）
+  prefetchAttHistory(name);
 }
 
 function goToApp(page) {
@@ -15511,37 +15514,47 @@ function closePunchSuccess() {
   document.getElementById('home-screen').classList.add('show');
 }
 
-// ── 打刻履歴画面 ───────────────────────────────────────────
-async function openAttHistory() {
+// ── Attendance History事前取得（launchApp時） ──────────────
+async function prefetchAttHistory(name) {
+  if (!name) return;
+  const now = new Date();
+  const sgt = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Singapore' }));
+  const month = sgt.getFullYear() + '-' + String(sgt.getMonth()+1).padStart(2,'0');
+  const cacheKey = 'att_hist_' + name + '_' + month;
+  try {
+    const res  = await fetch(ATT_GAS_URL + '?action=getAttHistory&name=' + encodeURIComponent(name) + '&month=' + month);
+    const data = await res.json();
+    localStorage.setItem(cacheKey, JSON.stringify(data.records || []));
+  } catch(e) {}
+}
+
+// ── 打刻履歴画面を開く ────────────────────────────────────
+function openAttHistory() {
   const name = localStorage.getItem('j2hub_passkey_name') || '';
   const lang = localStorage.getItem('j2hub_lang') || 'en';
   const t    = ATT_T[lang] || ATT_T.en;
-  document.getElementById('att-history-title').textContent = t.my_attendance;
 
-  // GASから実績のある月一覧を取得
+  // 月プルダウン生成（当月から過去6ヶ月）
   const sel = document.getElementById('att-month-select');
-  sel.innerHTML = '<option>Loading…</option>';
-  document.getElementById('att-history-screen').classList.add('show');
-
-  try {
-    const res  = await fetch(ATT_GAS_URL + '?action=getAttMonths&name=' + encodeURIComponent(name));
-    const data = await res.json();
+  if (sel) {
     sel.innerHTML = '';
-    if (data.months && data.months.length > 0) {
-      data.months.forEach(m => {
+    const now = new Date();
+    const sgt = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Singapore' }));
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    for (let i = 0; i < 6; i++) {
+      const d   = new Date(sgt.getFullYear(), sgt.getMonth() - i, 1);
+      const val = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+      const lbl = months[d.getMonth()] + '-' + d.getFullYear();
+      // データがある月のみ表示
+      const cached = localStorage.getItem('att_hist_' + name + '_' + val);
+      if (i === 0 || (cached && JSON.parse(cached).length > 0)) {
         const opt = document.createElement('option');
-        opt.value = m.value; opt.textContent = m.label;
+        opt.value = val; opt.textContent = lbl;
         sel.appendChild(opt);
-      });
-      loadAttHistory();
-    } else {
-      sel.innerHTML = '<option value="">No records yet</option>';
-      document.getElementById('att-history-list').innerHTML =
-        '<div style="text-align:center;color:#9ca3af;padding:40px;font-size:14px;">No records found.</div>';
+      }
     }
-  } catch(e) {
-    sel.innerHTML = '<option value="">Error loading</option>';
   }
+  loadAttHistory();
 }
 
 // ── QRスキャン画面を開く ───────────────────────────────────
@@ -15654,15 +15667,17 @@ function handleQRResult(url) {
 }
 
 function closeAttHistory() {
-  document.getElementById('att-history-screen').classList.remove('show');
+  // att-history-screenは廃止済み。page-att-history方式に統一。
 }
 
 async function loadAttHistory() {
   const name   = localStorage.getItem('j2hub_passkey_name') || '';
   const lang   = localStorage.getItem('j2hub_lang') || 'en';
   const t      = ATT_T[lang] || ATT_T.en;
-  const month  = document.getElementById('att-month-select').value;
+  const sel    = document.getElementById('att-month-select');
+  const month  = sel ? sel.value : '';
   const listEl = document.getElementById('att-history-list');
+  if (!month || !listEl) return;
   const cacheKey = 'att_hist_' + name + '_' + month;
 
   // キャッシュから即時表示
@@ -15672,54 +15687,42 @@ async function loadAttHistory() {
     else listEl.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-muted);font-size:14px;">Loading…</div>';
   } catch(e) {}
 
-  // バックグラウンドで最新取得
+  // バックグラウンドで最新取得・キャッシュ更新
   try {
     const res  = await fetch(ATT_GAS_URL + '?action=getAttHistory&name=' + encodeURIComponent(name) + '&month=' + month);
     const data = await res.json();
     localStorage.setItem(cacheKey, JSON.stringify(data.records || []));
     renderAttHistory(data.records || [], listEl, t);
-  } catch(e) {
-    if (!listEl.children.length) {
-      listEl.innerHTML = '<div style="text-align:center;color:#dc2626;padding:32px;font-size:13px;">' + t.error_load + '</div>';
-    }
-  }
+  } catch(e) {}
 }
 
 function renderAttHistory(records, listEl, t) {
   if (!records || records.length === 0) {
-    listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:32px;font-size:14px;">No records found.</div>';
+    listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:32px;font-size:13px;">No records found.</div>';
     return;
   }
-  listEl.innerHTML = '';
-  records.forEach(r => {
+  listEl.innerHTML = records.map(r => {
     const inTime  = r.clockIn  || '—';
     const outTime = r.clockOut || '—';
     const hasOut  = !!r.clockOut;
     const flag    = r.flag;
-    let badge, badgeClass, cardBg;
+    let badgeClass, badgeText, typeBg;
     if (flag) {
-      badge = '🚩 Missing'; badgeClass = 'attn'; cardBg = '#fff0f0';
+      badgeClass = 'rejected'; badgeText = '🚩 Missing'; typeBg = '#fff0f0';
     } else if (hasOut) {
-      badge = 'Clocked Out'; badgeClass = 'att-out'; cardBg = '#e8f5e9';
+      badgeClass = 'approved'; badgeText = 'Clocked Out'; typeBg = '#e8f5e9';
     } else {
-      badge = 'Clocked In'; badgeClass = 'att-in'; cardBg = '#fff3e0';
+      badgeClass = 'pending'; badgeText = 'Clocked In'; typeBg = '#fff3e0';
     }
-    const hours = r.hours ? r.hours : '';
-    const card  = document.createElement('div');
-    card.className = 'insp-hist-card';
-    card.style.background = cardBg;
-    card.innerHTML =
-      '<div class="insp-hist-header">' +
-        '<span class="insp-hist-vehicle">' + r.date + '</span>' +
-        '<span class="insp-hist-badge ' + badgeClass + '">' + badge + '</span>' +
-      '</div>' +
-      '<div class="insp-hist-meta">' +
-        t.clock_in_lbl + ': ' + inTime + '　' +
-        t.clock_out_lbl + ': ' + outTime +
-        (hours ? '　' + hours : '') +
-      '</div>';
-    listEl.appendChild(card);
-  });
+    const hours = r.hours ? ' · ' + r.hours : '';
+    return `<div class="history-item" style="background:${typeBg};">
+      <div>
+        <div class="history-type" style="color:#1a1a2e;">${r.date}</div>
+        <div class="history-date">${t.clock_in_lbl}: ${inTime}　${t.clock_out_lbl}: ${outTime}${hours}</div>
+      </div>
+      <span class="status-badge ${badgeClass}">${badgeText}</span>
+    </div>`;
+  }).join('');
 }
 
 // ── URLパラメーター処理（QRコード読み取り後） ─────────────
