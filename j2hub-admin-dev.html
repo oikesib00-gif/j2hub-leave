@@ -11578,33 +11578,21 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   .punch-success-overlay {
     display: none; position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    z-index: 230;
-    flex-direction: column; align-items: center; justify-content: center; gap: 12px;
-    text-align: center; padding: 32px;
-    transition: background 0.3s;
+    background: #003087; z-index: 230;
+    flex-direction: column; align-items: center; justify-content: center; gap: 16px;
   }
   .punch-success-overlay.show { display: flex; }
-  .punch-success-overlay.punch-in  { background: linear-gradient(135deg, #e87722 0%, #f5a623 100%); }
-  .punch-success-overlay.punch-out { background: linear-gradient(135deg, #00875a 0%, #00b377 100%); }
-  .punch-success-name {
-    font-family: 'Montserrat', sans-serif; font-size: 32px;
-    font-weight: 800; color: #ffffff; margin-bottom: 4px;
+  .punch-success-icon { font-size: 64px; margin-bottom: 8px; }
+  .punch-success-title {
+    font-family: 'Montserrat', sans-serif; font-size: 28px;
+    font-weight: 800; color: #ffffff;
   }
-  .punch-success-status {
-    font-family: 'Montserrat', sans-serif; font-size: 22px;
-    font-weight: 700; color: rgba(255,255,255,0.9);
+  .punch-success-detail {
+    font-family: 'Open Sans', sans-serif; font-size: 15px;
+    color: rgba(255,255,255,0.8); text-align: center; line-height: 1.6; padding: 0 32px;
   }
-  .punch-success-time {
-    font-family: 'Montserrat', sans-serif; font-size: 48px;
-    font-weight: 800; color: #ffffff; letter-spacing: 2px;
-  }
-  .punch-success-msg {
-    font-family: 'Open Sans', sans-serif; font-size: 17px;
-    color: rgba(255,255,255,0.95); line-height: 1.6;
-    margin-top: 8px; padding: 0 16px;
-  }
-  .punch-success-close-btn {
-    margin-top: 32px; background: rgba(255,255,255,0.25); border: none;
+  .punch-success-close {
+    margin-top: 24px; background: rgba(255,255,255,0.2); border: none;
     color: #ffffff; font-family: 'Montserrat', sans-serif; font-size: 15px;
     font-weight: 700; padding: 14px 40px; border-radius: 50px; cursor: pointer;
   }
@@ -11955,8 +11943,6 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   }
   .insp-hist-badge.ok      { background: var(--green-light); color: var(--green); }
   .insp-hist-badge.attn    { background: #fff0f0; color: #dc2626; }
-  .insp-hist-badge.att-in  { background: #fff3e0; color: #e87722; }
-  .insp-hist-badge.att-out { background: #e8f5e9; color: #00875a; }
   .insp-hist-meta {
     font-size: 12px;
     color: var(--text-muted);
@@ -12180,14 +12166,23 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 
   <!-- ── Attendance: Punch Success Overlay ── -->
   <div class="punch-success-overlay" id="punch-success-overlay">
-    <div class="punch-success-name" id="punch-success-name"></div>
-    <div class="punch-success-status" id="punch-success-status"></div>
-    <div class="punch-success-time" id="punch-success-time"></div>
-    <div class="punch-success-msg" id="punch-success-msg"></div>
-    <button class="punch-success-close-btn" onclick="closePunchSuccess()" id="punch-success-close-lbl">Back to Home</button>
+    <div class="punch-success-icon" id="punch-success-icon">&#10003;</div>
+    <div class="punch-success-title" id="punch-success-title">Clocked In!</div>
+    <div class="punch-success-detail" id="punch-success-detail"></div>
+    <button class="punch-success-close" onclick="closePunchSuccess()" id="punch-success-close-lbl">Back to Home</button>
   </div>
 
   <!-- ── Attendance: History Screen ── -->
+  <div class="att-history-screen" id="att-history-screen">
+    <div class="att-history-header">
+      <button class="att-history-back" onclick="closeAttHistory()">&#8592;</button>
+      <div class="att-history-title" id="att-history-title">My Attendance</div>
+    </div>
+    <select class="att-month-select" id="att-month-select" onchange="loadAttHistory()"></select>
+    <div class="att-history-list" id="att-history-list">
+      <div style="text-align:center;color:#9ca3af;padding:40px;font-size:14px;">Loading&#8230;</div>
+    </div>
+  </div>
 
 
   <!-- ── Attendance Submenu ── -->
@@ -12226,11 +12221,17 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       <button class="qr-scanner-back" onclick="closeQRScanner()">&#8592;</button>
       <div class="qr-scanner-title" id="qr-scanner-title">Scan QR Code</div>
     </div>
-    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:24px;padding:32px;">
-      <div id="qr-scan-msg" style="font-family:'Open Sans',sans-serif;font-size:16px;color:rgba(255,255,255,0.9);text-align:center;line-height:1.7;"></div>
-      <input type="file" id="qr-file-input" accept="image/*" capture="environment" style="display:none;" onchange="onQRFileSelected(this)">
-      <button onclick="document.getElementById('qr-file-input').click()" style="width:200px;padding:18px 0;background:#00c853;color:#fff;border:none;border-radius:50px;font-family:'Montserrat',sans-serif;font-size:17px;font-weight:800;cursor:pointer;" id="qr-scan-btn">📷 Scan</button>
-      <div id="qr-status" style="font-family:'Open Sans',sans-serif;font-size:13px;color:rgba(255,255,255,0.6);text-align:center;"></div>
+    <div class="form-main">
+      <div class="form-card">
+        <div id="qr-scan-msg" style="font-size:14px;color:var(--text-muted);text-align:center;margin-bottom:8px;line-height:1.6;"></div>
+        <input type="file" id="qr-file-input" accept="image/*" capture="environment" style="display:none;" onchange="onQRFileSelected(this)">
+        <div class="receipt-upload-area" id="qr-upload-area" onclick="document.getElementById('qr-file-input').click()">
+          <div class="receipt-upload-icon">📷</div>
+          <div class="receipt-upload-text" id="qr-upload-text">Tap to scan QR Code</div>
+          <img id="qr-preview" class="receipt-preview" alt="QR preview">
+        </div>
+        <div id="qr-status" style="font-size:13px;color:#dc2626;text-align:center;margin-top:8px;display:none;"></div>
+      </div>
     </div>
   </div>
 
@@ -12360,17 +12361,6 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       <span>Maintenance</span>
     </button>
     -->
-  </div>
-
-  <div class="nav-tabs" id="nav-attendance" style="display:none;">
-    <button class="nav-tab active" id="nav-att-btn" onclick="showAttPage('attendance',this)">
-      <span class="icon">🕐</span>
-      <span>Attendance</span>
-    </button>
-    <button class="nav-tab" id="nav-att-hist-btn" onclick="showAttPage('att-history',this);openAttHistory()">
-      <span class="icon">📋</span>
-      <span>History</span>
-    </button>
   </div>
 
   <!-- ══════════════════════════════════════════
@@ -12846,34 +12836,6 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     <div class="success-sub" id="insp-success-msg" style="font-size:15px;font-weight:700;color:#fff;margin-bottom:4px;"></div>
     <div class="success-sub" id="insp-success-sub" style="white-space:pre-line;"></div>
     <button class="success-close" onclick="closeInspSuccess()" id="insp-success-close-btn">Back to Home</button>
-  </div>
-
-  <!-- ══════════════════════════════════════════
-       PAGE: ATTENDANCE
-  ══════════════════════════════════════════ -->
-  <div id="page-attendance" class="page">
-    <div class="page-header">
-      <div class="page-title">Clock In / Out</div>
-      <div class="page-title-main">Attendance <em>Scan</em></div>
-    </div>
-    <div class="form-main" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:24px;">
-      <div style="font-family:'Open Sans',sans-serif;font-size:15px;color:#6b7280;text-align:center;line-height:1.8;">Scan the QR code posted at your workplace.</div>
-      <button onclick="openQRScanner()" style="width:180px;padding:18px 0;background:#003087;color:#fff;border:none;border-radius:50px;font-family:'Montserrat',sans-serif;font-size:16px;font-weight:800;cursor:pointer;">📷 Scan QR</button>
-    </div>
-  </div>
-
-  <!-- ══════════════════════════════════════════
-       PAGE: ATTENDANCE HISTORY
-  ══════════════════════════════════════════ -->
-  <div id="page-att-history" class="page">
-    <div class="page-header">
-      <div class="page-title">My Records</div>
-      <div class="page-title-main">Attendance <em>History</em></div>
-    </div>
-    <div class="form-main">
-      <select class="att-month-select" id="att-month-select" onchange="loadAttHistory()" style="margin:16px 0;padding:10px 14px;border-radius:10px;border:1.5px solid #dde3ee;font-family:'Open Sans',sans-serif;font-size:14px;background:#fff;color:#1a1a2e;width:100%;"></select>
-      <div id="att-history-list"><div style="text-align:center;color:#9ca3af;padding:40px;font-size:14px;">Loading…</div></div>
-    </div>
   </div>
 
   <div class="install-hint">
@@ -13933,9 +13895,6 @@ function launchApp(name) {
   // スタッフ向けScan QR FABを表示
   const fabEl = document.getElementById('scan-qr-fab');
   if (fabEl) fabEl.classList.toggle('show', !isAdmin);
-
-  // Attendance History事前取得（バックグラウンド）
-  prefetchAttHistory(name);
 }
 
 function goToApp(page) {
@@ -13956,13 +13915,11 @@ function goHome() {
   // 全ページ非アクティブ
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  // 全ナビ非表示
+  // 両ナビ非表示
   const navApp   = document.getElementById('nav-application');
   const navLorry = document.getElementById('nav-lorry');
-  const navAtt   = document.getElementById('nav-attendance');
   if (navApp)   navApp.style.display   = 'none';
   if (navLorry) navLorry.style.display = 'none';
-  if (navAtt)   navAtt.style.display   = 'none';
   // ホーム画面表示
   document.getElementById('home-screen').classList.add('show');
 }
@@ -14021,29 +13978,11 @@ function goToInfo() {
 // ── ATTENDANCE ───────────────────────────────────────────────
 function goToAttendance() {
   document.getElementById('home-screen').classList.remove('show');
-  const navApp   = document.getElementById('nav-application');
-  const navLorry = document.getElementById('nav-lorry');
-  const navAtt   = document.getElementById('nav-attendance');
-  if (navApp)   navApp.style.display   = 'none';
-  if (navLorry) navLorry.style.display = 'none';
-  if (navAtt)   navAtt.style.display   = '';
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('#nav-attendance .nav-tab').forEach(t => t.classList.remove('active'));
-  const attTab  = document.getElementById('nav-att-btn');
-  const attPage = document.getElementById('page-attendance');
-  if (attTab)  attTab.classList.add('active');
-  if (attPage) attPage.classList.add('active');
-}
-
-function showAttPage(name, btn) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('#nav-attendance .nav-tab').forEach(t => t.classList.remove('active'));
-  const targetPage = document.getElementById('page-' + name);
-  if (targetPage) targetPage.classList.add('active');
-  if (btn) btn.classList.add('active');
+  document.getElementById('att-submenu').classList.add('show');
 }
 
 function closeAttSubmenu() {
+  document.getElementById('att-submenu').classList.remove('show');
   document.getElementById('home-screen').classList.add('show');
 }
 
@@ -14624,7 +14563,7 @@ async function submitInspection() {
     ? t.attnNeeded + failedKeys.length + t.attnItems
     : t.allOK;
 
-  document.getElementById('insp-success-title').textContent = 'Thank you, ' + driver + '!';
+  document.getElementById('insp-success-title').textContent = 'Thank you, ' + driver.split(' ')[0] + '!';
   document.getElementById('insp-success-msg').textContent   = vehicleNo + ' — ' + resultText;
   document.getElementById('insp-success-sub').textContent   = t.successSub;
   document.getElementById('insp-success-overlay').classList.add('show');
@@ -15346,11 +15285,12 @@ const ATT_T = {
     cancel: 'Cancel',
     clocked_in: 'Clocked In!',
     clocked_out: 'Clocked Out!',
-    msg_in: "Let's have a great day together!",
+    msg_in:  "Let's have a great day together!",
     msg_out: 'Thank you for your hard work today. Now it is time to take a rest.',
-    scan_title: 'Scan QR Code',
-    scan_msg_in:  'Please scan the QR Code to Clock In.',
-    scan_msg_out: 'Please scan the QR Code to Clock Out.',
+    scan_title:       'Scan QR Code',
+    scan_msg_in:      'Please scan the QR Code to Clock In.',
+    scan_msg_out:     'Please scan the QR Code to Clock Out.',
+    scan_upload_text: 'Tap to scan QR Code',
     back_home: 'Back to Home',
     my_attendance: 'My Attendance',
     clock_in_lbl: 'Clock In',
@@ -15369,11 +15309,12 @@ const ATT_T = {
     cancel: '取消',
     clocked_in: '上班已打卡！',
     clocked_out: '下班已打卡！',
-    msg_in: '今天也请多多加油！',
+    msg_in:  '今天也请多多加油！',
     msg_out: '辛苦了！好好休息吧。',
-    scan_title: '扫描二维码',
-    scan_msg_in:  '请扫描二维码打上班卡。',
-    scan_msg_out: '请扫描二维码打下班卡。',
+    scan_title:       '扫描二维码',
+    scan_msg_in:      '请扫描二维码打上班卡。',
+    scan_msg_out:     '请扫描二维码打下班卡。',
+    scan_upload_text: '点击扫描二维码',
     back_home: '返回主页',
     my_attendance: '我的出勤记录',
     clock_in_lbl: '上班',
@@ -15392,11 +15333,12 @@ const ATT_T = {
     cancel: 'ரத்து செய்',
     clocked_in: 'வருகை பதிவு செய்யப்பட்டது!',
     clocked_out: 'புறப்பாடு பதிவு செய்யப்பட்டது!',
-    msg_in: 'இன்றும் சிறப்பாக பணியாற்றுவோம்!',
+    msg_in:  'இன்றும் சிறப்பாக பணியாற்றுவோம்!',
     msg_out: 'இன்றைய உழைப்பிற்கு நன்றி. இப்போது ஓய்வெடுங்கள்.',
-    scan_title: 'QR குறியீட்டை ஸ்கேன் செய்யவும்',
-    scan_msg_in:  'வருகை பதிவு செய்ய QR குறியீட்டை ஸ்கேன் செய்யவும்.',
-    scan_msg_out: 'புறப்பாடு பதிவு செய்ய QR குறியீட்டை ஸ்கேன் செய்யவும்.',
+    scan_title:       'QR குறியீட்டை ஸ்கேன் செய்யவும்',
+    scan_msg_in:      'வருகை பதிவு செய்ய QR குறியீட்டை ஸ்கேன் செய்யவும்.',
+    scan_msg_out:     'புறப்பாடு பதிவு செய்ய QR குறியீட்டை ஸ்கேன் செய்யவும்.',
+    scan_upload_text: 'QR குறியீட்டை ஸ்கேன் செய்ய தட்டவும்',
     back_home: 'முகப்புக்கு திரும்பவும்',
     my_attendance: 'என் வருகை பதிவு',
     clock_in_lbl: 'வருகை',
@@ -15472,7 +15414,7 @@ function closePunchScreen() {
 }
 
 // ── 打刻実行 ───────────────────────────────────────────────
-function confirmPunch(type) {
+async function confirmPunch(type) {
   const name = localStorage.getItem('j2hub_passkey_name') || '';
   const lang = localStorage.getItem('j2hub_lang') || 'en';
   const t    = ATT_T[lang] || ATT_T.en;
@@ -15485,75 +15427,59 @@ function confirmPunch(type) {
   const mm      = String(sgt.getMinutes()).padStart(2,'0');
   const timeStr = hh + ':' + mm;
 
-  // 即時画面表示（ユーザーを待たせない）
+  try {
+    await fetch(ATT_GAS_URL, {
+      method: 'POST',
+      cache:  'no-store',
+      body:   JSON.stringify({ action: 'punchAttendance', name, type, date: dateStr, time: timeStr })
+    });
+  } catch(e) {}
+
   closePunchScreen();
-  document.getElementById('punch-success-icon').textContent   = '✓';
-  document.getElementById('punch-success-title').textContent  = type === 'in' ? t.clocked_in : t.clocked_out;
+
+  // 成功画面
+  document.getElementById('punch-success-icon').textContent  = type === 'in' ? '✓' : '✓';
+  document.getElementById('punch-success-title').textContent = type === 'in' ? t.clocked_in : t.clocked_out;
   document.getElementById('punch-success-detail').textContent = name + '\n' + dateStr + '  ' + timeStr;
   document.getElementById('punch-success-close-lbl').textContent = t.back_home;
   document.getElementById('punch-success-overlay').classList.add('show');
-
-  // バックグラウンドでGASに送信
-  fetch(ATT_GAS_URL, {
-    method: 'POST',
-    cache:  'no-store',
-    body:   JSON.stringify({ action: 'punchAttendance', name, type, date: dateStr, time: timeStr })
-  }).catch(() => {});
 }
 
 function closePunchSuccess() {
   document.getElementById('punch-success-overlay').classList.remove('show');
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  const navApp   = document.getElementById('nav-application');
-  const navLorry = document.getElementById('nav-lorry');
-  const navAtt   = document.getElementById('nav-attendance');
-  if (navApp)   navApp.style.display   = 'none';
-  if (navLorry) navLorry.style.display = 'none';
-  if (navAtt)   navAtt.style.display   = 'none';
-  document.getElementById('home-screen').classList.add('show');
 }
 
-// ── Attendance History事前取得（launchApp時） ──────────────
-async function prefetchAttHistory(name) {
-  if (!name) return;
-  const now = new Date();
-  const sgt = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Singapore' }));
-  const month = sgt.getFullYear() + '-' + String(sgt.getMonth()+1).padStart(2,'0');
-  const cacheKey = 'att_hist_' + name + '_' + month;
-  try {
-    const res  = await fetch(ATT_GAS_URL + '?action=getAttHistory&name=' + encodeURIComponent(name) + '&month=' + month);
-    const data = await res.json();
-    localStorage.setItem(cacheKey, JSON.stringify(data.records || []));
-  } catch(e) {}
-}
-
-// ── 打刻履歴画面を開く ────────────────────────────────────
-function openAttHistory() {
+// ── 打刻履歴画面 ───────────────────────────────────────────
+async function openAttHistory() {
   const name = localStorage.getItem('j2hub_passkey_name') || '';
   const lang = localStorage.getItem('j2hub_lang') || 'en';
   const t    = ATT_T[lang] || ATT_T.en;
+  document.getElementById('att-history-title').textContent = t.my_attendance;
 
-  // 月プルダウン生成（当月から過去6ヶ月）
+  // GASから実績のある月一覧を取得
   const sel = document.getElementById('att-month-select');
-  if (sel) {
+  sel.innerHTML = '<option>Loading…</option>';
+  document.getElementById('att-history-screen').classList.add('show');
+
+  try {
+    const res  = await fetch(ATT_GAS_URL + '?action=getAttMonths&name=' + encodeURIComponent(name));
+    const data = await res.json();
     sel.innerHTML = '';
-    const now = new Date();
-    const sgt = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Singapore' }));
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    for (let i = 0; i < 6; i++) {
-      const d   = new Date(sgt.getFullYear(), sgt.getMonth() - i, 1);
-      const val = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
-      const lbl = months[d.getMonth()] + '-' + d.getFullYear();
-      // データがある月のみ表示
-      const cached = localStorage.getItem('att_hist_' + name + '_' + val);
-      if (i === 0 || (cached && JSON.parse(cached).length > 0)) {
+    if (data.months && data.months.length > 0) {
+      data.months.forEach(m => {
         const opt = document.createElement('option');
-        opt.value = val; opt.textContent = lbl;
+        opt.value = m.value; opt.textContent = m.label;
         sel.appendChild(opt);
-      }
+      });
+      loadAttHistory();
+    } else {
+      sel.innerHTML = '<option value="">No records yet</option>';
+      document.getElementById('att-history-list').innerHTML =
+        '<div style="text-align:center;color:#9ca3af;padding:40px;font-size:14px;">No records found.</div>';
     }
+  } catch(e) {
+    sel.innerHTML = '<option value="">Error loading</option>';
   }
-  loadAttHistory();
 }
 
 // ── QRスキャン画面を開く ───────────────────────────────────
@@ -15562,23 +15488,30 @@ function openQRScanner() {
   const name = localStorage.getItem('j2hub_passkey_name') || '';
   const t    = ATT_T[lang] || ATT_T.en;
 
-  // Clock In/Out判断でメッセージを切替
+  // Clock In/Out判断でメッセージ切替
   const now = new Date();
   const sgt = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Singapore' }));
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const dateStr = String(sgt.getDate()).padStart(2,'0') + '-' + months[sgt.getMonth()] + '-' + sgt.getFullYear();
-  const cacheKey = 'att_punch_' + name + '_' + dateStr;
-  const cached   = localStorage.getItem(cacheKey);
-  const type     = cached === 'in' ? 'out' : 'in';
+  const cached  = localStorage.getItem('att_punch_' + name + '_' + dateStr);
+  const type    = cached === 'in' ? 'out' : 'in';
 
-  const msgEl = document.getElementById('qr-scan-msg');
+  const msgEl   = document.getElementById('qr-scan-msg');
   const titleEl = document.getElementById('qr-scanner-title');
-  if (msgEl)   msgEl.textContent  = type === 'in' ? t.scan_msg_in  : t.scan_msg_out;
+  if (msgEl)   msgEl.textContent   = type === 'in' ? t.scan_msg_in : t.scan_msg_out;
   if (titleEl) titleEl.textContent = t.scan_title || 'Scan QR Code';
 
-  // ファイル入力リセット
-  const inp = document.getElementById('qr-file-input');
-  if (inp) inp.value = '';
+  // アップロードエリアをリセット
+  const area    = document.getElementById('qr-upload-area');
+  const preview = document.getElementById('qr-preview');
+  const inp     = document.getElementById('qr-file-input');
+  const textEl  = document.getElementById('qr-upload-text');
+  const statusEl= document.getElementById('qr-status');
+  if (area)    area.classList.remove('has-image');
+  if (preview) { preview.src = ''; preview.style.display = 'none'; }
+  if (inp)     inp.value = '';
+  if (textEl)  textEl.textContent = t.scan_upload_text || 'Tap to scan QR Code';
+  if (statusEl){ statusEl.style.display = 'none'; statusEl.textContent = ''; }
 
   document.getElementById('qr-scanner-screen').classList.add('show');
 }
@@ -15587,12 +15520,22 @@ function closeQRScanner() {
   document.getElementById('qr-scanner-screen').classList.remove('show');
 }
 
-// ── QR画像を選択・解析 ────────────────────────────────────
+// ── QR画像選択・解析（Medicalと同じ方式） ────────────────
 function onQRFileSelected(input) {
   if (!input.files || !input.files[0]) return;
   const file   = input.files[0];
+  const area   = document.getElementById('qr-upload-area');
+  const preview= document.getElementById('qr-preview');
+  const textEl = document.getElementById('qr-upload-text');
+
   const reader = new FileReader();
   reader.onload = function(e) {
+    // プレビュー表示
+    if (preview) { preview.src = e.target.result; preview.style.display = 'block'; }
+    if (area)    area.classList.add('has-image');
+    if (textEl)  textEl.textContent = file.name;
+
+    // jsQRで解析
     const img = new Image();
     img.onload = function() {
       const canvas = document.createElement('canvas');
@@ -15609,134 +15552,67 @@ function onQRFileSelected(input) {
           return;
         }
       }
-      // 読み取れなかった場合
       const statusEl = document.getElementById('qr-status');
-      if (statusEl) statusEl.textContent = 'QR code not found. Please try again.';
+      if (statusEl) { statusEl.textContent = 'QR code not found. Please try again.'; statusEl.style.display = 'block'; }
     };
     img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
 
-// stopQRCamera互換（不要になったが参照箇所のため残す）
-function stopQRCamera() {}
+// startQRCamera・stopQRCamera互換（廃止）
 function startQRCamera() {}
+function stopQRCamera() {}
 
 function handleQRResult(url) {
   stopQRCamera();
   closeQRScanner();
-  try { new URL(url); } catch(e) { return; }
-  if (url.indexOf('j2hub-admin-dev.html') === -1 && url.indexOf('j2hub-leave-app') === -1) return;
-
-  const name = localStorage.getItem('j2hub_passkey_name') || '';
-  const lang = localStorage.getItem('j2hub_lang') || 'en';
-  const t    = ATT_T[lang] || ATT_T.en;
-
-  const now = new Date();
-  const sgt = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Singapore' }));
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const dateStr = String(sgt.getDate()).padStart(2,'0') + '-' + months[sgt.getMonth()] + '-' + sgt.getFullYear();
-  const hh      = String(sgt.getHours()).padStart(2,'0');
-  const mm      = String(sgt.getMinutes()).padStart(2,'0');
-  const timeStr = hh + ':' + mm;
-
-  // フロントでClock In/Out判断（キャッシュから同日記録を確認）
-  const cacheKey = 'att_punch_' + name + '_' + dateStr;
-  const cached   = localStorage.getItem(cacheKey);
-  const type     = cached === 'in' ? 'out' : 'in';
-
-  // 即時1発表示
-  const overlay = document.getElementById('punch-success-overlay');
-  overlay.classList.remove('punch-in', 'punch-out');
-  overlay.classList.add('show', type === 'in' ? 'punch-in' : 'punch-out');
-  document.getElementById('punch-success-name').textContent   = name;
-  document.getElementById('punch-success-status').textContent = type === 'in' ? t.clocked_in : t.clocked_out;
-  document.getElementById('punch-success-time').textContent   = timeStr;
-  document.getElementById('punch-success-msg').textContent    = type === 'in' ? t.msg_in : t.msg_out;
-  document.getElementById('punch-success-close-lbl').textContent = t.back_home;
-
-  // キャッシュ更新
-  localStorage.setItem(cacheKey, type);
-
-  // Historyキャッシュを即更新（GASレスポンスを待たずに表示を反映）
-  const histCacheKey = 'att_hist_' + name + '_' + dateStr.slice(7, 11) + '-' + String(['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].indexOf(dateStr.slice(3,6)) + 1).padStart(2,'0');
   try {
-    const existing = JSON.parse(localStorage.getItem(histCacheKey) || '[]');
-    const idx = existing.findIndex(r => r.date === dateStr);
-    if (idx >= 0) {
-      if (type === 'in')  existing[idx].clockIn  = timeStr;
-      if (type === 'out') existing[idx].clockOut = timeStr;
-    } else {
-      existing.unshift({ date: dateStr, clockIn: type === 'in' ? timeStr : '', clockOut: type === 'out' ? timeStr : '', hours: '', flag: false });
+    const u     = new URL(url);
+    const punch = u.searchParams.get('punch');
+    if (punch === 'in' || punch === 'out') {
+      openPunchScreen(punch);
     }
-    localStorage.setItem(histCacheKey, JSON.stringify(existing));
   } catch(e) {}
-
-  // バックグラウンドでGASに送信
-  fetch(ATT_GAS_URL, {
-    method: 'POST',
-    cache:  'no-store',
-    body:   JSON.stringify({ action: 'punchAttendance', name, type, date: dateStr, time: timeStr })
-  }).catch(() => {});
 }
 
 function closeAttHistory() {
-  // att-history-screenは廃止済み。page-att-history方式に統一。
+  document.getElementById('att-history-screen').classList.remove('show');
 }
 
 async function loadAttHistory() {
   const name   = localStorage.getItem('j2hub_passkey_name') || '';
   const lang   = localStorage.getItem('j2hub_lang') || 'en';
   const t      = ATT_T[lang] || ATT_T.en;
-  const sel    = document.getElementById('att-month-select');
-  const month  = sel ? sel.value : '';
+  const month  = document.getElementById('att-month-select').value;
   const listEl = document.getElementById('att-history-list');
-  if (!month || !listEl) return;
-  const cacheKey = 'att_hist_' + name + '_' + month;
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-  // キャッシュから即時表示
-  try {
-    const cached = localStorage.getItem(cacheKey);
-    if (cached) renderAttHistory(JSON.parse(cached), listEl, t);
-    else listEl.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-muted);font-size:14px;">Loading…</div>';
-  } catch(e) {}
+  listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;padding:40px;font-size:14px;">Loading…</div>';
 
-  // バックグラウンドで最新取得・キャッシュ更新
   try {
     const res  = await fetch(ATT_GAS_URL + '?action=getAttHistory&name=' + encodeURIComponent(name) + '&month=' + month);
     const data = await res.json();
-    localStorage.setItem(cacheKey, JSON.stringify(data.records || []));
-    renderAttHistory(data.records || [], listEl, t);
-  } catch(e) {}
-}
-
-function renderAttHistory(records, listEl, t) {
-  if (!records || records.length === 0) {
-    listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:32px;font-size:13px;">No records found.</div>';
-    return;
-  }
-  listEl.innerHTML = records.map(r => {
-    const inTime  = r.clockIn  || '—';
-    const outTime = r.clockOut || '—';
-    const hasOut  = !!r.clockOut;
-    const flag    = r.flag;
-    let badgeClass, badgeText, typeBg;
-    if (flag) {
-      badgeClass = 'rejected'; badgeText = '🚩 Missing'; typeBg = '#fff0f0';
-    } else if (hasOut) {
-      badgeClass = 'approved'; badgeText = 'Clocked Out'; typeBg = '#e8f5e9';
-    } else {
-      badgeClass = 'pending'; badgeText = 'Clocked In'; typeBg = '#fff3e0';
+    if (!data.records || data.records.length === 0) {
+      listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;padding:40px;font-size:14px;">No records found.</div>';
+      return;
     }
-    const hours = r.hours ? ' · ' + r.hours : '';
-    return `<div class="history-item" style="background:${typeBg};">
-      <div>
-        <div class="history-type" style="color:#1a1a2e;">${r.date}</div>
-        <div class="history-date">${t.clock_in_lbl}: ${inTime}　${t.clock_out_lbl}: ${outTime}${hours}</div>
-      </div>
-      <span class="status-badge ${badgeClass}">${badgeText}</span>
-    </div>`;
-  }).join('');
+    listEl.innerHTML = data.records.map(r => {
+      const inTime  = r.clockIn  || '<span style="color:#ef4444;">' + t.not_recorded + '</span>';
+      const outTime = r.clockOut || '<span style="color:#ef4444;">' + t.not_recorded + '</span>';
+      const flag    = r.flag ? '<div class="att-record-flag">' + t.flag_missing + '</div>' : '';
+      const hours   = r.hours ? '<div class="att-record-hours">' + r.hours + '</div>' : '';
+      return '<div class="att-record">' +
+        '<div class="att-record-left">' +
+          '<div class="att-record-date">' + r.date + '</div>' +
+          '<div class="att-record-times">' + t.clock_in_lbl + ': ' + inTime + '　' + t.clock_out_lbl + ': ' + outTime + '</div>' +
+        '</div>' +
+        '<div class="att-record-right">' + hours + flag + '</div>' +
+        '</div>';
+    }).join('');
+  } catch(e) {
+    listEl.innerHTML = '<div style="text-align:center;color:#ef4444;padding:40px;font-size:13px;">' + t.error_load + '</div>';
+  }
 }
 
 // ── URLパラメーター処理（QRコード読み取り後） ─────────────
