@@ -12165,11 +12165,11 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   </div>
 
   <!-- ── Attendance: Punch Success Overlay ── -->
-  <div class="punch-success-overlay" id="punch-success-overlay">
-    <div class="punch-success-icon" id="punch-success-icon">&#10003;</div>
-    <div class="punch-success-title" id="punch-success-title">Clocked In!</div>
-    <div class="punch-success-detail" id="punch-success-detail"></div>
-    <button class="punch-success-close" onclick="closePunchSuccess()" id="punch-success-close-lbl">Back to Home</button>
+  <div class="success-overlay" id="punch-success-overlay">
+    <div class="success-icon">✓</div>
+    <div class="success-title" id="punch-success-title"></div>
+    <div class="success-sub" id="punch-success-detail"></div>
+    <button class="success-close" onclick="closePunchSuccess()" id="punch-success-close-lbl">Back to Home</button>
   </div>
 
   <!-- ── Attendance: History Screen ── -->
@@ -15480,6 +15480,14 @@ function confirmPunch(type) {
 
 function closePunchSuccess() {
   document.getElementById('punch-success-overlay').classList.remove('show');
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const navApp   = document.getElementById('nav-application');
+  const navLorry = document.getElementById('nav-lorry');
+  const navAtt   = document.getElementById('nav-attendance');
+  if (navApp)   navApp.style.display   = 'none';
+  if (navLorry) navLorry.style.display = 'none';
+  if (navAtt)   navAtt.style.display   = 'none';
+  document.getElementById('home-screen').classList.add('show');
 }
 
 // ── 打刻履歴画面 ───────────────────────────────────────────
@@ -15529,7 +15537,7 @@ function closeQRScanner() {
 }
 
 let _qrStream = null;
-let _qrTimer  = null;
+let _qrRaf    = null;
 
 async function startQRCamera() {
   const video  = document.getElementById('qr-video');
@@ -15539,41 +15547,67 @@ async function startQRCamera() {
     _qrStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
     video.srcObject = _qrStream;
     video.play();
-    _qrTimer = setInterval(() => {
+    function scan() {
       if (video.readyState === video.HAVE_ENOUGH_DATA) {
         canvas.height = video.videoHeight;
         canvas.width  = video.videoWidth;
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        // jsQRライブラリで解析
         if (typeof jsQR !== 'undefined') {
-          const code = jsQR(imageData.data, imageData.width, imageData.height);
+          const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
           if (code && code.data) {
             handleQRResult(code.data);
+            return;
           }
         }
       }
-    }, 300);
+      _qrRaf = requestAnimationFrame(scan);
+    }
+    _qrRaf = requestAnimationFrame(scan);
   } catch(e) {
     document.getElementById('qr-status').textContent = 'Camera not available. Please allow camera access.';
   }
 }
 
 function stopQRCamera() {
-  if (_qrTimer) { clearInterval(_qrTimer); _qrTimer = null; }
+  if (_qrRaf)    { cancelAnimationFrame(_qrRaf); _qrRaf = null; }
   if (_qrStream) { _qrStream.getTracks().forEach(t => t.stop()); _qrStream = null; }
 }
 
 function handleQRResult(url) {
   stopQRCamera();
   closeQRScanner();
+  // QRコードのURLを検証（j2hub-admin-dev.htmlのURLか確認）
   try {
-    const u     = new URL(url);
-    const punch = u.searchParams.get('punch');
-    if (punch === 'in' || punch === 'out') {
-      openPunchScreen(punch);
-    }
-  } catch(e) {}
+    new URL(url);
+  } catch(e) { return; }
+  if (url.indexOf('j2hub-admin-dev.html') === -1 && url.indexOf('j2hub-leave-app') === -1) return;
+
+  const name = localStorage.getItem('j2hub_passkey_name') || '';
+  const lang = localStorage.getItem('j2hub_lang') || 'en';
+  const t    = ATT_T[lang] || ATT_T.en;
+
+  const now = new Date();
+  const sgt = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Singapore' }));
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const dateStr = String(sgt.getDate()).padStart(2,'0') + '-' + months[sgt.getMonth()] + '-' + sgt.getFullYear();
+  const hh      = String(sgt.getHours()).padStart(2,'0');
+  const mm      = String(sgt.getMinutes()).padStart(2,'0');
+  const timeStr = hh + ':' + mm;
+
+  // 即時完了画面表示
+  const overlay = document.getElementById('punch-success-overlay');
+  document.getElementById('punch-success-title').textContent  = name.split(' ')[0] + '!';
+  document.getElementById('punch-success-detail').textContent = dateStr + '  ' + timeStr;
+  document.getElementById('punch-success-close-lbl').textContent = t.back_home;
+  if (overlay) overlay.classList.add('show');
+
+  // バックグラウンドでGASに送信（自動判断）
+  fetch(ATT_GAS_URL, {
+    method: 'POST',
+    cache:  'no-store',
+    body:   JSON.stringify({ action: 'punchAttendance', name, type: 'auto', date: dateStr, time: timeStr })
+  }).catch(() => {});
 }
 
 function closeAttHistory() {
