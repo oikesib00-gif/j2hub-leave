@@ -11578,21 +11578,33 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   .punch-success-overlay {
     display: none; position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: #003087; z-index: 230;
-    flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+    z-index: 230;
+    flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+    text-align: center; padding: 32px;
+    transition: background 0.3s;
   }
   .punch-success-overlay.show { display: flex; }
-  .punch-success-icon { font-size: 64px; margin-bottom: 8px; }
-  .punch-success-title {
-    font-family: 'Montserrat', sans-serif; font-size: 28px;
-    font-weight: 800; color: #ffffff;
+  .punch-success-overlay.punch-in  { background: linear-gradient(135deg, #e87722 0%, #f5a623 100%); }
+  .punch-success-overlay.punch-out { background: linear-gradient(135deg, #00875a 0%, #00b377 100%); }
+  .punch-success-name {
+    font-family: 'Montserrat', sans-serif; font-size: 32px;
+    font-weight: 800; color: #ffffff; margin-bottom: 4px;
   }
-  .punch-success-detail {
-    font-family: 'Open Sans', sans-serif; font-size: 15px;
-    color: rgba(255,255,255,0.8); text-align: center; line-height: 1.6; padding: 0 32px;
+  .punch-success-status {
+    font-family: 'Montserrat', sans-serif; font-size: 22px;
+    font-weight: 700; color: rgba(255,255,255,0.9);
   }
-  .punch-success-close {
-    margin-top: 24px; background: rgba(255,255,255,0.2); border: none;
+  .punch-success-time {
+    font-family: 'Montserrat', sans-serif; font-size: 48px;
+    font-weight: 800; color: #ffffff; letter-spacing: 2px;
+  }
+  .punch-success-msg {
+    font-family: 'Open Sans', sans-serif; font-size: 17px;
+    color: rgba(255,255,255,0.95); line-height: 1.6;
+    margin-top: 8px; padding: 0 16px;
+  }
+  .punch-success-close-btn {
+    margin-top: 32px; background: rgba(255,255,255,0.25); border: none;
     color: #ffffff; font-family: 'Montserrat', sans-serif; font-size: 15px;
     font-weight: 700; padding: 14px 40px; border-radius: 50px; cursor: pointer;
   }
@@ -11943,6 +11955,8 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   }
   .insp-hist-badge.ok      { background: var(--green-light); color: var(--green); }
   .insp-hist-badge.attn    { background: #fff0f0; color: #dc2626; }
+  .insp-hist-badge.att-in  { background: #fff3e0; color: #e87722; }
+  .insp-hist-badge.att-out { background: #e8f5e9; color: #00875a; }
   .insp-hist-meta {
     font-size: 12px;
     color: var(--text-muted);
@@ -12165,11 +12179,12 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   </div>
 
   <!-- ── Attendance: Punch Success Overlay ── -->
-  <div class="success-overlay" id="punch-success-overlay">
-    <div class="success-icon">✓</div>
-    <div class="success-title" id="punch-success-title"></div>
-    <div class="success-sub" id="punch-success-detail"></div>
-    <button class="success-close" onclick="closePunchSuccess()" id="punch-success-close-lbl">Back to Home</button>
+  <div class="punch-success-overlay" id="punch-success-overlay">
+    <div class="punch-success-name" id="punch-success-name"></div>
+    <div class="punch-success-status" id="punch-success-status"></div>
+    <div class="punch-success-time" id="punch-success-time"></div>
+    <div class="punch-success-msg" id="punch-success-msg"></div>
+    <button class="punch-success-close-btn" onclick="closePunchSuccess()" id="punch-success-close-lbl">Back to Home</button>
   </div>
 
   <!-- ── Attendance: History Screen ── -->
@@ -15583,9 +15598,7 @@ function stopQRCamera() {
 function handleQRResult(url) {
   stopQRCamera();
   closeQRScanner();
-  try {
-    new URL(url);
-  } catch(e) { return; }
+  try { new URL(url); } catch(e) { return; }
   if (url.indexOf('j2hub-admin-dev.html') === -1 && url.indexOf('j2hub-leave-app') === -1) return;
 
   const name = localStorage.getItem('j2hub_passkey_name') || '';
@@ -15600,25 +15613,29 @@ function handleQRResult(url) {
   const mm      = String(sgt.getMinutes()).padStart(2,'0');
   const timeStr = hh + ':' + mm;
 
-  // 即時完了画面表示（GASの応答を待たない）
-  document.getElementById('punch-success-title').textContent  = name + '!';
-  document.getElementById('punch-success-detail').textContent = dateStr + '  ' + timeStr;
-  document.getElementById('punch-success-close-lbl').textContent = t.back_home;
-  document.getElementById('punch-success-overlay').classList.add('show');
+  // フロントでClock In/Out判断（キャッシュから同日記録を確認）
+  const cacheKey = 'att_punch_' + name + '_' + dateStr;
+  const cached   = localStorage.getItem(cacheKey);
+  const type     = cached === 'in' ? 'out' : 'in';
 
-  // バックグラウンドでGASに送信（自動判断）→ 結果でメッセージを更新
+  // 即時1発表示
+  const overlay = document.getElementById('punch-success-overlay');
+  overlay.classList.remove('punch-in', 'punch-out');
+  overlay.classList.add('show', type === 'in' ? 'punch-in' : 'punch-out');
+  document.getElementById('punch-success-name').textContent   = name;
+  document.getElementById('punch-success-status').textContent = type === 'in' ? t.clocked_in : t.clocked_out;
+  document.getElementById('punch-success-time').textContent   = timeStr;
+  document.getElementById('punch-success-msg').textContent    = type === 'in' ? t.msg_in : t.msg_out;
+  document.getElementById('punch-success-close-lbl').textContent = t.back_home;
+
+  // キャッシュ更新
+  localStorage.setItem(cacheKey, type);
+
+  // バックグラウンドでGASに送信
   fetch(ATT_GAS_URL, {
     method: 'POST',
     cache:  'no-store',
-    body:   JSON.stringify({ action: 'punchAttendance', name, type: 'auto', date: dateStr, time: timeStr })
-  }).then(r => r.json()).then(data => {
-    const type = data.type || 'in';
-    const title = type === 'in' ? t.clocked_in : t.clocked_out;
-    const msg   = type === 'in' ? t.msg_in : t.msg_out;
-    const el = document.getElementById('punch-success-title');
-    const det = document.getElementById('punch-success-detail');
-    if (el)  el.textContent  = title;
-    if (det) det.textContent = name + '\n' + dateStr + '  ' + timeStr + '\n' + msg;
+    body:   JSON.stringify({ action: 'punchAttendance', name, type, date: dateStr, time: timeStr })
   }).catch(() => {});
 }
 
@@ -15632,42 +15649,62 @@ async function loadAttHistory() {
   const t      = ATT_T[lang] || ATT_T.en;
   const month  = document.getElementById('att-month-select').value;
   const listEl = document.getElementById('att-history-list');
+  const cacheKey = 'att_hist_' + name + '_' + month;
 
-  listEl.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-muted);font-size:14px;">Loading…</div>';
+  // キャッシュから即時表示
+  try {
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) renderAttHistory(JSON.parse(cached), listEl, t);
+    else listEl.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-muted);font-size:14px;">Loading…</div>';
+  } catch(e) {}
 
+  // バックグラウンドで最新取得
   try {
     const res  = await fetch(ATT_GAS_URL + '?action=getAttHistory&name=' + encodeURIComponent(name) + '&month=' + month);
     const data = await res.json();
-    if (!data.records || data.records.length === 0) {
-      listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:32px;font-size:14px;">No records found.</div>';
-      return;
-    }
-    listEl.innerHTML = '';
-    data.records.forEach(r => {
-      const inTime  = r.clockIn  || '—';
-      const outTime = r.clockOut || '—';
-      const isOK    = !r.flag;
-      const badge   = isOK
-        ? '<span class="insp-hist-badge ok">OK</span>'
-        : '<span class="insp-hist-badge attn">🚩 Missing</span>';
-      const hours   = r.hours ? r.hours : '—';
-      const card    = document.createElement('div');
-      card.className = 'insp-hist-card';
-      card.innerHTML =
-        '<div class="insp-hist-header">' +
-          '<span class="insp-hist-vehicle">' + r.date + '</span>' +
-          badge +
-        '</div>' +
-        '<div class="insp-hist-meta">' +
-          t.clock_in_lbl + ': ' + inTime + '　' +
-          t.clock_out_lbl + ': ' + outTime + '　' +
-          hours +
-        '</div>';
-      listEl.appendChild(card);
-    });
+    localStorage.setItem(cacheKey, JSON.stringify(data.records || []));
+    renderAttHistory(data.records || [], listEl, t);
   } catch(e) {
-    listEl.innerHTML = '<div style="text-align:center;color:#dc2626;padding:32px;font-size:13px;">' + t.error_load + '</div>';
+    if (!listEl.children.length) {
+      listEl.innerHTML = '<div style="text-align:center;color:#dc2626;padding:32px;font-size:13px;">' + t.error_load + '</div>';
+    }
   }
+}
+
+function renderAttHistory(records, listEl, t) {
+  if (!records || records.length === 0) {
+    listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:32px;font-size:14px;">No records found.</div>';
+    return;
+  }
+  listEl.innerHTML = '';
+  records.forEach(r => {
+    const inTime  = r.clockIn  || '—';
+    const outTime = r.clockOut || '—';
+    const hasOut  = !!r.clockOut;
+    const flag    = r.flag;
+    let badge, badgeClass;
+    if (flag) {
+      badge = '🚩 Missing'; badgeClass = 'attn';
+    } else if (hasOut) {
+      badge = 'Clocked Out'; badgeClass = 'att-out';
+    } else {
+      badge = 'Clocked In'; badgeClass = 'att-in';
+    }
+    const hours = r.hours ? r.hours : '';
+    const card  = document.createElement('div');
+    card.className = 'insp-hist-card';
+    card.innerHTML =
+      '<div class="insp-hist-header">' +
+        '<span class="insp-hist-vehicle">' + r.date + '</span>' +
+        '<span class="insp-hist-badge ' + badgeClass + '">' + badge + '</span>' +
+      '</div>' +
+      '<div class="insp-hist-meta">' +
+        t.clock_in_lbl + ': ' + inTime + '　' +
+        t.clock_out_lbl + ': ' + outTime +
+        (hours ? '　' + hours : '') +
+      '</div>';
+    listEl.appendChild(card);
+  });
 }
 
 // ── URLパラメーター処理（QRコード読み取り後） ─────────────
