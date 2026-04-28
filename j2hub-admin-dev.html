@@ -15449,7 +15449,7 @@ function closePunchScreen() {
 }
 
 // ── 打刻実行 ───────────────────────────────────────────────
-async function confirmPunch(type) {
+function confirmPunch(type) {
   const name = localStorage.getItem('j2hub_passkey_name') || '';
   const lang = localStorage.getItem('j2hub_lang') || 'en';
   const t    = ATT_T[lang] || ATT_T.en;
@@ -15462,22 +15462,20 @@ async function confirmPunch(type) {
   const mm      = String(sgt.getMinutes()).padStart(2,'0');
   const timeStr = hh + ':' + mm;
 
-  try {
-    await fetch(ATT_GAS_URL, {
-      method: 'POST',
-      cache:  'no-store',
-      body:   JSON.stringify({ action: 'punchAttendance', name, type, date: dateStr, time: timeStr })
-    });
-  } catch(e) {}
-
+  // 即時画面表示（ユーザーを待たせない）
   closePunchScreen();
-
-  // 成功画面
-  document.getElementById('punch-success-icon').textContent  = type === 'in' ? '✓' : '✓';
-  document.getElementById('punch-success-title').textContent = type === 'in' ? t.clocked_in : t.clocked_out;
+  document.getElementById('punch-success-icon').textContent   = '✓';
+  document.getElementById('punch-success-title').textContent  = type === 'in' ? t.clocked_in : t.clocked_out;
   document.getElementById('punch-success-detail').textContent = name + '\n' + dateStr + '  ' + timeStr;
   document.getElementById('punch-success-close-lbl').textContent = t.back_home;
   document.getElementById('punch-success-overlay').classList.add('show');
+
+  // バックグラウンドでGASに送信
+  fetch(ATT_GAS_URL, {
+    method: 'POST',
+    cache:  'no-store',
+    body:   JSON.stringify({ action: 'punchAttendance', name, type, date: dateStr, time: timeStr })
+  }).catch(() => {});
 }
 
 function closePunchSuccess() {
