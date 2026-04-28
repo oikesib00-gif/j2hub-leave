@@ -14033,6 +14033,10 @@ function goToAttendance() {
   const attPage = document.getElementById('page-attendance');
   if (attTab)  attTab.classList.add('active');
   if (attPage) attPage.classList.add('active');
+  const lang   = localStorage.getItem('j2hub_lang') || 'en';
+  const t      = ATT_T[lang] || ATT_T.en;
+  const descEl = document.getElementById('att-scan-desc');
+  if (descEl) descEl.textContent = t.scan_desc;
 }
 
 function showAttPage(name, btn) {
