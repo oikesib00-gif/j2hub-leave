@@ -11,7 +11,6 @@
 <title>J2Hub – Staff Portal</title>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -1437,159 +1436,6 @@
     color: #fff;
     letter-spacing: 0.5px;
   }
-  /* ── Attendance Punch Screen ── */
-  .punch-screen {
-    display: none; position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: #003087; z-index: 220;
-    flex-direction: column; align-items: center; justify-content: center;
-  }
-  .punch-screen.show { display: flex; }
-  .punch-greeting {
-    font-family: 'Montserrat', sans-serif; font-size: 15px; font-weight: 600;
-    color: rgba(255,255,255,0.75); margin-bottom: 6px; letter-spacing: 0.5px;
-  }
-  .punch-name {
-    font-family: 'Montserrat', sans-serif; font-size: 26px; font-weight: 800;
-    color: #ffffff; margin-bottom: 32px; letter-spacing: -0.5px;
-  }
-  .punch-clock {
-    font-family: 'Montserrat', sans-serif; font-size: 52px; font-weight: 800;
-    color: #ffffff; letter-spacing: 2px; margin-bottom: 8px;
-  }
-  .punch-date {
-    font-family: 'Open Sans', sans-serif; font-size: 15px;
-    color: rgba(255,255,255,0.75); margin-bottom: 48px;
-  }
-  .punch-btn {
-    width: 200px; padding: 18px 0; border-radius: 50px; border: none;
-    font-family: 'Montserrat', sans-serif; font-size: 18px; font-weight: 800;
-    cursor: pointer; letter-spacing: 0.5px; transition: transform 0.1s; margin-bottom: 16px;
-  }
-  .punch-btn:active { transform: scale(0.96); }
-  .punch-btn.in  { background: #00c853; color: #ffffff; }
-  .punch-btn.out { background: #ff6b35; color: #ffffff; }
-  .punch-cancel {
-    margin-top: 8px; background: none; border: none;
-    color: rgba(255,255,255,0.6); font-family: 'Open Sans', sans-serif;
-    font-size: 14px; cursor: pointer; padding: 8px 24px;
-  }
-  .punch-success-overlay {
-    display: none; position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: #003087; z-index: 230;
-    flex-direction: column; align-items: center; justify-content: center; gap: 16px;
-  }
-  .punch-success-overlay.show { display: flex; }
-  .punch-success-icon { font-size: 64px; margin-bottom: 8px; }
-  .punch-success-title {
-    font-family: 'Montserrat', sans-serif; font-size: 28px;
-    font-weight: 800; color: #ffffff;
-  }
-  .punch-success-detail {
-    font-family: 'Open Sans', sans-serif; font-size: 15px;
-    color: rgba(255,255,255,0.8); text-align: center; line-height: 1.6; padding: 0 32px;
-  }
-  .punch-success-close {
-    margin-top: 24px; background: rgba(255,255,255,0.2); border: none;
-    color: #ffffff; font-family: 'Montserrat', sans-serif; font-size: 15px;
-    font-weight: 700; padding: 14px 40px; border-radius: 50px; cursor: pointer;
-  }
-  .att-history-screen {
-    display: none; position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: #f7f9fc; z-index: 220; flex-direction: column;
-  }
-  .att-history-screen.show { display: flex; }
-  .att-history-header {
-    background: #003087; padding: 20px 20px 16px;
-    display: flex; align-items: center; gap: 12px;
-  }
-  .att-history-back {
-    background: none; border: none; color: #ffffff;
-    font-size: 22px; cursor: pointer; padding: 4px 8px;
-  }
-  .att-history-title {
-    font-family: 'Montserrat', sans-serif; font-size: 18px;
-    font-weight: 800; color: #ffffff; flex: 1;
-  }
-  .att-month-select {
-    margin: 16px 20px; padding: 10px 14px; border-radius: 10px;
-    border: 1.5px solid #dde3ee; font-family: 'Open Sans', sans-serif;
-    font-size: 14px; background: #ffffff; color: #1a1a2e; width: calc(100% - 40px);
-  }
-  .att-history-list { flex: 1; overflow-y: auto; padding: 0 20px 20px; }
-  .att-record {
-    background: #ffffff; border-radius: 12px; padding: 14px 16px;
-    margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,48,135,0.07);
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .att-record-left { flex: 1; }
-  .att-record-date {
-    font-family: 'Montserrat', sans-serif; font-size: 13px;
-    font-weight: 700; color: #003087;
-  }
-  .att-record-times {
-    font-family: 'Open Sans', sans-serif; font-size: 13px;
-    color: #6b7280; margin-top: 3px;
-  }
-  .att-record-right { text-align: right; }
-  .att-record-hours {
-    font-family: 'Montserrat', sans-serif; font-size: 14px;
-    font-weight: 700; color: #00875a;
-  }
-  .att-record-flag { font-size: 16px; }
-  /* ── QR Scanner Screen ── */
-  .qr-scanner-screen {
-    display: none; position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: #000; z-index: 225;
-    flex-direction: column; align-items: center; justify-content: center;
-  }
-  .qr-scanner-screen.show { display: flex; }
-  .qr-scanner-header {
-    position: absolute; top: 0; left: 0; right: 0;
-    padding: 20px; display: flex; align-items: center; gap: 12px;
-    background: rgba(0,0,0,0.5); z-index: 10;
-  }
-  .qr-scanner-back {
-    background: none; border: none; color: #fff;
-    font-size: 22px; cursor: pointer; padding: 4px 8px;
-  }
-  .qr-scanner-title {
-    font-family: 'Montserrat', sans-serif; font-size: 18px;
-    font-weight: 700; color: #fff;
-  }
-  .qr-video-wrap {
-    position: relative; width: 100%; height: 100%; overflow: hidden;
-  }
-  #qr-video {
-    width: 100%; height: 100%; object-fit: cover;
-  }
-  #qr-canvas { display: none; }
-  .qr-overlay {
-    position: absolute; top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    width: 220px; height: 220px;
-    border: 3px solid #00c853; border-radius: 16px;
-    box-shadow: 0 0 0 9999px rgba(0,0,0,0.5);
-  }
-  .qr-status {
-    position: absolute; bottom: 40px; left: 0; right: 0;
-    text-align: center; color: rgba(255,255,255,0.8);
-    font-family: 'Open Sans', sans-serif; font-size: 14px;
-    padding: 0 20px;
-  }
-  /* ── Scan QR Button（スタッフ向けホームに追加） ── */
-  .scan-qr-fab {
-    position: fixed; bottom: 90px; right: 20px;
-    width: 60px; height: 60px; border-radius: 50%;
-    background: #003087; border: none;
-    box-shadow: 0 4px 12px rgba(0,48,135,0.4);
-    display: none; align-items: center; justify-content: center;
-    cursor: pointer; z-index: 100;
-  }
-  .scan-qr-fab.show { display: flex; }
   /* ── Lorry Submenu（第2階層） ── */
   .lorry-submenu {
     display: none;
@@ -1603,19 +1449,6 @@
     gap: 28px;
   }
   .lorry-submenu.show { display: flex; }
-  /* ── Attendance Submenu ── */
-  .att-submenu {
-    display: none;
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: #f0f4ff;
-    z-index: 210;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 28px;
-  }
-  .att-submenu.show { display: flex; }
   .lorry-submenu-title {
     font-family: 'Montserrat', sans-serif;
     font-size: 20px;
@@ -2015,119 +1848,8 @@
         ">0</span>
       </button>
 
-      <!-- ATTENDANCE（打刻機・アナログ時計・長針黒・短針赤） -->
-      <button class="home-cat-btn" onclick="goToAttendance()">
-        <svg width="52" height="62" viewBox="0 0 52 62" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <!-- カードスロット（上部） -->
-          <rect x="6" y="0" width="40" height="6" rx="2" fill="#ffffff" opacity="0.8"/>
-          <!-- カード（上から差し込み中） -->
-          <rect x="16" y="0" width="20" height="18" rx="2" fill="none" stroke="#ffffff" stroke-width="1.5"/>
-          <line x1="19" y1="6"  x2="33" y2="6"  stroke="#ffffff" stroke-width="1" opacity="0.6"/>
-          <line x1="19" y1="10" x2="33" y2="10" stroke="#ffffff" stroke-width="1" opacity="0.6"/>
-          <line x1="19" y1="14" x2="29" y2="14" stroke="#ffffff" stroke-width="1" opacity="0.6"/>
-          <!-- 本体 -->
-          <rect x="2" y="6" width="48" height="50" rx="6" fill="none" stroke="#ffffff" stroke-width="2"/>
-          <!-- アナログ時計 -->
-          <circle cx="26" cy="26" r="14" fill="none" stroke="#ffffff" stroke-width="1.5"/>
-          <!-- 目盛り（12,3,6,9） -->
-          <line x1="26" y1="13" x2="26" y2="16" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
-          <line x1="39" y1="26" x2="36" y2="26" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
-          <line x1="26" y1="39" x2="26" y2="36" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
-          <line x1="13" y1="26" x2="16" y2="26" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
-          <!-- 長針（黒） -->
-          <line x1="26" y1="26" x2="26" y2="14" stroke="#000000" stroke-width="2" stroke-linecap="round"/>
-          <!-- 短針（赤） -->
-          <line x1="26" y1="26" x2="18" y2="31" stroke="#cc2200" stroke-width="2" stroke-linecap="round"/>
-          <!-- 中心点 -->
-          <circle cx="26" cy="26" r="2" fill="#ffffff"/>
-          <!-- スタンプライン -->
-          <rect x="8" y="46" width="36" height="4" rx="2" fill="#ffffff" opacity="0.7"/>
-          <!-- 台座 -->
-          <rect x="0" y="54" width="52" height="4" rx="2" fill="#ffffff" opacity="0.5"/>
-        </svg>
-        <span class="label">ATTENDANCE</span>
-      </button>
-
     </div>
   </div>
-
-
-  <!-- ── Attendance: Punch Screen ── -->
-  <div class="punch-screen" id="punch-screen">
-    <div class="punch-greeting" id="punch-greeting">Good morning,</div>
-    <div class="punch-name" id="punch-name"></div>
-    <div class="punch-clock" id="punch-clock">--:--</div>
-    <div class="punch-date" id="punch-date"></div>
-    <button class="punch-btn in"  id="punch-in-btn"  onclick="confirmPunch('in')"  style="display:none;">&#10003; Clock In</button>
-    <button class="punch-btn out" id="punch-out-btn" onclick="confirmPunch('out')" style="display:none;">&#10003; Clock Out</button>
-    <button class="punch-cancel" onclick="closePunchScreen()" id="punch-cancel-lbl">Cancel</button>
-  </div>
-
-  <!-- ── Attendance: Punch Success Overlay ── -->
-  <div class="punch-success-overlay" id="punch-success-overlay">
-    <div class="punch-success-icon" id="punch-success-icon">&#10003;</div>
-    <div class="punch-success-title" id="punch-success-title">Clocked In!</div>
-    <div class="punch-success-detail" id="punch-success-detail"></div>
-    <button class="punch-success-close" onclick="closePunchSuccess()" id="punch-success-close-lbl">Back to Home</button>
-  </div>
-
-  <!-- ── Attendance: History Screen ── -->
-  <div class="att-history-screen" id="att-history-screen">
-    <div class="att-history-header">
-      <button class="att-history-back" onclick="closeAttHistory()">&#8592;</button>
-      <div class="att-history-title" id="att-history-title">My Attendance</div>
-    </div>
-    <select class="att-month-select" id="att-month-select" onchange="loadAttHistory()"></select>
-    <div class="att-history-list" id="att-history-list">
-      <div style="text-align:center;color:#9ca3af;padding:40px;font-size:14px;">Loading&#8230;</div>
-    </div>
-  </div>
-
-
-  <!-- ── Attendance Submenu ── -->
-  <div class="att-submenu" id="att-submenu">
-    <button class="lorry-back-btn" onclick="closeAttSubmenu()">&#8592; Home</button>
-    <div class="lorry-submenu-title">ATTENDANCE</div>
-    <div class="lorry-submenu-icons">
-      <button class="lorry-sub-btn" onclick="openQRScanner()">
-        <svg width="36" height="42" viewBox="0 0 52 62" fill="none">
-          <rect x="6" y="0" width="40" height="6" rx="2" fill="#ffffff" opacity="0.8"/>
-          <rect x="16" y="0" width="20" height="18" rx="2" fill="none" stroke="#ffffff" stroke-width="1.5"/>
-          <rect x="2" y="6" width="48" height="50" rx="6" fill="none" stroke="#ffffff" stroke-width="2"/>
-          <circle cx="26" cy="26" r="14" fill="none" stroke="#ffffff" stroke-width="1.5"/>
-          <line x1="26" y1="13" x2="26" y2="16" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
-          <line x1="39" y1="26" x2="36" y2="26" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
-          <line x1="26" y1="39" x2="26" y2="36" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
-          <line x1="13" y1="26" x2="16" y2="26" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
-          <line x1="26" y1="26" x2="26" y2="14" stroke="#000000" stroke-width="2" stroke-linecap="round"/>
-          <line x1="26" y1="26" x2="18" y2="31" stroke="#cc2200" stroke-width="2" stroke-linecap="round"/>
-          <circle cx="26" cy="26" r="2" fill="#ffffff"/>
-          <rect x="8" y="46" width="36" height="4" rx="2" fill="#ffffff" opacity="0.7"/>
-          <rect x="0" y="54" width="52" height="4" rx="2" fill="#ffffff" opacity="0.5"/>
-        </svg>
-        <span class="label">Attendance</span>
-      </button>
-      <button class="lorry-sub-btn" onclick="openAttHistory()">
-        <span class="icon">&#x1F4CB;</span>
-        <span class="label">History</span>
-      </button>
-    </div>
-  </div>
-
-  <!-- ── QR Scanner Screen ── -->
-  <div class="qr-scanner-screen" id="qr-scanner-screen">
-    <div class="qr-scanner-header">
-      <button class="qr-scanner-back" onclick="closeQRScanner()">&#8592;</button>
-      <div class="qr-scanner-title" id="qr-scanner-title">Scan QR Code</div>
-    </div>
-    <div class="qr-video-wrap">
-      <video id="qr-video" playsinline></video>
-      <canvas id="qr-canvas"></canvas>
-      <div class="qr-overlay"></div>
-      <div class="qr-status" id="qr-status">Point camera at QR code</div>
-    </div>
-  </div>
-
 
   <!-- ── 通知許可ポップアップ ── -->
   <div id="notif-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:250;align-items:center;justify-content:center;">
@@ -2737,23 +2459,6 @@
 
 </div><!-- .app -->
 
-<!-- ── Scan QR FAB（スタッフ向け） ── -->
-<button class="scan-qr-fab" id="scan-qr-fab" onclick="openQRScanner()">
-  <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-    <rect x="2" y="2" width="10" height="10" rx="2" stroke="#fff" stroke-width="2"/>
-    <rect x="16" y="2" width="10" height="10" rx="2" stroke="#fff" stroke-width="2"/>
-    <rect x="2" y="16" width="10" height="10" rx="2" stroke="#fff" stroke-width="2"/>
-    <rect x="5" y="5" width="4" height="4" fill="#fff"/>
-    <rect x="19" y="5" width="4" height="4" fill="#fff"/>
-    <rect x="5" y="19" width="4" height="4" fill="#fff"/>
-    <line x1="16" y1="16" x2="26" y2="16" stroke="#fff" stroke-width="2"/>
-    <line x1="26" y1="16" x2="26" y2="26" stroke="#fff" stroke-width="2"/>
-    <line x1="16" y1="26" x2="26" y2="26" stroke="#fff" stroke-width="2"/>
-    <line x1="16" y1="21" x2="21" y2="21" stroke="#fff" stroke-width="2"/>
-  </svg>
-</button>
-
-
 <!-- ── Pending Popup ── -->
 <div class="pending-popup-overlay" id="pending-popup-overlay" onclick="if(event.target===this)closePendingPopup()">
   <div class="pending-popup">
@@ -2850,8 +2555,8 @@ async function loadHolidays() {
 // ============================================================
 const STAFF_TYPE = {
   'Cheng Liang Chye':'Drive','Jennifer Ho':'Office','Kader Mydeen Seik':'Drive',
-  'Kuan Tee Tee':'Drive','Leong Weng Yuen':'Drive','Liu GuangYue':'Drive',
-  'Ng Chye Kim':'Drive','Ng Yew Huat':'Drive','Seah Tang Chew':'Drive',
+  'Kuan Tee Tee':'Office','Leong Weng Yuen':'Drive','Liu GuangYue':'Drive',
+  'Ng Chye Kim':'Office','Ng Yew Huat':'Drive','Seah Tang Chew':'Drive',
   'Shige Oike':'Office','Sim Soon Wah':'Drive','Sivabalan Arumugan':'Drive',
   'Tan Boon Long':'Drive','Tan Thiam Hock':'Drive','Tan Yew Seng':'Drive',
   'Tay Ban Liang':'Drive','Yau Soo Kee':'Office','Zhang Xianwei':'Drive'
@@ -3013,10 +2718,9 @@ async function loadBalance(name) {
       document.getElementById('bal-used').textContent      = data.used;
       document.getElementById('bal-pending').textContent   = data.pending;
       const clockBtn = document.getElementById('clock-btn');
-      if (data.pending > 0 && data.pendingFrom) {
+      if (data.pending > 0 && data.pendingItems && data.pendingItems.length > 0) {
         clockBtn.style.display  = 'inline-block';
-        clockBtn.dataset.from   = data.pendingFrom;
-        clockBtn.dataset.to     = data.pendingTo || data.pendingFrom;
+        clockBtn.dataset.items  = JSON.stringify(data.pendingItems);
         clockBtn.dataset.days   = data.pending;
       } else {
         clockBtn.style.display = 'none';
@@ -3161,10 +2865,8 @@ function syncDateToMin() {
 
 // ── Pending Popup ─────────────────────────────────────────────────
 function showPendingPopup() {
-  const btn  = document.getElementById('clock-btn');
-  const from = btn.dataset.from;
-  const to   = btn.dataset.to;
-  const days = btn.dataset.days;
+  const btn   = document.getElementById('clock-btn');
+  const items = JSON.parse(btn.dataset.items || '[]');
 
   function fmt(d) {
     if (!d) return '—';
@@ -3173,12 +2875,19 @@ function showPendingPopup() {
     return `${dd}-${['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][parseInt(m)-1]}-${y}`;
   }
 
-  let html = from === to
-    ? `<div class="pending-popup-row"><span>On</span><span>${fmt(from)}</span></div>
-       <div class="pending-popup-row"><span>Day</span><span>1</span></div>`
-    : `<div class="pending-popup-row"><span>From</span><span>${fmt(from)}</span></div>
-       <div class="pending-popup-row"><span>To</span><span>${fmt(to)}</span></div>
-       <div class="pending-popup-row"><span>Days</span><span>${days}</span></div>`;
+  let html = '';
+  items.forEach(function(item, idx) {
+    if (idx > 0) html += '<hr style="border:none;border-top:1px solid var(--border);margin:8px 0;">';
+    const from = item.from;
+    const to   = item.to;
+    const days = item.days;
+    html += from === to
+      ? `<div class="pending-popup-row"><span>On</span><span>${fmt(from)}</span></div>
+         <div class="pending-popup-row"><span>Day</span><span>${days}</span></div>`
+      : `<div class="pending-popup-row"><span>From</span><span>${fmt(from)}</span></div>
+         <div class="pending-popup-row"><span>To</span><span>${fmt(to)}</span></div>
+         <div class="pending-popup-row"><span>Days</span><span>${days}</span></div>`;
+  });
 
   document.getElementById('pending-popup-body').innerHTML = html;
   document.getElementById('pending-popup-overlay').classList.add('show');
@@ -3781,13 +3490,6 @@ function launchApp(name) {
       document.getElementById('notif-overlay').style.display = 'flex';
     }
   }
-  // QRコード読み取り後の打刻画面自動表示
-  if (window._pendingPunch && !isAdmin) {
-    setTimeout(() => { openPunchScreen(window._pendingPunch); window._pendingPunch = null; }, 800);
-  }
-  // スタッフ向けScan QR FABを表示
-  const fabEl = document.getElementById('scan-qr-fab');
-  if (fabEl) fabEl.classList.toggle('show', !isAdmin);
 }
 
 function goToApp(page) {
@@ -3866,17 +3568,6 @@ function showLorryPage(name, btn) {
 function goToInfo() {
   // Phase 2実装予定 — 現在は準備中メッセージをオーバーレイで表示
   showInfoOverlay();
-}
-
-// ── ATTENDANCE ───────────────────────────────────────────────
-function goToAttendance() {
-  document.getElementById('home-screen').classList.remove('show');
-  document.getElementById('att-submenu').classList.add('show');
-}
-
-function closeAttSubmenu() {
-  document.getElementById('att-submenu').classList.remove('show');
-  document.getElementById('home-screen').classList.add('show');
 }
 
 // 後方互換
@@ -5159,315 +4850,3 @@ async function loadPettyCashHistory() {
 </script>
 </body>
 </html>
-<script>
-// ============================================================
-// ── Attendance（打刻）機能 ─────────────────────────────────
-// ============================================================
-
-// !! ATTENDANCE GAS URL — デプロイ後に設定 !!
-const ATT_GAS_URL = 'https://script.google.com/macros/s/AKfycbxI81ieC-ITY4SN-kQZa0UcgX07Zc5SpGJFpbhW2R3hMs5Qz_VqiQNk4MdoliGA5EiuGg/exec';
-
-// i18n
-const ATT_T = {
-  en: {
-    greeting_morning: 'Good morning,',
-    greeting_afternoon: 'Good afternoon,',
-    greeting_evening: 'Good evening,',
-    clock_in: '✓ Clock In',
-    clock_out: '✓ Clock Out',
-    cancel: 'Cancel',
-    clocked_in: 'Clocked In!',
-    clocked_out: 'Clocked Out!',
-    back_home: 'Back to Home',
-    my_attendance: 'My Attendance',
-    clock_in_lbl: 'Clock In',
-    clock_out_lbl: 'Clock Out',
-    not_recorded: 'Not recorded',
-    flag_missing: '🚩 Missing punch',
-    error_submit: 'Failed to record. Please try again.',
-    error_load: 'Failed to load attendance data.'
-  },
-  zh: {
-    greeting_morning: '早上好，',
-    greeting_afternoon: '下午好，',
-    greeting_evening: '晚上好，',
-    clock_in: '✓ 上班打卡',
-    clock_out: '✓ 下班打卡',
-    cancel: '取消',
-    clocked_in: '上班已打卡！',
-    clocked_out: '下班已打卡！',
-    back_home: '返回主页',
-    my_attendance: '我的出勤记录',
-    clock_in_lbl: '上班',
-    clock_out_lbl: '下班',
-    not_recorded: '未记录',
-    flag_missing: '🚩 漏打卡',
-    error_submit: '记录失败，请重试。',
-    error_load: '无法加载出勤数据。'
-  },
-  ta: {
-    greeting_morning: 'காலை வணக்கம்,',
-    greeting_afternoon: 'மதிய வணக்கம்,',
-    greeting_evening: 'மாலை வணக்கம்,',
-    clock_in: '✓ வருகை பதிவு',
-    clock_out: '✓ புறப்பாடு பதிவு',
-    cancel: 'ரத்து செய்',
-    clocked_in: 'வருகை பதிவு செய்யப்பட்டது!',
-    clocked_out: 'புறப்பாடு பதிவு செய்யப்பட்டது!',
-    back_home: 'முகப்புக்கு திரும்பவும்',
-    my_attendance: 'என் வருகை பதிவு',
-    clock_in_lbl: 'வருகை',
-    clock_out_lbl: 'புறப்பாடு',
-    not_recorded: 'பதிவு இல்லை',
-    flag_missing: '🚩 பதிவு விடுபட்டது',
-    error_submit: 'பதிவு தோல்வியடைந்தது. மீண்டும் முயற்சிக்கவும்.',
-    error_load: 'தரவு ஏற்ற முடியவில்லை.'
-  }
-};
-
-let _punchType    = '';
-let _punchTimer   = null;
-
-// ── 時刻更新 ───────────────────────────────────────────────
-function updatePunchClock() {
-  const now = new Date();
-  const sgt = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Singapore' }));
-  const hh  = String(sgt.getHours()).padStart(2,'0');
-  const mm  = String(sgt.getMinutes()).padStart(2,'0');
-  const days   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const dateStr = days[sgt.getDay()] + ', ' + sgt.getDate() + ' ' + months[sgt.getMonth()] + ' ' + sgt.getFullYear();
-  const el = document.getElementById('punch-clock');
-  const de = document.getElementById('punch-date');
-  if (el) el.textContent = hh + ':' + mm;
-  if (de) de.textContent = dateStr;
-}
-
-// ── 挨拶文 ────────────────────────────────────────────────
-function getPunchGreeting(lang) {
-  const now = new Date();
-  const sgt = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Singapore' }));
-  const h   = sgt.getHours();
-  const t   = ATT_T[lang] || ATT_T.en;
-  if (h < 12) return t.greeting_morning;
-  if (h < 18) return t.greeting_afternoon;
-  return t.greeting_evening;
-}
-
-// ── 打刻画面を開く（URLパラメーターから呼び出し or ボタン） ─
-function openPunchScreen(type) {
-  const name = localStorage.getItem('j2hub_passkey_name') || '';
-  const lang = localStorage.getItem('j2hub_lang') || 'en';
-  const t    = ATT_T[lang] || ATT_T.en;
-  _punchType = type;
-
-  document.getElementById('punch-greeting').textContent = getPunchGreeting(lang);
-  document.getElementById('punch-name').textContent     = name;
-  document.getElementById('punch-cancel-lbl').textContent = t.cancel;
-
-  const inBtn  = document.getElementById('punch-in-btn');
-  const outBtn = document.getElementById('punch-out-btn');
-  inBtn.textContent  = t.clock_in;
-  outBtn.textContent = t.clock_out;
-
-  if (type === 'in') {
-    inBtn.style.display  = 'block';
-    outBtn.style.display = 'none';
-  } else {
-    inBtn.style.display  = 'none';
-    outBtn.style.display = 'block';
-  }
-
-  updatePunchClock();
-  _punchTimer = setInterval(updatePunchClock, 1000);
-  document.getElementById('punch-screen').classList.add('show');
-}
-
-function closePunchScreen() {
-  document.getElementById('punch-screen').classList.remove('show');
-  if (_punchTimer) { clearInterval(_punchTimer); _punchTimer = null; }
-}
-
-// ── 打刻実行 ───────────────────────────────────────────────
-async function confirmPunch(type) {
-  const name = localStorage.getItem('j2hub_passkey_name') || '';
-  const lang = localStorage.getItem('j2hub_lang') || 'en';
-  const t    = ATT_T[lang] || ATT_T.en;
-
-  const now = new Date();
-  const sgt = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Singapore' }));
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const dateStr = String(sgt.getDate()).padStart(2,'0') + '-' + months[sgt.getMonth()] + '-' + sgt.getFullYear();
-  const hh      = String(sgt.getHours()).padStart(2,'0');
-  const mm      = String(sgt.getMinutes()).padStart(2,'0');
-  const timeStr = hh + ':' + mm;
-
-  try {
-    await fetch(ATT_GAS_URL, {
-      method: 'POST',
-      cache:  'no-store',
-      body:   JSON.stringify({ action: 'punchAttendance', name, type, date: dateStr, time: timeStr })
-    });
-  } catch(e) {}
-
-  closePunchScreen();
-
-  // 成功画面
-  document.getElementById('punch-success-icon').textContent  = type === 'in' ? '✓' : '✓';
-  document.getElementById('punch-success-title').textContent = type === 'in' ? t.clocked_in : t.clocked_out;
-  document.getElementById('punch-success-detail').textContent = name + '\n' + dateStr + '  ' + timeStr;
-  document.getElementById('punch-success-close-lbl').textContent = t.back_home;
-  document.getElementById('punch-success-overlay').classList.add('show');
-}
-
-function closePunchSuccess() {
-  document.getElementById('punch-success-overlay').classList.remove('show');
-}
-
-// ── 打刻履歴画面 ───────────────────────────────────────────
-async function openAttHistory() {
-  const name = localStorage.getItem('j2hub_passkey_name') || '';
-  const lang = localStorage.getItem('j2hub_lang') || 'en';
-  const t    = ATT_T[lang] || ATT_T.en;
-  document.getElementById('att-history-title').textContent = t.my_attendance;
-
-  // GASから実績のある月一覧を取得
-  const sel = document.getElementById('att-month-select');
-  sel.innerHTML = '<option>Loading…</option>';
-  document.getElementById('att-history-screen').classList.add('show');
-
-  try {
-    const res  = await fetch(ATT_GAS_URL + '?action=getAttMonths&name=' + encodeURIComponent(name));
-    const data = await res.json();
-    sel.innerHTML = '';
-    if (data.months && data.months.length > 0) {
-      data.months.forEach(m => {
-        const opt = document.createElement('option');
-        opt.value = m.value; opt.textContent = m.label;
-        sel.appendChild(opt);
-      });
-      loadAttHistory();
-    } else {
-      sel.innerHTML = '<option value="">No records yet</option>';
-      document.getElementById('att-history-list').innerHTML =
-        '<div style="text-align:center;color:#9ca3af;padding:40px;font-size:14px;">No records found.</div>';
-    }
-  } catch(e) {
-    sel.innerHTML = '<option value="">Error loading</option>';
-  }
-}
-
-// ── QRスキャン画面を開く ───────────────────────────────────
-function openQRScanner() {
-  const screen = document.getElementById('qr-scanner-screen');
-  if (screen) screen.classList.add('show');
-  startQRCamera();
-}
-
-function closeQRScanner() {
-  stopQRCamera();
-  const screen = document.getElementById('qr-scanner-screen');
-  if (screen) screen.classList.remove('show');
-}
-
-let _qrStream = null;
-let _qrTimer  = null;
-
-async function startQRCamera() {
-  const video  = document.getElementById('qr-video');
-  const canvas = document.getElementById('qr-canvas');
-  const ctx    = canvas.getContext('2d');
-  try {
-    _qrStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-    video.srcObject = _qrStream;
-    video.play();
-    _qrTimer = setInterval(() => {
-      if (video.readyState === video.HAVE_ENOUGH_DATA) {
-        canvas.height = video.videoHeight;
-        canvas.width  = video.videoWidth;
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        // jsQRライブラリで解析
-        if (typeof jsQR !== 'undefined') {
-          const code = jsQR(imageData.data, imageData.width, imageData.height);
-          if (code && code.data) {
-            handleQRResult(code.data);
-          }
-        }
-      }
-    }, 300);
-  } catch(e) {
-    document.getElementById('qr-status').textContent = 'Camera not available. Please allow camera access.';
-  }
-}
-
-function stopQRCamera() {
-  if (_qrTimer) { clearInterval(_qrTimer); _qrTimer = null; }
-  if (_qrStream) { _qrStream.getTracks().forEach(t => t.stop()); _qrStream = null; }
-}
-
-function handleQRResult(url) {
-  stopQRCamera();
-  closeQRScanner();
-  try {
-    const u     = new URL(url);
-    const punch = u.searchParams.get('punch');
-    if (punch === 'in' || punch === 'out') {
-      openPunchScreen(punch);
-    }
-  } catch(e) {}
-}
-
-function closeAttHistory() {
-  document.getElementById('att-history-screen').classList.remove('show');
-}
-
-async function loadAttHistory() {
-  const name   = localStorage.getItem('j2hub_passkey_name') || '';
-  const lang   = localStorage.getItem('j2hub_lang') || 'en';
-  const t      = ATT_T[lang] || ATT_T.en;
-  const month  = document.getElementById('att-month-select').value;
-  const listEl = document.getElementById('att-history-list');
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-
-  listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;padding:40px;font-size:14px;">Loading…</div>';
-
-  try {
-    const res  = await fetch(ATT_GAS_URL + '?action=getAttHistory&name=' + encodeURIComponent(name) + '&month=' + month);
-    const data = await res.json();
-    if (!data.records || data.records.length === 0) {
-      listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;padding:40px;font-size:14px;">No records found.</div>';
-      return;
-    }
-    listEl.innerHTML = data.records.map(r => {
-      const inTime  = r.clockIn  || '<span style="color:#ef4444;">' + t.not_recorded + '</span>';
-      const outTime = r.clockOut || '<span style="color:#ef4444;">' + t.not_recorded + '</span>';
-      const flag    = r.flag ? '<div class="att-record-flag">' + t.flag_missing + '</div>' : '';
-      const hours   = r.hours ? '<div class="att-record-hours">' + r.hours + '</div>' : '';
-      return '<div class="att-record">' +
-        '<div class="att-record-left">' +
-          '<div class="att-record-date">' + r.date + '</div>' +
-          '<div class="att-record-times">' + t.clock_in_lbl + ': ' + inTime + '　' + t.clock_out_lbl + ': ' + outTime + '</div>' +
-        '</div>' +
-        '<div class="att-record-right">' + hours + flag + '</div>' +
-        '</div>';
-    }).join('');
-  } catch(e) {
-    listEl.innerHTML = '<div style="text-align:center;color:#ef4444;padding:40px;font-size:13px;">' + t.error_load + '</div>';
-  }
-}
-
-// ── URLパラメーター処理（QRコード読み取り後） ─────────────
-(function checkPunchParam() {
-  const params = new URLSearchParams(window.location.search);
-  const punch  = params.get('punch');
-  if (punch === 'in' || punch === 'out') {
-    // Passkey認証完了後に打刻画面を自動表示
-    window._pendingPunch = punch;
-  }
-})();
-
-// ============================================================
-// Attendance機能 ここまで
-// ============================================================
-</script>
