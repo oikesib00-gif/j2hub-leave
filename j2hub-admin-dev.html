@@ -12857,7 +12857,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       <div class="page-title-main">Attendance <em>Scan</em></div>
     </div>
     <div class="form-main" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:24px;">
-      <div id="att-scan-desc" style="font-family:'Open Sans',sans-serif;font-size:15px;color:#6b7280;text-align:center;line-height:1.8;"></div>
+      <div id="att-scan-desc" style="font-family:'Open Sans',sans-serif;font-size:15px;color:#6b7280;text-align:center;line-height:1.8;">Scan the QR code posted at your workplace.</div>
       <button onclick="openQRScanner()" style="width:180px;padding:18px 0;background:#003087;color:#fff;border:none;border-radius:50px;font-family:'Montserrat',sans-serif;font-size:16px;font-weight:800;cursor:pointer;">📷 Scan QR</button>
     </div>
   </div>
@@ -14033,18 +14033,10 @@ function goToAttendance() {
   const attPage = document.getElementById('page-attendance');
   if (attTab)  attTab.classList.add('active');
   if (attPage) attPage.classList.add('active');
-  const lang     = localStorage.getItem('j2hub_lang') || 'en';
-  const pname    = localStorage.getItem('j2hub_passkey_name') || '';
-  const t        = ATT_T[lang] || ATT_T.en;
-  const now      = new Date();
-  const sgt      = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Singapore' }));
-  const months   = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const dateStr  = String(sgt.getDate()).padStart(2,'0') + '-' + months[sgt.getMonth()] + '-' + sgt.getFullYear();
-  const cacheKey = 'att_punch_' + pname + '_' + dateStr;
-  const cached   = localStorage.getItem(cacheKey);
-  const type     = cached === 'in' ? 'out' : 'in';
-  const descEl   = document.getElementById('att-scan-desc');
-  if (descEl) descEl.textContent = type === 'in' ? t.scan_msg_in : t.scan_msg_out;
+  const lang   = localStorage.getItem('j2hub_lang') || 'en';
+  const t      = ATT_T[lang] || ATT_T.en;
+  const descEl = document.getElementById('att-scan-desc');
+  if (descEl) descEl.textContent = t.scan_desc;
 }
 
 function showAttPage(name, btn) {
@@ -14054,23 +14046,11 @@ function showAttPage(name, btn) {
   if (targetPage) targetPage.classList.add('active');
   if (btn) btn.classList.add('active');
   if (name === 'attendance') {
-    const lang     = localStorage.getItem('j2hub_lang') || 'en';
-    const pname    = localStorage.getItem('j2hub_passkey_name') || '';
-    const t        = ATT_T[lang] || ATT_T.en;
-    const now      = new Date();
-    const sgt      = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Singapore' }));
-    const months   = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const dateStr  = String(sgt.getDate()).padStart(2,'0') + '-' + months[sgt.getMonth()] + '-' + sgt.getFullYear();
-    const cacheKey = 'att_punch_' + pname + '_' + dateStr;
-    const cached   = localStorage.getItem(cacheKey);
-    const type     = cached === 'in' ? 'out' : 'in';
-    const descEl   = document.getElementById('att-scan-desc');
-    if (descEl) descEl.textContent = type === 'in' ? t.scan_msg_in : t.scan_msg_out;
+    const lang = localStorage.getItem('j2hub_lang') || 'en';
+    const t    = ATT_T[lang] || ATT_T.en;
+    const descEl = document.getElementById('att-scan-desc');
+    if (descEl) descEl.textContent = t.scan_desc;
   }
-}
-  const targetPage = document.getElementById('page-' + name);
-  if (targetPage) targetPage.classList.add('active');
-  if (btn) btn.classList.add('active');
 }
 
 function closeAttSubmenu() {
@@ -15595,7 +15575,6 @@ function openQRScanner() {
   const name = localStorage.getItem('j2hub_passkey_name') || '';
   const t    = ATT_T[lang] || ATT_T.en;
 
-  // Clock In/Out判断でメッセージを切替
   const now = new Date();
   const sgt = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Singapore' }));
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -15604,9 +15583,9 @@ function openQRScanner() {
   const cached   = localStorage.getItem(cacheKey);
   const type     = cached === 'in' ? 'out' : 'in';
 
-  const msgEl = document.getElementById('qr-scan-msg');
+  const msgEl   = document.getElementById('qr-scan-msg');
   const titleEl = document.getElementById('qr-scanner-title');
-  if (msgEl)   msgEl.textContent  = type === 'in' ? t.scan_msg_in  : t.scan_msg_out;
+  if (msgEl)   msgEl.textContent   = type === 'in' ? t.scan_msg_in  : t.scan_msg_out;
   if (titleEl) titleEl.textContent = t.scan_title || 'Scan QR Code';
 
   document.getElementById('qr-scanner-screen').classList.add('show');
@@ -15618,47 +15597,17 @@ function closeQRScanner() {
   document.getElementById('qr-scanner-screen').classList.remove('show');
 }
 
-// ── QR画像を選択・解析 ────────────────────────────────────
-function onQRFileSelected(input) {
-  if (!input.files || !input.files[0]) return;
-  const file   = input.files[0];
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const img = new Image();
-    img.onload = function() {
-      const canvas = document.createElement('canvas');
-      canvas.width  = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0);
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      if (typeof jsQR !== 'undefined') {
-        const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
-        if (code && code.data) {
-          closeQRScanner();
-          handleQRResult(code.data);
-          return;
-        }
-      }
-      // 読み取れなかった場合
-      const statusEl = document.getElementById('qr-status');
-      if (statusEl) statusEl.textContent = 'QR code not found. Please try again.';
-    };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
-}
-
 let _qrStream = null;
-let _qrRAF    = null;
+let _qrRAF   = null;
 
 function startQRCamera() {
   const video  = document.getElementById('qr-video');
   const canvas = document.getElementById('qr-canvas');
   const ctx    = canvas.getContext('2d');
+
   navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
     .then(function(stream) {
-      _qrStream       = stream;
+      _qrStream      = stream;
       video.srcObject = stream;
       video.play();
       video.addEventListener('loadedmetadata', function() {
@@ -15671,6 +15620,7 @@ function startQRCamera() {
       const msgEl = document.getElementById('qr-scan-msg');
       if (msgEl) msgEl.textContent = 'Camera not available.';
     });
+
   function scanFrame() {
     if (!_qrStream) return;
     if (video.readyState === video.HAVE_ENOUGH_DATA) {
@@ -15679,7 +15629,6 @@ function startQRCamera() {
       if (typeof jsQR !== 'undefined') {
         const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
         if (code && code.data) {
-          stopQRCamera();
           closeQRScanner();
           handleQRResult(code.data);
           return;
@@ -15692,9 +15641,9 @@ function startQRCamera() {
 
 function stopQRCamera() {
   if (_qrRAF)    { cancelAnimationFrame(_qrRAF); _qrRAF = null; }
-  if (_qrStream) { _qrStream.getTracks().forEach(function(t){ t.stop(); }); _qrStream = null; }
+  if (_qrStream) { _qrStream.getTracks().forEach(t => t.stop()); _qrStream = null; }
   const video = document.getElementById('qr-video');
-  if (video) video.srcObject = null;
+  if (video) { video.srcObject = null; }
 }
 
 function handleQRResult(url) {
