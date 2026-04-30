@@ -15470,7 +15470,7 @@ function getPunchGreeting(lang) {
 // ── 打刻画面を開く（URLパラメーターから呼び出し or ボタン） ─
 function openPunchScreen(type) {
   const name = localStorage.getItem('j2hub_passkey_name') || '';
-  const lang = localStorage.getItem('j2hub_lang') || 'en';
+  const lang = window.lang || 'en';
   const t    = ATT_T[lang] || ATT_T.en;
   _punchType = type;
 
@@ -15504,7 +15504,7 @@ function closePunchScreen() {
 // ── 打刻実行 ───────────────────────────────────────────────
 function confirmPunch(type) {
   const name = localStorage.getItem('j2hub_passkey_name') || '';
-  const lang = localStorage.getItem('j2hub_lang') || 'en';
+  const lang = window.lang || 'en';
   const t    = ATT_T[lang] || ATT_T.en;
 
   const now = new Date();
@@ -15560,7 +15560,7 @@ async function prefetchAttHistory(name) {
 // ── 打刻履歴画面を開く ────────────────────────────────────
 function openAttHistory() {
   const name = localStorage.getItem('j2hub_passkey_name') || '';
-  const lang = localStorage.getItem('j2hub_lang') || 'en';
+  const lang = window.lang || 'en';
   const t    = ATT_T[lang] || ATT_T.en;
 
   // 月プルダウン生成（当月から過去6ヶ月）
@@ -15703,7 +15703,7 @@ function handleQRResult(url) {
   if (url.indexOf('j2hub-admin-dev.html') === -1 && url.indexOf('j2hub-leave-app') === -1) return;
 
   const name = localStorage.getItem('j2hub_passkey_name') || '';
-  const lang = localStorage.getItem('j2hub_lang') || 'en';
+  const lang = window.lang || 'en';
   const t    = ATT_T[lang] || ATT_T.en;
 
   const now = new Date();
@@ -15760,7 +15760,7 @@ function closeAttHistory() {
 
 async function loadAttHistory() {
   const name   = localStorage.getItem('j2hub_passkey_name') || '';
-  const lang   = localStorage.getItem('j2hub_lang') || 'en';
+  const lang = window.lang || 'en';
   const t      = ATT_T[lang] || ATT_T.en;
   const sel    = document.getElementById('att-month-select');
   const month  = sel ? sel.value : '';
