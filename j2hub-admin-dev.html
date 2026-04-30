@@ -13093,6 +13093,7 @@ let lang = 'en', halfday = false, selectedType = 'Annual';
 
 function setLang(l, btn) {
   lang = l;
+  localStorage.setItem('j2hub_lang', l);
   document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   apply();
