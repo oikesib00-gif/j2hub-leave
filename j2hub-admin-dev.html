@@ -12226,11 +12226,11 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       <button class="qr-scanner-back" onclick="closeQRScanner()">&#8592;</button>
       <div class="qr-scanner-title" id="qr-scanner-title">Scan QR Code</div>
     </div>
-    <div class="qr-video-wrap">
-      <video id="qr-video" autoplay playsinline muted></video>
-      <canvas id="qr-canvas"></canvas>
-      <div class="qr-overlay"></div>
-      <div class="qr-status" id="qr-scan-msg"></div>
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:24px;padding:32px;">
+      <div id="qr-scan-msg" style="font-family:'Open Sans',sans-serif;font-size:16px;color:rgba(255,255,255,0.9);text-align:center;line-height:1.7;"></div>
+      <input type="file" id="qr-file-input" accept="image/*" capture="environment" style="display:none;" onchange="onQRFileSelected(this)">
+      <button onclick="document.getElementById('qr-file-input').click()" style="width:200px;padding:18px 0;background:#00c853;color:#fff;border:none;border-radius:50px;font-family:'Montserrat',sans-serif;font-size:17px;font-weight:800;cursor:pointer;" id="qr-scan-btn">📷 Scan</button>
+      <div id="qr-status" style="font-family:'Open Sans',sans-serif;font-size:13px;color:rgba(255,255,255,0.6);text-align:center;"></div>
     </div>
   </div>
 
@@ -14033,10 +14033,19 @@ function goToAttendance() {
   const attPage = document.getElementById('page-attendance');
   if (attTab)  attTab.classList.add('active');
   if (attPage) attPage.classList.add('active');
-  const lang   = localStorage.getItem('j2hub_lang') || 'en';
-  const t      = ATT_T[lang] || ATT_T.en;
-  const descEl = document.getElementById('att-scan-desc');
-  if (descEl) descEl.textContent = t.scan_desc;
+  // 3言語対応：出退勤判断で文言切替
+  const _lang = localStorage.getItem('j2hub_lang') || 'en';
+  const _t    = ATT_T[_lang] || ATT_T.en;
+  const _name = localStorage.getItem('j2hub_passkey_name') || '';
+  const _now  = new Date();
+  const _sgt  = new Date(_now.toLocaleString('en-US', { timeZone: 'Asia/Singapore' }));
+  const _mons = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const _ds   = String(_sgt.getDate()).padStart(2,'0') + '-' + _mons[_sgt.getMonth()] + '-' + _sgt.getFullYear();
+  const _ck   = 'att_punch_' + _name + '_' + _ds;
+  const _cached = localStorage.getItem(_ck);
+  const _type   = _cached === 'in' ? 'out' : 'in';
+  const _descEl = document.getElementById('att-scan-desc');
+  if (_descEl) _descEl.textContent = _type === 'in' ? _t.scan_msg_in : _t.scan_msg_out;
 }
 
 function showAttPage(name, btn) {
@@ -14045,11 +14054,20 @@ function showAttPage(name, btn) {
   const targetPage = document.getElementById('page-' + name);
   if (targetPage) targetPage.classList.add('active');
   if (btn) btn.classList.add('active');
+  // 3言語対応：attendance画面の文言切替
   if (name === 'attendance') {
-    const lang = localStorage.getItem('j2hub_lang') || 'en';
-    const t    = ATT_T[lang] || ATT_T.en;
-    const descEl = document.getElementById('att-scan-desc');
-    if (descEl) descEl.textContent = t.scan_desc;
+    const _lang2 = localStorage.getItem('j2hub_lang') || 'en';
+    const _t2    = ATT_T[_lang2] || ATT_T.en;
+    const _name2 = localStorage.getItem('j2hub_passkey_name') || '';
+    const _now2  = new Date();
+    const _sgt2  = new Date(_now2.toLocaleString('en-US', { timeZone: 'Asia/Singapore' }));
+    const _mons2 = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const _ds2   = String(_sgt2.getDate()).padStart(2,'0') + '-' + _mons2[_sgt2.getMonth()] + '-' + _sgt2.getFullYear();
+    const _ck2   = 'att_punch_' + _name2 + '_' + _ds2;
+    const _cached2 = localStorage.getItem(_ck2);
+    const _type2   = _cached2 === 'in' ? 'out' : 'in';
+    const _descEl2 = document.getElementById('att-scan-desc');
+    if (_descEl2) _descEl2.textContent = _type2 === 'in' ? _t2.scan_msg_in : _t2.scan_msg_out;
   }
 }
 
@@ -15358,7 +15376,6 @@ const ATT_T = {
     clocked_out: 'Clocked Out!',
     msg_in: "Let's have a great day together!",
     msg_out: 'Thank you for your hard work today. Now it is time to take a rest.',
-    scan_desc: 'Scan the QR code posted at your workplace.',
     scan_title: 'Scan QR Code',
     scan_msg_in:  'Please scan the QR Code to Clock In.',
     scan_msg_out: 'Please scan the QR Code to Clock Out.',
@@ -15382,7 +15399,6 @@ const ATT_T = {
     clocked_out: '下班已打卡！',
     msg_in: '今天也请多多加油！',
     msg_out: '辛苦了！好好休息吧。',
-    scan_desc: '请扫描张贴在工作场所的二维码。',
     scan_title: '扫描二维码',
     scan_msg_in:  '请扫描二维码打上班卡。',
     scan_msg_out: '请扫描二维码打下班卡。',
@@ -15406,7 +15422,6 @@ const ATT_T = {
     clocked_out: 'புறப்பாடு பதிவு செய்யப்பட்டது!',
     msg_in: 'இன்றும் சிறப்பாக பணியாற்றுவோம்!',
     msg_out: 'இன்றைய உழைப்பிற்கு நன்றி. இப்போது ஓய்வெடுங்கள்.',
-    scan_desc: 'உங்கள் பணியிடத்தில் ஒட்டப்பட்ட QR குறியீட்டை ஸ்கேன் செய்யவும்.',
     scan_title: 'QR குறியீட்டை ஸ்கேன் செய்யவும்',
     scan_msg_in:  'வருகை பதிவு செய்ய QR குறியீட்டை ஸ்கேன் செய்யவும்.',
     scan_msg_out: 'புறப்பாடு பதிவு செய்ய QR குறியீட்டை ஸ்கேன் செய்யவும்.',
@@ -15575,6 +15590,7 @@ function openQRScanner() {
   const name = localStorage.getItem('j2hub_passkey_name') || '';
   const t    = ATT_T[lang] || ATT_T.en;
 
+  // Clock In/Out判断でメッセージを切替
   const now = new Date();
   const sgt = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Singapore' }));
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -15583,48 +15599,35 @@ function openQRScanner() {
   const cached   = localStorage.getItem(cacheKey);
   const type     = cached === 'in' ? 'out' : 'in';
 
-  const msgEl   = document.getElementById('qr-scan-msg');
+  const msgEl = document.getElementById('qr-scan-msg');
   const titleEl = document.getElementById('qr-scanner-title');
-  if (msgEl)   msgEl.textContent   = type === 'in' ? t.scan_msg_in  : t.scan_msg_out;
+  if (msgEl)   msgEl.textContent  = type === 'in' ? t.scan_msg_in  : t.scan_msg_out;
   if (titleEl) titleEl.textContent = t.scan_title || 'Scan QR Code';
 
+  // ファイル入力リセット
+  const inp = document.getElementById('qr-file-input');
+  if (inp) inp.value = '';
+
   document.getElementById('qr-scanner-screen').classList.add('show');
-  startQRCamera();
 }
 
 function closeQRScanner() {
-  stopQRCamera();
   document.getElementById('qr-scanner-screen').classList.remove('show');
 }
 
-let _qrStream = null;
-let _qrRAF   = null;
-
-function startQRCamera() {
-  const video  = document.getElementById('qr-video');
-  const canvas = document.getElementById('qr-canvas');
-  const ctx    = canvas.getContext('2d');
-
-  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-    .then(function(stream) {
-      _qrStream      = stream;
-      video.srcObject = stream;
-      video.play();
-      video.addEventListener('loadedmetadata', function() {
-        canvas.width  = video.videoWidth;
-        canvas.height = video.videoHeight;
-        scanFrame();
-      });
-    })
-    .catch(function(err) {
-      const msgEl = document.getElementById('qr-scan-msg');
-      if (msgEl) msgEl.textContent = 'Camera not available.';
-    });
-
-  function scanFrame() {
-    if (!_qrStream) return;
-    if (video.readyState === video.HAVE_ENOUGH_DATA) {
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+// ── QR画像を選択・解析 ────────────────────────────────────
+function onQRFileSelected(input) {
+  if (!input.files || !input.files[0]) return;
+  const file   = input.files[0];
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      canvas.width  = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       if (typeof jsQR !== 'undefined') {
         const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
@@ -15634,17 +15637,18 @@ function startQRCamera() {
           return;
         }
       }
-    }
-    _qrRAF = requestAnimationFrame(scanFrame);
-  }
+      // 読み取れなかった場合
+      const statusEl = document.getElementById('qr-status');
+      if (statusEl) statusEl.textContent = 'QR code not found. Please try again.';
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
 }
 
-function stopQRCamera() {
-  if (_qrRAF)    { cancelAnimationFrame(_qrRAF); _qrRAF = null; }
-  if (_qrStream) { _qrStream.getTracks().forEach(t => t.stop()); _qrStream = null; }
-  const video = document.getElementById('qr-video');
-  if (video) { video.srcObject = null; }
-}
+// stopQRCamera互換（不要になったが参照箇所のため残す）
+function stopQRCamera() {}
+function startQRCamera() {}
 
 function handleQRResult(url) {
   stopQRCamera();
