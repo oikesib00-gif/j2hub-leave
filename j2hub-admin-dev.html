@@ -13093,7 +13093,6 @@ let lang = 'en', halfday = false, selectedType = 'Annual';
 
 function setLang(l, btn) {
   lang = l;
-  localStorage.setItem('j2hub_lang', l);
   document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   apply();
@@ -14035,8 +14034,7 @@ function goToAttendance() {
   if (attTab)  attTab.classList.add('active');
   if (attPage) attPage.classList.add('active');
   // 3言語対応：出退勤判断で文言切替
-  const _lang = localStorage.getItem('j2hub_lang') || 'en';
-  const _t    = ATT_T[_lang] || ATT_T.en;
+  const _t    = ATT_T[lang] || ATT_T.en;
   const _name = localStorage.getItem('j2hub_passkey_name') || '';
   const _now  = new Date();
   const _sgt  = new Date(_now.toLocaleString('en-US', { timeZone: 'Asia/Singapore' }));
@@ -14057,8 +14055,7 @@ function showAttPage(name, btn) {
   if (btn) btn.classList.add('active');
   // 3言語対応：attendance画面の文言切替
   if (name === 'attendance') {
-    const _lang2 = localStorage.getItem('j2hub_lang') || 'en';
-    const _t2    = ATT_T[_lang2] || ATT_T.en;
+    const _t2    = ATT_T[lang] || ATT_T.en;
     const _name2 = localStorage.getItem('j2hub_passkey_name') || '';
     const _now2  = new Date();
     const _sgt2  = new Date(_now2.toLocaleString('en-US', { timeZone: 'Asia/Singapore' }));
