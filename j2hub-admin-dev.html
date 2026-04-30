@@ -12226,12 +12226,13 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       <button class="qr-scanner-back" onclick="closeQRScanner()">&#8592;</button>
       <div class="qr-scanner-title" id="qr-scanner-title">Scan QR Code</div>
     </div>
-    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:24px;padding:32px;">
-      <div id="qr-scan-msg" style="font-family:'Open Sans',sans-serif;font-size:16px;color:rgba(255,255,255,0.9);text-align:center;line-height:1.7;"></div>
-      <input type="file" id="qr-file-input" accept="image/*" capture="environment" style="display:none;" onchange="onQRFileSelected(this)">
-      <button onclick="document.getElementById('qr-file-input').click()" style="width:200px;padding:18px 0;background:#00c853;color:#fff;border:none;border-radius:50px;font-family:'Montserrat',sans-serif;font-size:17px;font-weight:800;cursor:pointer;" id="qr-scan-btn">📷 Scan</button>
-      <div id="qr-status" style="font-family:'Open Sans',sans-serif;font-size:13px;color:rgba(255,255,255,0.6);text-align:center;"></div>
+    <div class="qr-video-wrap">
+      <video id="qr-video" autoplay playsinline muted></video>
+      <canvas id="qr-canvas"></canvas>
+      <div class="qr-overlay"></div>
+      <div class="qr-status" id="qr-status"></div>
     </div>
+    <div id="qr-scan-msg" style="position:absolute;bottom:100px;left:0;right:0;font-family:'Open Sans',sans-serif;font-size:15px;color:rgba(255,255,255,0.9);text-align:center;line-height:1.7;padding:0 20px;"></div>
   </div>
 
 
@@ -12857,7 +12858,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       <div class="page-title-main">Attendance <em>Scan</em></div>
     </div>
     <div class="form-main" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:24px;">
-      <div style="font-family:'Open Sans',sans-serif;font-size:15px;color:#6b7280;text-align:center;line-height:1.8;">Scan the QR code posted at your workplace.</div>
+      <div id="att-scan-desc" data-key="att_scan_in" style="font-family:'Open Sans',sans-serif;font-size:15px;color:#6b7280;text-align:center;line-height:1.8;">Please scan the QR Code to Clock In.</div>
       <button onclick="openQRScanner()" style="width:180px;padding:18px 0;background:#003087;color:#fff;border:none;border-radius:50px;font-family:'Montserrat',sans-serif;font-size:16px;font-weight:800;cursor:pointer;">📷 Scan QR</button>
     </div>
   </div>
@@ -13034,6 +13035,8 @@ const T = {
     suc_title:'Submitted!', suc_close:'Back to Home',
     suc_detail:(n,t,f,to)=>`${n}'s ${t} leave\n${f} → ${to}\nhas been submitted for approval.`,
     reason_ph:'Briefly describe the reason…',
+    att_scan_in:'Please scan the QR Code to Clock In.',
+    att_scan_out:'Please scan the QR Code to Clock Out.',
   },
   zh: {
     nav_leave:'请假', nav_history:'记录', nav_notices:'公告',
@@ -13060,6 +13063,8 @@ const T = {
     suc_title:'提交成功！', suc_close:'返回主页',
     suc_detail:(n,t,f,to)=>`${n} 的${t}\n${f} → ${to}\n已提交，等待审批。`,
     reason_ph:'请简述原因…',
+    att_scan_in:'请扫描二维码打上班卡。',
+    att_scan_out:'请扫描二维码打下班卡。',
   },
   ta: {
     nav_leave:'விடுப்பு', nav_history:'வரலாறு', nav_notices:'அறிவிப்பு',
@@ -13086,6 +13091,8 @@ const T = {
     suc_title:'சமர்ப்பிக்கப்பட்டது!', suc_close:'முகப்பிற்கு திரும்பவும்',
     suc_detail:(n,t,f,to)=>`${n} அவர்களின் ${t}\n${f} → ${to}\nஒப்புதலுக்காக சமர்ப்பிக்கப்பட்டது.`,
     reason_ph:'காரணத்தை சுருக்கமாக விவரிக்கவும்…',
+    att_scan_in:'வருகை பதிவு செய்ய QR குறியீட்டை ஸ்கேன் செய்யவும்.',
+    att_scan_out:'புறப்பாடு பதிவு செய்ய QR குறியீட்டை ஸ்கேன் செய்யவும்.',
   }
 };
 
@@ -14033,6 +14040,17 @@ function goToAttendance() {
   const attPage = document.getElementById('page-attendance');
   if (attTab)  attTab.classList.add('active');
   if (attPage) attPage.classList.add('active');
+  // 出退勤判断でdata-keyを切替→apply()で3言語対応
+  const _name = localStorage.getItem('j2hub_passkey_name') || '';
+  const _now  = new Date();
+  const _sgt  = new Date(_now.toLocaleString('en-US', { timeZone: 'Asia/Singapore' }));
+  const _mons = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const _ds   = String(_sgt.getDate()).padStart(2,'0') + '-' + _mons[_sgt.getMonth()] + '-' + _sgt.getFullYear();
+  const _ck   = 'att_punch_' + _name + '_' + _ds;
+  const _cached = localStorage.getItem(_ck);
+  const _type   = _cached === 'in' ? 'out' : 'in';
+  const _descEl = document.getElementById('att-scan-desc');
+  if (_descEl) { _descEl.dataset.key = _type === 'in' ? 'att_scan_in' : 'att_scan_out'; apply(); }
 }
 
 function showAttPage(name, btn) {
@@ -14041,6 +14059,18 @@ function showAttPage(name, btn) {
   const targetPage = document.getElementById('page-' + name);
   if (targetPage) targetPage.classList.add('active');
   if (btn) btn.classList.add('active');
+  if (name === 'attendance') {
+    const _name2 = localStorage.getItem('j2hub_passkey_name') || '';
+    const _now2  = new Date();
+    const _sgt2  = new Date(_now2.toLocaleString('en-US', { timeZone: 'Asia/Singapore' }));
+    const _mons2 = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const _ds2   = String(_sgt2.getDate()).padStart(2,'0') + '-' + _mons2[_sgt2.getMonth()] + '-' + _sgt2.getFullYear();
+    const _ck2   = 'att_punch_' + _name2 + '_' + _ds2;
+    const _cached2 = localStorage.getItem(_ck2);
+    const _type2   = _cached2 === 'in' ? 'out' : 'in';
+    const _descEl2 = document.getElementById('att-scan-desc');
+    if (_descEl2) { _descEl2.dataset.key = _type2 === 'in' ? 'att_scan_in' : 'att_scan_out'; apply(); }
+  }
 }
 
 function closeAttSubmenu() {
@@ -15558,7 +15588,6 @@ function openAttHistory() {
 
 // ── QRスキャン画面を開く ───────────────────────────────────
 function openQRScanner() {
-  const lang = localStorage.getItem('j2hub_lang') || 'en';
   const name = localStorage.getItem('j2hub_passkey_name') || '';
   const t    = ATT_T[lang] || ATT_T.en;
 
@@ -15571,19 +15600,17 @@ function openQRScanner() {
   const cached   = localStorage.getItem(cacheKey);
   const type     = cached === 'in' ? 'out' : 'in';
 
-  const msgEl = document.getElementById('qr-scan-msg');
+  const msgEl   = document.getElementById('qr-scan-msg');
   const titleEl = document.getElementById('qr-scanner-title');
   if (msgEl)   msgEl.textContent  = type === 'in' ? t.scan_msg_in  : t.scan_msg_out;
   if (titleEl) titleEl.textContent = t.scan_title || 'Scan QR Code';
 
-  // ファイル入力リセット
-  const inp = document.getElementById('qr-file-input');
-  if (inp) inp.value = '';
-
   document.getElementById('qr-scanner-screen').classList.add('show');
+  startQRCamera();
 }
 
 function closeQRScanner() {
+  stopQRCamera();
   document.getElementById('qr-scanner-screen').classList.remove('show');
 }
 
@@ -15618,9 +15645,56 @@ function onQRFileSelected(input) {
   reader.readAsDataURL(file);
 }
 
-// stopQRCamera互換（不要になったが参照箇所のため残す）
-function stopQRCamera() {}
-function startQRCamera() {}
+// stopQRCamera・startQRCamera — リアルタイムQRスキャン
+let _qrStream = null;
+let _qrRafId  = null;
+
+function startQRCamera() {
+  const video  = document.getElementById('qr-video');
+  const canvas = document.getElementById('qr-canvas');
+  if (!video || !canvas) return;
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+    .then(function(stream) {
+      _qrStream = stream;
+      video.srcObject = stream;
+      video.play();
+      video.addEventListener('loadedmetadata', function() {
+        canvas.width  = video.videoWidth;
+        canvas.height = video.videoHeight;
+        _scanFrame();
+      });
+    })
+    .catch(function(err) {
+      const st = document.getElementById('qr-status');
+      if (st) st.textContent = 'Camera error: ' + err.message;
+    });
+}
+
+function _scanFrame() {
+  const video  = document.getElementById('qr-video');
+  const canvas = document.getElementById('qr-canvas');
+  if (!video || !canvas || !_qrStream) return;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  if (typeof jsQR !== 'undefined') {
+    const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
+    if (code && code.data) {
+      stopQRCamera();
+      closeQRScanner();
+      handleQRResult(code.data);
+      return;
+    }
+  }
+  _qrRafId = requestAnimationFrame(_scanFrame);
+}
+
+function stopQRCamera() {
+  if (_qrRafId)  { cancelAnimationFrame(_qrRafId); _qrRafId = null; }
+  if (_qrStream) { _qrStream.getTracks().forEach(function(t){ t.stop(); }); _qrStream = null; }
+  const video = document.getElementById('qr-video');
+  if (video) { video.srcObject = null; }
+}
 
 function handleQRResult(url) {
   stopQRCamera();
