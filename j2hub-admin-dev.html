@@ -12858,8 +12858,9 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       <div class="page-title-main">Attendance <em>Scan</em></div>
     </div>
     <div class="form-main" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:24px;">
-      <div id="att-scan-desc" data-key="att_scan_in" style="font-family:'Open Sans',sans-serif;font-size:15px;color:#6b7280;text-align:center;line-height:1.8;">Please scan the QR Code to Clock In.</div>
-      <button onclick="openQRScanner()" style="width:180px;padding:18px 0;background:#003087;color:#fff;border:none;border-radius:50px;font-family:'Montserrat',sans-serif;font-size:16px;font-weight:800;cursor:pointer;">📷 Scan QR</button>
+      <div style="font-family:'Open Sans',sans-serif;font-size:15px;color:#6b7280;text-align:center;line-height:1.8;">Select Clock In or Clock Out, then scan your QR Code.</div>
+      <button onclick="openQRScanner('in')" style="width:220px;padding:18px 0;background:#003087;color:#fff;border:none;border-radius:50px;font-family:'Montserrat',sans-serif;font-size:16px;font-weight:800;cursor:pointer;">&#10003; Clock In</button>
+      <button onclick="openQRScanner('out')" style="width:220px;padding:18px 0;background:#e65c00;color:#fff;border:none;border-radius:50px;font-family:'Montserrat',sans-serif;font-size:16px;font-weight:800;cursor:pointer;">&#10003; Clock Out</button>
     </div>
   </div>
 
@@ -12873,6 +12874,10 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     </div>
     <div class="form-main">
       <select class="att-month-select" id="att-month-select" onchange="loadAttHistory()" style="margin:16px 0;padding:10px 14px;border-radius:10px;border:1.5px solid #dde3ee;font-family:'Open Sans',sans-serif;font-size:14px;background:#fff;color:#1a1a2e;width:100%;"></select>
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <button id="att-sort-desc" onclick="setAttSort('desc')" style="flex:1;padding:8px 0;border-radius:8px;border:1.5px solid #003087;background:#003087;color:#fff;font-family:'Montserrat',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">&#8595; 新しい順</button>
+        <button id="att-sort-asc"  onclick="setAttSort('asc')"  style="flex:1;padding:8px 0;border-radius:8px;border:1.5px solid #dde3ee;background:#fff;color:#003087;font-family:'Montserrat',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">&#8593; 古い順</button>
+      </div>
       <div id="att-history-list"><div style="text-align:center;color:#9ca3af;padding:40px;font-size:14px;">Loading…</div></div>
     </div>
   </div>
@@ -15590,18 +15595,11 @@ function openAttHistory() {
 }
 
 // ── QRスキャン画面を開く ───────────────────────────────────
-function openQRScanner() {
-  const name = localStorage.getItem('j2hub_passkey_name') || '';
-  const t    = ATT_T[lang] || ATT_T.en;
+function openQRScanner(type) {
+  const t = ATT_T[lang] || ATT_T.en;
 
-  // Clock In/Out判断でメッセージを切替
-  const now = new Date();
-  const sgt = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Singapore' }));
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const dateStr = String(sgt.getDate()).padStart(2,'0') + '-' + months[sgt.getMonth()] + '-' + sgt.getFullYear();
-  const cacheKey = 'att_punch_' + name + '_' + dateStr;
-  const cached   = localStorage.getItem(cacheKey);
-  const type     = cached === 'in' ? 'out' : 'in';
+  // ユーザーが選択したtypeを保持
+  window._attPunchType = type;
 
   const msgEl   = document.getElementById('qr-scan-msg');
   const titleEl = document.getElementById('qr-scanner-title');
@@ -15716,9 +15714,8 @@ function handleQRResult(url) {
   const mm      = String(sgt.getMinutes()).padStart(2,'0');
   const timeStr = hh + ':' + mm;
 
-  // att_statusキャッシュから次のtype取得（なければ'in'）
-  const statusKey = 'att_status_' + name;
-  const type      = localStorage.getItem(statusKey) || 'in';
+  // ユーザーがボタンで選択したtypeを使用
+  const type = window._attPunchType || 'in';
 
   // 即時表示
   const overlay = document.getElementById('punch-success-overlay');
@@ -15730,15 +15727,11 @@ function handleQRResult(url) {
   document.getElementById('punch-success-msg').textContent    = type === 'in' ? t.msg_in : t.msg_out;
   document.getElementById('punch-success-close-lbl').textContent = t.back_home;
 
-  // GASに送信 → レスポンスのnextTypeでキャッシュ更新
+  // GASに送信（typeを明示的に送る）
   fetch(ATT_GAS_URL, {
     method: 'POST',
     cache:  'no-store',
-    body:   JSON.stringify({ action: 'punchAttendance', name, date: dateStr, time: timeStr })
-  })
-  .then(r => r.json())
-  .then(d => {
-    if (d.nextType) localStorage.setItem(statusKey, d.nextType);
+    body:   JSON.stringify({ action: 'punchAttendance', name, type, date: dateStr, time: timeStr })
   })
   .catch(() => {});
 }
@@ -15772,12 +15765,29 @@ async function loadAttHistory() {
   } catch(e) {}
 }
 
+let _attSortOrder = 'desc';
+let _attLastRecords = [];
+let _attLastT = null;
+
+function setAttSort(order) {
+  _attSortOrder = order;
+  const btnDesc = document.getElementById('att-sort-desc');
+  const btnAsc  = document.getElementById('att-sort-asc');
+  if (btnDesc) { btnDesc.style.background = order === 'desc' ? '#003087' : '#fff'; btnDesc.style.color = order === 'desc' ? '#fff' : '#003087'; btnDesc.style.borderColor = order === 'desc' ? '#003087' : '#dde3ee'; }
+  if (btnAsc)  { btnAsc.style.background  = order === 'asc'  ? '#003087' : '#fff'; btnAsc.style.color  = order === 'asc'  ? '#fff' : '#003087'; btnAsc.style.borderColor  = order === 'asc'  ? '#003087' : '#dde3ee'; }
+  const listEl = document.getElementById('att-history-list');
+  if (listEl && _attLastT) renderAttHistory(_attLastRecords, listEl, _attLastT);
+}
+
 function renderAttHistory(records, listEl, t) {
+  _attLastRecords = records || [];
+  _attLastT = t;
   if (!records || records.length === 0) {
     listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:32px;font-size:13px;">No records found.</div>';
     return;
   }
-  listEl.innerHTML = records.map(r => {
+  const sorted = _attSortOrder === 'asc' ? records.slice().reverse() : records.slice();
+  listEl.innerHTML = sorted.map(r => {
     const inTime  = r.clockIn  || '—';
     const outTime = r.clockOut || '—';
     const hasOut  = !!r.clockOut;
