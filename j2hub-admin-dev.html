@@ -13109,6 +13109,9 @@ function setLang(l, btn) {
   btn.classList.add('active');
   apply();
   inspApplyLang(l);
+  // Attendance系も言語更新
+  loadAttStatusHighlight();
+  setAttSort(_attSortOrder);
 }
 
 function apply() {
@@ -15595,15 +15598,17 @@ function openAttHistory() {
 function loadAttStatusHighlight() {
   const name = localStorage.getItem('j2hub_passkey_name') || '';
   const t    = ATT_T[lang] || ATT_T.en;
+  // 説明文を言語に合わせて更新
   const descEl = document.getElementById('att-scan-desc');
   if (descEl) descEl.textContent = t.att_scan_desc || 'Select Clock In or Clock Out, then scan your QR Code.';
-  // まずデフォルト（両方同じ見た目）
-  _setAttHighlight(null);
-  if (!name) return;
-  fetch(ATT_GAS_URL + '?action=getAttStatus&name=' + encodeURIComponent(name))
-    .then(r => r.json())
-    .then(d => { if (d.nextType) _setAttHighlight(d.nextType); })
-    .catch(() => {});
+  // ボタンラベルを言語に合わせて更新
+  const btnIn  = document.getElementById('att-btn-in');
+  const btnOut = document.getElementById('att-btn-out');
+  if (btnIn)  btnIn.textContent  = t.clock_in  || '✓ Clock In';
+  if (btnOut) btnOut.textContent = t.clock_out || '✓ Clock Out';
+  // キャッシュから即時ハイライト（GASへのfetchなし）
+  const nextType = localStorage.getItem('att_status_' + name) || 'in';
+  _setAttHighlight(nextType);
 }
 
 function _setAttHighlight(nextType) {
@@ -15624,21 +15629,17 @@ function _setAttHighlight(nextType) {
 
 // ── ボタン選択時（警告チェック後にQRスキャン） ──────────────
 function onAttBtnClick(type) {
-  const t = ATT_T[lang] || ATT_T.en;
-  const name = localStorage.getItem('j2hub_passkey_name') || '';
-  // getAttStatusで連続打刻チェック
-  fetch(ATT_GAS_URL + '?action=getAttStatus&name=' + encodeURIComponent(name))
-    .then(r => r.json())
-    .then(d => {
-      if (d.nextType && d.nextType !== type) {
-        const msg = type === 'in'
-          ? (t.warn_duplicate     || 'You have already clocked in. Please select Clock Out.')
-          : (t.warn_duplicate_out || 'You have already clocked out. Please select Clock In.');
-        if (!confirm(msg + '\n\nContinue anyway?')) return;
-      }
-      openQRScanner(type);
-    })
-    .catch(() => { openQRScanner(type); });
+  const t        = ATT_T[lang] || ATT_T.en;
+  const name     = localStorage.getItem('j2hub_passkey_name') || '';
+  // キャッシュから即時チェック（GASへのfetchなし）
+  const nextType = localStorage.getItem('att_status_' + name) || 'in';
+  if (nextType !== type) {
+    const msg = type === 'in'
+      ? (t.warn_duplicate     || 'You have already clocked in. Please select Clock Out.')
+      : (t.warn_duplicate_out || 'You have already clocked out. Please select Clock In.');
+    if (!confirm(msg + '\n\nContinue anyway?')) return;
+  }
+  openQRScanner(type);
 }
 
 // ── QRスキャン画面を開く ───────────────────────────────────
@@ -15844,7 +15845,7 @@ function renderAttHistory(records, listEl, t) {
     listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:32px;font-size:13px;">No records found.</div>';
     return;
   }
-  const sorted = _attSortOrder === 'asc' ? records.slice().reverse() : records.slice();
+  const sorted = _attSortOrder === 'desc' ? records.slice().reverse() : records.slice();
   listEl.innerHTML = sorted.map(r => {
     const inTime  = r.clockIn  || '—';
     const outTime = r.clockOut || '—';
