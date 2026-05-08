@@ -12189,6 +12189,15 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 
   <!-- ── Attendance: History Screen ── -->
 
+  <!-- ── Attendance: Warning Overlay ── -->
+  <div class="punch-success-overlay" id="att-warn-overlay" style="background:rgba(30,30,60,0.97);z-index:200;">
+    <div style="font-size:48px;margin-bottom:12px;">⚠️</div>
+    <div class="punch-success-status" id="att-warn-msg" style="font-size:17px;text-align:center;line-height:1.7;"></div>
+    <div style="display:flex;gap:16px;margin-top:24px;">
+      <button id="att-warn-cancel" onclick="closeAttWarn()" style="flex:1;padding:14px 0;background:transparent;color:#fff;border:2px solid rgba(255,255,255,0.5);border-radius:50px;font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;cursor:pointer;"></button>
+      <button id="att-warn-confirm" onclick="confirmAttWarn()" style="flex:1;padding:14px 0;background:#e65c00;color:#fff;border:none;border-radius:50px;font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;cursor:pointer;"></button>
+    </div>
+  </div>
 
   <!-- ── Attendance Submenu ── -->
   <div class="att-submenu" id="att-submenu">
@@ -12366,11 +12375,11 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   <div class="nav-tabs" id="nav-attendance" style="display:none;">
     <button class="nav-tab active" id="nav-att-btn" onclick="showAttPage('attendance',this)">
       <span class="icon">🕐</span>
-      <span>Attendance</span>
+      <span data-key="nav_att">Attendance</span>
     </button>
     <button class="nav-tab" id="nav-att-hist-btn" onclick="showAttPage('att-history',this);openAttHistory()">
       <span class="icon">📋</span>
-      <span>History</span>
+      <span data-key="nav_att_hist">History</span>
     </button>
   </div>
 
@@ -13042,6 +13051,10 @@ const T = {
     reason_ph:'Briefly describe the reason…',
     att_scan_in:'Please scan the QR Code to Clock In.',
     att_scan_out:'Please scan the QR Code to Clock Out.',
+    nav_att:'Attendance', nav_att_hist:'History',
+    warn_att_in:'You have already clocked in. Please select Clock Out.',
+    warn_att_out:'You have already clocked out. Please select Clock In.',
+    warn_att_confirm:'Continue anyway?',
   },
   zh: {
     nav_leave:'请假', nav_history:'记录', nav_notices:'公告',
@@ -13070,6 +13083,10 @@ const T = {
     reason_ph:'请简述原因…',
     att_scan_in:'请扫描二维码打上班卡。',
     att_scan_out:'请扫描二维码打下班卡。',
+    nav_att:'打卡', nav_att_hist:'记录',
+    warn_att_in:'您已打上班卡，请选择下班打卡。',
+    warn_att_out:'您已打下班卡，请选择上班打卡。',
+    warn_att_confirm:'是否继续？',
   },
   ta: {
     nav_leave:'விடுப்பு', nav_history:'வரலாறு', nav_notices:'அறிவிப்பு',
@@ -13098,6 +13115,10 @@ const T = {
     reason_ph:'காரணத்தை சுருக்கமாக விவரிக்கவும்…',
     att_scan_in:'வருகை பதிவு செய்ய QR குறியீட்டை ஸ்கேன் செய்யவும்.',
     att_scan_out:'புறப்பாடு பதிவு செய்ய QR குறியீட்டை ஸ்கேன் செய்யவும்.',
+    nav_att:'வருகை', nav_att_hist:'பதிவு',
+    warn_att_in:'நீங்கள் ஏற்கனவே வருகை பதிவு செய்துள்ளீர்கள். புறப்பாடு தேர்வு செய்யவும்.',
+    warn_att_out:'நீங்கள் ஏற்கனவே புறப்பாடு பதிவு செய்துள்ளீர்கள். வருகை தேர்வு செய்யவும்.',
+    warn_att_confirm:'தொடரவும்?',
   }
 };
 
@@ -15628,18 +15649,44 @@ function _setAttHighlight(nextType) {
 }
 
 // ── ボタン選択時（警告チェック後にQRスキャン） ──────────────
+let _attWarnPendingType = null;
+
 function onAttBtnClick(type) {
-  const t        = ATT_T[lang] || ATT_T.en;
   const name     = localStorage.getItem('j2hub_passkey_name') || '';
-  // キャッシュから即時チェック（GASへのfetchなし）
   const nextType = localStorage.getItem('att_status_' + name) || 'in';
   if (nextType !== type) {
-    const msg = type === 'in'
-      ? (t.warn_duplicate     || 'You have already clocked in. Please select Clock Out.')
-      : (t.warn_duplicate_out || 'You have already clocked out. Please select Clock In.');
-    if (!confirm(msg + '\n\nContinue anyway?')) return;
+    showAttWarn(type);
+    return;
   }
   openQRScanner(type);
+}
+
+function showAttWarn(type) {
+  const t = T[lang] || T.en;
+  const at = ATT_T[lang] || ATT_T.en;
+  _attWarnPendingType = type;
+  const msg = type === 'in'
+    ? (at.warn_att_in  || 'You have already clocked in. Please select Clock Out.')
+    : (at.warn_att_out || 'You have already clocked out. Please select Clock In.');
+  const overlay  = document.getElementById('att-warn-overlay');
+  const msgEl    = document.getElementById('att-warn-msg');
+  const cancelEl = document.getElementById('att-warn-cancel');
+  const confEl   = document.getElementById('att-warn-confirm');
+  if (msgEl)    msgEl.textContent    = msg;
+  if (cancelEl) cancelEl.textContent = t.cancel || 'Cancel';
+  if (confEl)   confEl.textContent   = at.warn_att_confirm || 'Continue anyway?';
+  if (overlay)  overlay.classList.add('show');
+}
+
+function closeAttWarn() {
+  _attWarnPendingType = null;
+  document.getElementById('att-warn-overlay').classList.remove('show');
+}
+
+function confirmAttWarn() {
+  document.getElementById('att-warn-overlay').classList.remove('show');
+  if (_attWarnPendingType) openQRScanner(_attWarnPendingType);
+  _attWarnPendingType = null;
 }
 
 // ── QRスキャン画面を開く ───────────────────────────────────
@@ -15776,6 +15823,10 @@ function handleQRResult(url) {
   document.getElementById('punch-success-close-lbl').textContent = t.back_home;
 
   // GASに送信（typeを明示的に送る）
+  // 打刻後はキャッシュを即時更新（nextTypeはtypeの反対）
+  const nextType = type === 'in' ? 'out' : 'in';
+  localStorage.setItem('att_status_' + name, nextType);
+
   fetch(ATT_GAS_URL, {
     method: 'POST',
     cache:  'no-store',
