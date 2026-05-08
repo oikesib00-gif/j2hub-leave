@@ -12858,9 +12858,9 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       <div class="page-title-main">Attendance <em>Scan</em></div>
     </div>
     <div class="form-main" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:24px;">
-      <div style="font-family:'Open Sans',sans-serif;font-size:15px;color:#6b7280;text-align:center;line-height:1.8;">Select Clock In or Clock Out, then scan your QR Code.</div>
-      <button onclick="openQRScanner('in')" style="width:220px;padding:18px 0;background:#003087;color:#fff;border:none;border-radius:50px;font-family:'Montserrat',sans-serif;font-size:16px;font-weight:800;cursor:pointer;">&#10003; Clock In</button>
-      <button onclick="openQRScanner('out')" style="width:220px;padding:18px 0;background:#e65c00;color:#fff;border:none;border-radius:50px;font-family:'Montserrat',sans-serif;font-size:16px;font-weight:800;cursor:pointer;">&#10003; Clock Out</button>
+      <div id="att-scan-desc" style="font-family:'Open Sans',sans-serif;font-size:15px;color:#6b7280;text-align:center;line-height:1.8;">Select Clock In or Clock Out, then scan your QR Code.</div>
+      <button id="att-btn-in"  onclick="onAttBtnClick('in')"  style="width:220px;padding:18px 0;background:#e65c00;color:#fff;border:3px solid #e65c00;border-radius:50px;font-family:'Montserrat',sans-serif;font-size:16px;font-weight:800;cursor:pointer;">&#10003; Clock In</button>
+      <button id="att-btn-out" onclick="onAttBtnClick('out')" style="width:220px;padding:18px 0;background:#2e7d32;color:#fff;border:3px solid #2e7d32;border-radius:50px;font-family:'Montserrat',sans-serif;font-size:16px;font-weight:800;cursor:pointer;">&#10003; Clock Out</button>
     </div>
   </div>
 
@@ -12875,8 +12875,8 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     <div class="form-main">
       <select class="att-month-select" id="att-month-select" onchange="loadAttHistory()" style="margin:16px 0;padding:10px 14px;border-radius:10px;border:1.5px solid #dde3ee;font-family:'Open Sans',sans-serif;font-size:14px;background:#fff;color:#1a1a2e;width:100%;"></select>
       <div style="display:flex;gap:8px;margin-bottom:12px;">
-        <button id="att-sort-desc" onclick="setAttSort('desc')" style="flex:1;padding:8px 0;border-radius:8px;border:1.5px solid #003087;background:#003087;color:#fff;font-family:'Montserrat',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">&#8595; 新しい順</button>
-        <button id="att-sort-asc"  onclick="setAttSort('asc')"  style="flex:1;padding:8px 0;border-radius:8px;border:1.5px solid #dde3ee;background:#fff;color:#003087;font-family:'Montserrat',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">&#8593; 古い順</button>
+        <button id="att-sort-desc" onclick="setAttSort('desc')" style="flex:1;padding:8px 0;border-radius:8px;border:1.5px solid #003087;background:#003087;color:#fff;font-family:'Montserrat',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">&#8595; Newest First</button>
+        <button id="att-sort-asc"  onclick="setAttSort('asc')"  style="flex:1;padding:8px 0;border-radius:8px;border:1.5px solid #dde3ee;background:#fff;color:#003087;font-family:'Montserrat',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">&#8593; Oldest First</button>
       </div>
       <div id="att-history-list"><div style="text-align:center;color:#9ca3af;padding:40px;font-size:14px;">Loading…</div></div>
     </div>
@@ -14045,17 +14045,8 @@ function goToAttendance() {
   const attPage = document.getElementById('page-attendance');
   if (attTab)  attTab.classList.add('active');
   if (attPage) attPage.classList.add('active');
-  // 出退勤判断でdata-keyを切替→apply()で3言語対応
-  const _name = localStorage.getItem('j2hub_passkey_name') || '';
-  const _now  = new Date();
-  const _sgt  = new Date(_now.toLocaleString('en-US', { timeZone: 'Asia/Singapore' }));
-  const _mons = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const _ds   = String(_sgt.getDate()).padStart(2,'0') + '-' + _mons[_sgt.getMonth()] + '-' + _sgt.getFullYear();
-  const _ck   = 'att_punch_' + _name + '_' + _ds;
-  const _cached = localStorage.getItem(_ck);
-  const _type   = _cached === 'in' ? 'out' : 'in';
-  const _descEl = document.getElementById('att-scan-desc');
-  if (_descEl) { _descEl.dataset.key = _type === 'in' ? 'att_scan_in' : 'att_scan_out'; apply(); }
+  // getAttStatusでハイライト更新
+  loadAttStatusHighlight();
 }
 
 function showAttPage(name, btn) {
@@ -14065,16 +14056,7 @@ function showAttPage(name, btn) {
   if (targetPage) targetPage.classList.add('active');
   if (btn) btn.classList.add('active');
   if (name === 'attendance') {
-    const _name2 = localStorage.getItem('j2hub_passkey_name') || '';
-    const _now2  = new Date();
-    const _sgt2  = new Date(_now2.toLocaleString('en-US', { timeZone: 'Asia/Singapore' }));
-    const _mons2 = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const _ds2   = String(_sgt2.getDate()).padStart(2,'0') + '-' + _mons2[_sgt2.getMonth()] + '-' + _sgt2.getFullYear();
-    const _ck2   = 'att_punch_' + _name2 + '_' + _ds2;
-    const _cached2 = localStorage.getItem(_ck2);
-    const _type2   = _cached2 === 'in' ? 'out' : 'in';
-    const _descEl2 = document.getElementById('att-scan-desc');
-    if (_descEl2) { _descEl2.dataset.key = _type2 === 'in' ? 'att_scan_in' : 'att_scan_out'; apply(); }
+    loadAttStatusHighlight();
   }
 }
 
@@ -15399,7 +15381,12 @@ const ATT_T = {
     not_recorded: 'Not recorded',
     flag_missing: '🚩 Missing punch',
     error_submit: 'Failed to record. Please try again.',
-    error_load: 'Failed to load attendance data.'
+    error_load: 'Failed to load attendance data.',
+    att_scan_desc: 'Select Clock In or Clock Out, then scan your QR Code.',
+    sort_newest: '↓ Newest First',
+    sort_oldest: '↑ Oldest First',
+    warn_duplicate: 'You have already clocked in. Please select Clock Out.',
+    warn_duplicate_out: 'You have already clocked out. Please select Clock In.'
   },
   zh: {
     greeting_morning: '早上好，',
@@ -15422,7 +15409,12 @@ const ATT_T = {
     not_recorded: '未记录',
     flag_missing: '🚩 漏打卡',
     error_submit: '记录失败，请重试。',
-    error_load: '无法加载出勤数据。'
+    error_load: '无法加载出勤数据。',
+    att_scan_desc: '请选择上班或下班打卡，然后扫描二维码。',
+    sort_newest: '↓ 最新优先',
+    sort_oldest: '↑ 最旧优先',
+    warn_duplicate: '您已打上班卡，请选择下班打卡。',
+    warn_duplicate_out: '您已打下班卡，请选择上班打卡。'
   },
   ta: {
     greeting_morning: 'காலை வணக்கம்,',
@@ -15445,7 +15437,12 @@ const ATT_T = {
     not_recorded: 'பதிவு இல்லை',
     flag_missing: '🚩 பதிவு விடுபட்டது',
     error_submit: 'பதிவு தோல்வியடைந்தது. மீண்டும் முயற்சிக்கவும்.',
-    error_load: 'தரவு ஏற்ற முடியவில்லை.'
+    error_load: 'தரவு ஏற்ற முடியவில்லை.',
+    att_scan_desc: 'வருகை அல்லது புறப்பாடு தேர்வு செய்து QR குறியீட்டை ஸ்கேன் செய்யவும்.',
+    sort_newest: '↓ புதியது முதல்',
+    sort_oldest: '↑ பழையது முதல்',
+    warn_duplicate: 'நீங்கள் ஏற்கனவே வருகை பதிவு செய்துள்ளீர்கள். புறப்பாடு தேர்வு செய்யவும்.',
+    warn_duplicate_out: 'நீங்கள் ஏற்கனவே புறப்பாடு பதிவு செய்துள்ளீர்கள். வருகை தேர்வு செய்யவும்.'
   }
 };
 
@@ -15592,6 +15589,56 @@ function openAttHistory() {
     }
   }
   loadAttHistory();
+}
+
+// ── Attendance画面ハイライト更新 ─────────────────────────────
+function loadAttStatusHighlight() {
+  const name = localStorage.getItem('j2hub_passkey_name') || '';
+  const t    = ATT_T[lang] || ATT_T.en;
+  const descEl = document.getElementById('att-scan-desc');
+  if (descEl) descEl.textContent = t.att_scan_desc || 'Select Clock In or Clock Out, then scan your QR Code.';
+  // まずデフォルト（両方同じ見た目）
+  _setAttHighlight(null);
+  if (!name) return;
+  fetch(ATT_GAS_URL + '?action=getAttStatus&name=' + encodeURIComponent(name))
+    .then(r => r.json())
+    .then(d => { if (d.nextType) _setAttHighlight(d.nextType); })
+    .catch(() => {});
+}
+
+function _setAttHighlight(nextType) {
+  const btnIn  = document.getElementById('att-btn-in');
+  const btnOut = document.getElementById('att-btn-out');
+  if (!btnIn || !btnOut) return;
+  // 両ボタンをリセット
+  btnIn.style.opacity  = '1';
+  btnOut.style.opacity = '1';
+  btnIn.style.border   = '3px solid #e65c00';
+  btnOut.style.border  = '3px solid #2e7d32';
+  if (nextType === 'in') {
+    btnOut.style.opacity = '0.45';
+  } else if (nextType === 'out') {
+    btnIn.style.opacity = '0.45';
+  }
+}
+
+// ── ボタン選択時（警告チェック後にQRスキャン） ──────────────
+function onAttBtnClick(type) {
+  const t = ATT_T[lang] || ATT_T.en;
+  const name = localStorage.getItem('j2hub_passkey_name') || '';
+  // getAttStatusで連続打刻チェック
+  fetch(ATT_GAS_URL + '?action=getAttStatus&name=' + encodeURIComponent(name))
+    .then(r => r.json())
+    .then(d => {
+      if (d.nextType && d.nextType !== type) {
+        const msg = type === 'in'
+          ? (t.warn_duplicate     || 'You have already clocked in. Please select Clock Out.')
+          : (t.warn_duplicate_out || 'You have already clocked out. Please select Clock In.');
+        if (!confirm(msg + '\n\nContinue anyway?')) return;
+      }
+      openQRScanner(type);
+    })
+    .catch(() => { openQRScanner(type); });
 }
 
 // ── QRスキャン画面を開く ───────────────────────────────────
@@ -15773,8 +15820,19 @@ function setAttSort(order) {
   _attSortOrder = order;
   const btnDesc = document.getElementById('att-sort-desc');
   const btnAsc  = document.getElementById('att-sort-asc');
-  if (btnDesc) { btnDesc.style.background = order === 'desc' ? '#003087' : '#fff'; btnDesc.style.color = order === 'desc' ? '#fff' : '#003087'; btnDesc.style.borderColor = order === 'desc' ? '#003087' : '#dde3ee'; }
-  if (btnAsc)  { btnAsc.style.background  = order === 'asc'  ? '#003087' : '#fff'; btnAsc.style.color  = order === 'asc'  ? '#fff' : '#003087'; btnAsc.style.borderColor  = order === 'asc'  ? '#003087' : '#dde3ee'; }
+  const t = ATT_T[lang] || ATT_T.en;
+  if (btnDesc) {
+    btnDesc.style.background  = order === 'desc' ? '#003087' : '#fff';
+    btnDesc.style.color       = order === 'desc' ? '#fff' : '#003087';
+    btnDesc.style.borderColor = order === 'desc' ? '#003087' : '#dde3ee';
+    btnDesc.textContent       = t.sort_newest || '↓ Newest First';
+  }
+  if (btnAsc) {
+    btnAsc.style.background  = order === 'asc' ? '#003087' : '#fff';
+    btnAsc.style.color       = order === 'asc' ? '#fff' : '#003087';
+    btnAsc.style.borderColor = order === 'asc' ? '#003087' : '#dde3ee';
+    btnAsc.textContent       = t.sort_oldest || '↑ Oldest First';
+  }
   const listEl = document.getElementById('att-history-list');
   if (listEl && _attLastT) renderAttHistory(_attLastRecords, listEl, _attLastT);
 }
