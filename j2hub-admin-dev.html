@@ -14907,13 +14907,14 @@ async function loadInitialData(name) {
       localStorage.setItem(CACHE_KEY + '_' + name, JSON.stringify({ data: data, ts: Date.now() }));
     } catch(e) {}
 
-    hideLoading();
+    // ログイン時にAttendance打刻状態を取得してキャッシュ（ローディング完了前に実施）
+    try {
+      const attRes  = await fetch(ATT_GAS_URL + '?action=getAttStatus&name=' + encodeURIComponent(name));
+      const attData = await attRes.json();
+      if (attData.nextType) localStorage.setItem('att_status_' + name, attData.nextType);
+    } catch(e) {}
 
-    // ログイン時にAttendance打刻状態を取得してキャッシュ
-    fetch(ATT_GAS_URL + '?action=getAttStatus&name=' + encodeURIComponent(name))
-      .then(r => r.json())
-      .then(d => { if (d.nextType) localStorage.setItem('att_status_' + name, d.nextType); })
-      .catch(() => {});
+    hideLoading();
 
   } catch (err) {
     console.error('loadInitialData error:', err);
