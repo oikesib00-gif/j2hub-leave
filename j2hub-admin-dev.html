@@ -15673,7 +15673,7 @@ function showAttWarn(type) {
   const cancelEl = document.getElementById('att-warn-cancel');
   const confEl   = document.getElementById('att-warn-confirm');
   if (msgEl)    msgEl.textContent    = msg;
-  if (cancelEl) cancelEl.textContent = t.cancel || 'Cancel';
+  if (cancelEl) cancelEl.textContent = at.cancel || 'Cancel';
   if (confEl)   confEl.textContent   = at.warn_att_confirm || 'Continue anyway?';
   if (overlay)  overlay.classList.add('show');
 }
