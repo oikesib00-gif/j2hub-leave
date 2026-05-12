@@ -12716,6 +12716,46 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   </div>
 
   <!-- ══════════════════════════════════════════
+       PAGE: J2Hub INFO
+  ══════════════════════════════════════════ -->
+  <div id="page-info" class="page">
+    <div class="page-header">
+      <div class="page-title">Company News</div>
+      <div class="page-title-main">J2Hub <em>INFO</em></div>
+    </div>
+
+    <div class="form-main">
+
+      <!-- 管理者のみ：アップロードボタン -->
+      <div id="info-upload-section" style="display:none;">
+        <div class="form-card">
+          <div class="form-section-label">Upload New PDF</div>
+          <div id="info-pdf-upload-area" style="
+            border:2px dashed var(--border);border-radius:12px;
+            padding:20px;text-align:center;cursor:pointer;
+            background:#f8faff;margin-bottom:12px;
+          " onclick="document.getElementById('info-pdf-input').click()">
+            <div style="font-size:32px;margin-bottom:8px;">📄</div>
+            <div id="info-pdf-label" style="font-size:13px;color:var(--text-muted);">Tap to select PDF</div>
+          </div>
+          <input type="file" id="info-pdf-input" accept="application/pdf" style="display:none;" onchange="infoPDFSelected(this)">
+          <button class="submit-btn" id="info-upload-btn" onclick="uploadInfoPDF()" style="background:var(--blue-dark);opacity:0.4;pointer-events:none;">
+            Upload PDF
+          </button>
+        </div>
+      </div>
+
+      <!-- 投稿一覧 -->
+      <div class="form-card">
+        <div class="form-section-label">Latest Posts</div>
+        <div id="info-loading" style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px;">Loading…</div>
+        <div id="info-post-list"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
        PAGE: INSPECTION（運行前点検）
   ══════════════════════════════════════════ -->
   <div id="page-inspection" class="page">
@@ -12974,6 +13014,9 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 </div>
 
 <script>
+// ── GAS URL（グローバル定義） ────────────────────────────────────
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwAXrw_Hex1V8fzuXXBZa95u1cLwos4z38-ZlqL3olXlD-TTL25a0hO5JascLVRZL0u/exec';
+
 // ── キャッシュキー（グローバル定義） ─────────────────────────────
 const CACHE_KEY     = 'j2hub_cache_data';
 const CACHE_HOL_KEY = 'j2hub_cache_holidays';
@@ -13612,7 +13655,6 @@ function calDone() {
   document.getElementById('cal-overlay').classList.remove('show');
 }
 
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbwAXrw_Hex1V8fzuXXBZa95u1cLwos4z38-ZlqL3olXlD-TTL25a0hO5JascLVRZL0u/exec';
 
 async function submitLeave() {
   const name   = document.getElementById('employee-name').value;
@@ -14041,8 +14083,24 @@ function showLorryPage(name, btn) {
 
 // ── J2Hub INFO ───────────────────────────────────────────────
 function goToInfo() {
-  // Phase 2実装予定 — 現在は準備中メッセージをオーバーレイで表示
-  showInfoOverlay();
+  document.getElementById('home-screen').classList.remove('show');
+  // 全ナビ非表示
+  const navApp   = document.getElementById('nav-application');
+  const navLorry = document.getElementById('nav-lorry');
+  const navAtt   = document.getElementById('nav-attendance');
+  if (navApp)   navApp.style.display   = 'none';
+  if (navLorry) navLorry.style.display = 'none';
+  if (navAtt)   navAtt.style.display   = 'none';
+  // J2Hub INFOページをアクティブに
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const infoPage = document.getElementById('page-info');
+  if (infoPage) infoPage.classList.add('active');
+  // 管理者のみアップロードセクション表示
+  const isAdmin = _currentUser === 'Jennifer Ho' || _currentUser === 'Shige Oike';
+  const uploadSection = document.getElementById('info-upload-section');
+  if (uploadSection) uploadSection.style.display = isAdmin ? 'block' : 'none';
+  // 投稿一覧を読み込む
+  loadInfoPosts();
 }
 
 // ── ATTENDANCE ───────────────────────────────────────────────
@@ -14091,6 +14149,10 @@ function goToInspection() { goToLorry(); }
 // !! INSPECTION GAS URL — デプロイ後に設定 !!
 // !! INSPECTION GAS URL !!
 const INSP_GAS_URL = 'https://script.google.com/macros/s/AKfycbynoXNjgS1swI8BCoNiYGzpIAWP3xmDoDTMHH5L88hYn8lUV1u8zYVd9HlL5nKGfSS0/exec';
+
+// !! INFO GAS URL !!
+const INFO_GAS_URL = 'https://script.google.com/macros/s/AKfycbwCbsXOC6QjKh1T--Oq7Lac0wrpYCOayBE-x25jwbSFNht7E98Qi8FvzOPfuUMlcR3G/exec';
+// !! INFO GAS URL END !!
 
 // ============================================================
 // Inspection 3言語対応
@@ -14736,6 +14798,154 @@ function showInfoOverlay() {
   if (sub)      sub.textContent     = 'Stay tuned for company news and updates.';
   if (closeBtn) closeBtn.textContent= 'Close';
   if (overlay)  overlay.classList.add('show');
+}
+
+// ── J2Hub INFO 機能 ─────────────────────────────────────────
+let infoPDFBase64  = '';
+let infoPDFName    = '';
+
+// PDF選択時
+function infoPDFSelected(input) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  infoPDFName = file.name;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    // base64部分のみ（data:application/pdf;base64, を除く）
+    infoPDFBase64 = e.target.result.split(',')[1];
+    const label   = document.getElementById('info-pdf-label');
+    const btn     = document.getElementById('info-upload-btn');
+    if (label) label.textContent = '📄 ' + file.name;
+    if (btn)   { btn.style.opacity = '1'; btn.style.pointerEvents = 'auto'; }
+  };
+  reader.readAsDataURL(file);
+}
+
+// PDFアップロード
+async function uploadInfoPDF() {
+  if (!infoPDFBase64 || !infoPDFName) return;
+  const btn = document.getElementById('info-upload-btn');
+  btn.textContent      = 'Uploading…';
+  btn.style.opacity    = '0.6';
+  btn.style.pointerEvents = 'none';
+  try {
+    const payload = {
+      action:    'uploadInfoPDF',
+      uploader:  _currentUser,
+      fileName:  infoPDFName,
+      base64PDF: infoPDFBase64,
+      mimeType:  'application/pdf'
+    };
+    const res  = await fetch(INFO_GAS_URL, { method: 'POST', cache: 'no-store', body: JSON.stringify(payload) });
+    const data = await res.json();
+    if (data.status === 'success') {
+      // フォームリセット
+      infoPDFBase64 = '';
+      infoPDFName   = '';
+      document.getElementById('info-pdf-input').value = '';
+      document.getElementById('info-pdf-label').textContent = 'Tap to select PDF';
+      btn.textContent       = 'Upload PDF';
+      btn.style.opacity     = '0.4';
+      btn.style.pointerEvents = 'none';
+      // 一覧を再読み込み
+      loadInfoPosts();
+    } else {
+      alert('Upload failed: ' + (data.message || 'Unknown error'));
+      btn.textContent       = 'Upload PDF';
+      btn.style.opacity     = '1';
+      btn.style.pointerEvents = 'auto';
+    }
+  } catch (err) {
+    alert('Upload error: ' + err.message);
+    btn.textContent       = 'Upload PDF';
+    btn.style.opacity     = '1';
+    btn.style.pointerEvents = 'auto';
+  }
+}
+
+// 投稿一覧を読み込んでカード描画
+async function loadInfoPosts() {
+  const listEl    = document.getElementById('info-post-list');
+  const loadingEl = document.getElementById('info-loading');
+  if (!listEl) return;
+  if (loadingEl) loadingEl.style.display = 'block';
+  listEl.innerHTML = '';
+  try {
+    const res  = await fetch(INFO_GAS_URL + '?action=getInfoPosts&name=' + encodeURIComponent(_currentUser), { cache: 'no-store' });
+    const data = await res.json();
+    if (loadingEl) loadingEl.style.display = 'none';
+    if (!data.posts || data.posts.length === 0) {
+      listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:24px;font-size:13px;">No posts yet.</div>';
+      return;
+    }
+    data.posts.forEach(function(post) {
+      const card = document.createElement('div');
+      card.style.cssText = 'padding:14px 0;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;gap:12px;';
+      const left = document.createElement('div');
+      left.style.cssText = 'flex:1;min-width:0;';
+      const titleRow = document.createElement('div');
+      titleRow.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:4px;';
+      const titleEl = document.createElement('span');
+      titleEl.style.cssText = 'font-size:14px;font-weight:700;color:var(--text);word-break:break-all;';
+      titleEl.textContent = '📄 ' + post.fileName;
+      titleRow.appendChild(titleEl);
+      if (!post.isRead) {
+        const badge = document.createElement('span');
+        badge.style.cssText = 'background:#dc2626;color:#fff;font-size:9px;font-weight:800;font-family:Montserrat,sans-serif;border-radius:6px;padding:2px 6px;flex-shrink:0;';
+        badge.textContent = 'NEW';
+        titleRow.appendChild(badge);
+      }
+      const meta = document.createElement('div');
+      meta.style.cssText = 'font-size:11px;color:var(--text-muted);';
+      meta.textContent = post.uploader + ' · ' + String(post.uploadDate).substring(0, 11);
+      left.appendChild(titleRow);
+      left.appendChild(meta);
+      const viewBtn = document.createElement('a');
+      viewBtn.href        = post.driveUrl;
+      viewBtn.target      = '_blank';
+      viewBtn.rel         = 'noopener';
+      viewBtn.style.cssText = 'background:var(--blue-dark);color:#fff;font-size:12px;font-weight:700;font-family:Montserrat,sans-serif;padding:8px 14px;border-radius:8px;text-decoration:none;flex-shrink:0;';
+      viewBtn.textContent = 'View';
+      // View タップ時に既読記録
+      viewBtn.addEventListener('click', function() {
+        markInfoAsRead(post.postId);
+      });
+      card.appendChild(left);
+      card.appendChild(viewBtn);
+      listEl.appendChild(card);
+    });
+  } catch (err) {
+    if (loadingEl) loadingEl.style.display = 'none';
+    listEl.innerHTML = '<div style="text-align:center;color:#dc2626;padding:24px;font-size:13px;">Failed to load. Please try again.</div>';
+  }
+}
+
+// 既読記録
+async function markInfoAsRead(postId) {
+  try {
+    const payload = { action: 'markAsRead', staffName: _currentUser, postId: String(postId) };
+    await fetch(INFO_GAS_URL, { method: 'POST', cache: 'no-store', body: JSON.stringify(payload) });
+  } catch (err) {}
+  // info-badge を更新
+  updateInfoBadge();
+}
+
+// HOMEのinfo-badge更新
+async function updateInfoBadge() {
+  const badge = document.getElementById('info-badge');
+  if (!badge || !_currentUser) return;
+  try {
+    const res  = await fetch(INFO_GAS_URL + '?action=getInfoPosts&name=' + encodeURIComponent(_currentUser), { cache: 'no-store' });
+    const data = await res.json();
+    if (!data.posts) return;
+    const unread = data.posts.filter(function(p) { return !p.isRead; }).length;
+    if (unread > 0) {
+      badge.textContent    = unread;
+      badge.style.display  = 'flex';
+    } else {
+      badge.style.display  = 'none';
+    }
+  } catch (err) {}
 }
 
 // ── Inspection History ────────────────────────────────────────
