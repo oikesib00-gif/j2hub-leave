@@ -12720,7 +12720,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   ══════════════════════════════════════════ -->
   <div id="page-info" class="page">
     <div class="page-header">
-      <div class="page-title" id="info-title-sub">Company News</div>
+      <div class="page-title" id="info-title-sub" data-key="info_company">Company News</div>
       <div class="page-title-main">J2Hub <em>INFO</em></div>
     </div>
 
@@ -12728,7 +12728,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 
       <!-- 投稿一覧 -->
       <div class="form-card">
-        <div class="form-section-label" id="info-label-latest">Latest Posts</div>
+        <div class="form-section-label" id="info-label-latest" data-key="info_latest">Latest Posts</div>
         <div id="info-loading" style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px;">Loading…</div>
         <div id="info-post-list"></div>
       </div>
@@ -13076,6 +13076,7 @@ const T = {
     att_scan_in:'Please scan the QR Code to Clock In.',
     att_scan_out:'Please scan the QR Code to Clock Out.',
     nav_att:'Attendance', nav_att_hist:'History',
+    info_company:'Company News', info_latest:'Latest Posts', info_no_posts:'No posts yet.', info_view:'View', info_new:'NEW',
   },
   zh: {
     nav_leave:'请假', nav_history:'记录', nav_notices:'公告',
@@ -13105,6 +13106,7 @@ const T = {
     att_scan_in:'请扫描二维码打上班卡。',
     att_scan_out:'请扫描二维码打下班卡。',
     nav_att:'打卡', nav_att_hist:'记录',
+    info_company:'公司新闻', info_latest:'最新帖子', info_no_posts:'暂无内容。', info_view:'查看', info_new:'新',
   },
   ta: {
     nav_leave:'விடுப்பு', nav_history:'வரலாறு', nav_notices:'அறிவிப்பு',
@@ -13134,6 +13136,7 @@ const T = {
     att_scan_in:'வருகை பதிவு செய்ய QR குறியீட்டை ஸ்கேன் செய்யவும்.',
     att_scan_out:'புறப்பாடு பதிவு செய்ய QR குறியீட்டை ஸ்கேன் செய்யவும்.',
     nav_att:'வருகை', nav_att_hist:'பதிவு',
+    info_company:'நிறுவன செய்தி', info_latest:'சமீபத்திய இடுகைகள்', info_no_posts:'இடுகைகள் இல்லை.', info_view:'பார்க்க', info_new:'புதிய',
   }
 };
 
@@ -13148,6 +13151,17 @@ function setLang(l, btn) {
   // Attendance系も言語更新
   loadAttStatusHighlight();
   setAttSort(_attSortOrder);
+  // INFO ページが表示中なら再描画
+  const infoPage = document.getElementById('page-info');
+  if (infoPage && infoPage.classList.contains('active')) {
+    const cached = localStorage.getItem(INFO_CACHE_KEY + '_' + _currentUser);
+    if (cached) {
+      try {
+        const obj = JSON.parse(cached);
+        if (obj.posts) infoRenderPosts(obj.posts);
+      } catch(e) {}
+    }
+  }
 }
 
 function apply() {
@@ -14783,22 +14797,6 @@ function showInfoOverlay() {
 const INFO_CACHE_KEY = 'j2hub_cache_info';
 const INFO_CACHE_TTL = 5 * 60 * 1000; // 5分
 
-// ── INFO 3言語テキスト ────────────────────────────────────────
-const INFO_T = {
-  en: { titleSub: 'Company News', latest: 'Latest Posts', loading: 'Loading…', noPosts: 'No posts yet.', view: 'View', newBadge: 'NEW' },
-  zh: { titleSub: '公司新闻',     latest: '最新帖子',     loading: '加载中…',   noPosts: '暂无内容。',   view: '查看', newBadge: '新' },
-  ta: { titleSub: 'நிறுவன செய்தி', latest: 'சமீபத்திய இடுகைகள்', loading: 'ஏற்றுகிறது…', noPosts: 'இடுகைகள் இல்லை.', view: 'பார்க்க', newBadge: 'புதிய' }
-};
-
-// ── INFO言語テキスト適用 ──────────────────────────────────────
-function infoApplyLang(l) {
-  const t = INFO_T[l] || INFO_T.en;
-  const titleSub = document.getElementById('info-title-sub');
-  const latest   = document.getElementById('info-label-latest');
-  if (titleSub) titleSub.textContent = t.titleSub;
-  if (latest)   latest.textContent   = t.latest;
-}
-
 // ── INFO View URL（言語対応）─────────────────────────────────
 function infoViewUrl(driveUrl) {
   const l = (typeof lang !== 'undefined') ? lang : 'en';
@@ -14810,12 +14808,12 @@ function infoViewUrl(driveUrl) {
 // ── INFO投稿カード描画 ────────────────────────────────────────
 function infoRenderPosts(posts) {
   const l      = (typeof lang !== 'undefined') ? lang : 'en';
-  const t      = INFO_T[l] || INFO_T.en;
+  const t      = T[l] || T.en;
   const listEl = document.getElementById('info-post-list');
   if (!listEl) return;
   listEl.innerHTML = '';
   if (!posts || posts.length === 0) {
-    listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:24px;font-size:13px;">' + t.noPosts + '</div>';
+    listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:24px;font-size:13px;">' + t.info_no_posts + '</div>';
     return;
   }
   posts.forEach(function(post) {
@@ -14832,7 +14830,7 @@ function infoRenderPosts(posts) {
     if (!post.isRead) {
       const badge = document.createElement('span');
       badge.style.cssText = 'background:#dc2626;color:#fff;font-size:9px;font-weight:800;font-family:Montserrat,sans-serif;border-radius:6px;padding:2px 6px;flex-shrink:0;';
-      badge.textContent = t.newBadge;
+      badge.textContent = t.info_new;
       titleRow.appendChild(badge);
     }
     const meta = document.createElement('div');
@@ -14845,7 +14843,7 @@ function infoRenderPosts(posts) {
     viewBtn.target        = '_blank';
     viewBtn.rel           = 'noopener';
     viewBtn.style.cssText = 'background:var(--blue-dark);color:#fff;font-size:12px;font-weight:700;font-family:Montserrat,sans-serif;padding:8px 14px;border-radius:8px;text-decoration:none;flex-shrink:0;';
-    viewBtn.textContent   = t.view;
+    viewBtn.textContent   = t.info_view;
     viewBtn.addEventListener('click', function() { markInfoAsRead(post.postId); });
     card.appendChild(left);
     card.appendChild(viewBtn);
@@ -14857,10 +14855,6 @@ async function loadInfoPosts() {
   const listEl    = document.getElementById('info-post-list');
   const loadingEl = document.getElementById('info-loading');
   if (!listEl) return;
-
-  // 言語テキスト適用
-  const l = (typeof lang !== 'undefined') ? lang : 'en';
-  infoApplyLang(l);
 
   // キャッシュから即時表示
   try {
