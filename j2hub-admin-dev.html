@@ -12726,25 +12726,6 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 
     <div class="form-main">
 
-      <!-- 管理者のみ：アップロードボタン -->
-      <div id="info-upload-section" style="display:none;">
-        <div class="form-card">
-          <div class="form-section-label">Upload New PDF</div>
-          <div id="info-pdf-upload-area" style="
-            border:2px dashed var(--border);border-radius:12px;
-            padding:20px;text-align:center;cursor:pointer;
-            background:#f8faff;margin-bottom:12px;
-          " onclick="document.getElementById('info-pdf-input').click()">
-            <div style="font-size:32px;margin-bottom:8px;">📄</div>
-            <div id="info-pdf-label" style="font-size:13px;color:var(--text-muted);">Tap to select PDF</div>
-          </div>
-          <input type="file" id="info-pdf-input" accept="application/pdf" style="display:none;" onchange="infoPDFSelected(this)">
-          <button class="submit-btn" id="info-upload-btn" onclick="uploadInfoPDF()" style="background:var(--blue-dark);opacity:0.4;pointer-events:none;">
-            Upload PDF
-          </button>
-        </div>
-      </div>
-
       <!-- 投稿一覧 -->
       <div class="form-card">
         <div class="form-section-label">Latest Posts</div>
@@ -14095,10 +14076,6 @@ function goToInfo() {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const infoPage = document.getElementById('page-info');
   if (infoPage) infoPage.classList.add('active');
-  // 管理者のみアップロードセクション表示
-  const isAdmin = _currentUser === 'Jennifer Ho' || _currentUser === 'Shige Oike';
-  const uploadSection = document.getElementById('info-upload-section');
-  if (uploadSection) uploadSection.style.display = isAdmin ? 'block' : 'none';
   // 投稿一覧を読み込む
   loadInfoPosts();
 }
@@ -14801,68 +14778,6 @@ function showInfoOverlay() {
 }
 
 // ── J2Hub INFO 機能 ─────────────────────────────────────────
-let infoPDFBase64  = '';
-let infoPDFName    = '';
-
-// PDF選択時
-function infoPDFSelected(input) {
-  if (!input.files || !input.files[0]) return;
-  const file = input.files[0];
-  infoPDFName = file.name;
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    // base64部分のみ（data:application/pdf;base64, を除く）
-    infoPDFBase64 = e.target.result.split(',')[1];
-    const label   = document.getElementById('info-pdf-label');
-    const btn     = document.getElementById('info-upload-btn');
-    if (label) label.textContent = '📄 ' + file.name;
-    if (btn)   { btn.style.opacity = '1'; btn.style.pointerEvents = 'auto'; }
-  };
-  reader.readAsDataURL(file);
-}
-
-// PDFアップロード
-async function uploadInfoPDF() {
-  if (!infoPDFBase64 || !infoPDFName) return;
-  const btn = document.getElementById('info-upload-btn');
-  btn.textContent      = 'Uploading…';
-  btn.style.opacity    = '0.6';
-  btn.style.pointerEvents = 'none';
-  try {
-    const payload = {
-      action:    'uploadInfoPDF',
-      uploader:  _currentUser,
-      fileName:  infoPDFName,
-      base64PDF: infoPDFBase64,
-      mimeType:  'application/pdf'
-    };
-    const res  = await fetch(INFO_GAS_URL, { method: 'POST', cache: 'no-store', body: JSON.stringify(payload) });
-    const data = await res.json();
-    if (data.status === 'success') {
-      // フォームリセット
-      infoPDFBase64 = '';
-      infoPDFName   = '';
-      document.getElementById('info-pdf-input').value = '';
-      document.getElementById('info-pdf-label').textContent = 'Tap to select PDF';
-      btn.textContent       = 'Upload PDF';
-      btn.style.opacity     = '0.4';
-      btn.style.pointerEvents = 'none';
-      // 一覧を再読み込み
-      loadInfoPosts();
-    } else {
-      alert('Upload failed: ' + (data.message || 'Unknown error'));
-      btn.textContent       = 'Upload PDF';
-      btn.style.opacity     = '1';
-      btn.style.pointerEvents = 'auto';
-    }
-  } catch (err) {
-    alert('Upload error: ' + err.message);
-    btn.textContent       = 'Upload PDF';
-    btn.style.opacity     = '1';
-    btn.style.pointerEvents = 'auto';
-  }
-}
-
 // 投稿一覧を読み込んでカード描画
 async function loadInfoPosts() {
   const listEl    = document.getElementById('info-post-list');
