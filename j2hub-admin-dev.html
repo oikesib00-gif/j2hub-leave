@@ -14000,8 +14000,8 @@ function launchApp(name) {
 
   // Attendance History事前取得（バックグラウンド）
   prefetchAttHistory(name);
-  // INFO一覧事前取得（バックグラウンド）
-  prefetchInfoPosts(name);
+  // INFO一覧事前取得（バックグラウンド・遅延実行）
+  setTimeout(function() { prefetchInfoPosts(name); }, 3000);
 }
 
 function goToApp(page) {
