@@ -14799,11 +14799,8 @@ function showInfoOverlay() {
 const INFO_CACHE_KEY = 'j2hub_cache_info';
 const INFO_CACHE_TTL = 5 * 60 * 1000; // 5分
 
-// ── INFO View URL（言語対応）─────────────────────────────────
+// ── INFO View URL ────────────────────────────────────────────
 function infoViewUrl(driveUrl) {
-  const l = (typeof lang !== 'undefined') ? lang : 'en';
-  if (l === 'zh') return 'https://translate.google.com/translate?sl=auto&tl=zh-CN&u=' + encodeURIComponent(driveUrl);
-  if (l === 'ta') return 'https://translate.google.com/translate?sl=auto&tl=ta&u=' + encodeURIComponent(driveUrl);
   return driveUrl;
 }
 
