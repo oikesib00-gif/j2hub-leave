@@ -14000,6 +14000,8 @@ function launchApp(name) {
 
   // Attendance History事前取得（バックグラウンド）
   prefetchAttHistory(name);
+  // INFO一覧事前取得（バックグラウンド）
+  prefetchInfoPosts(name);
 }
 
 function goToApp(page) {
@@ -14856,25 +14858,41 @@ async function loadInfoPosts() {
   const loadingEl = document.getElementById('info-loading');
   if (!listEl) return;
 
-  // キャッシュから即時表示
+  // キャッシュから即時表示（Loadingなし）
   try {
     const cached = localStorage.getItem(INFO_CACHE_KEY + '_' + _currentUser);
     if (cached) {
       const obj = JSON.parse(cached);
-      if (Date.now() - obj.ts < INFO_CACHE_TTL) {
-        if (loadingEl) loadingEl.style.display = 'none';
-        infoRenderPosts(obj.posts);
-        // バックグラウンドで最新を取得
-        fetchInfoPosts();
-        return;
-      }
+      if (loadingEl) loadingEl.style.display = 'none';
+      infoRenderPosts(obj.posts);
+      // バックグラウンドで最新を取得してキャッシュ更新
+      fetchInfoPosts();
+      return;
     }
   } catch(e) {}
 
-  // キャッシュなし → ローディング表示してfetch
+  // キャッシュなし → Loadingを表示してfetch
   if (loadingEl) loadingEl.style.display = 'block';
   listEl.innerHTML = '';
   await fetchInfoPosts();
+}
+
+// ── INFOログイン時事前取得 ───────────────────────────────────
+async function prefetchInfoPosts(name) {
+  try {
+    const res  = await fetch(INFO_GAS_URL + '?action=getInfoPosts&name=' + encodeURIComponent(name), { cache: 'no-store' });
+    const data = await res.json();
+    if (data.posts) {
+      try { localStorage.setItem(INFO_CACHE_KEY + '_' + name, JSON.stringify({ posts: data.posts, ts: Date.now() })); } catch(e) {}
+      // HOMEのinfo-badge更新
+      const unread = data.posts.filter(function(p) { return !p.isRead; }).length;
+      const badge  = document.getElementById('info-badge');
+      if (badge) {
+        if (unread > 0) { badge.textContent = unread; badge.style.display = 'flex'; }
+        else            { badge.style.display = 'none'; }
+      }
+    }
+  } catch(e) {}
 }
 
 async function fetchInfoPosts() {
