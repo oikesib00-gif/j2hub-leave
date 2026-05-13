@@ -13151,17 +13151,6 @@ function setLang(l, btn) {
   // Attendance系も言語更新
   loadAttStatusHighlight();
   setAttSort(_attSortOrder);
-  // INFO ページが表示中なら再描画
-  const infoPage = document.getElementById('page-info');
-  if (infoPage && infoPage.classList.contains('active')) {
-    const cached = localStorage.getItem(INFO_CACHE_KEY + '_' + _currentUser);
-    if (cached) {
-      try {
-        const obj = JSON.parse(cached);
-        if (obj.posts) infoRenderPosts(obj.posts);
-      } catch(e) {}
-    }
-  }
 }
 
 function apply() {
@@ -14000,8 +13989,6 @@ function launchApp(name) {
 
   // Attendance History事前取得（バックグラウンド）
   prefetchAttHistory(name);
-  // HOMEのinfo-badgeをキャッシュから更新
-  setTimeout(function() { updateInfoBadgeFromCache(); }, 500);
 }
 
 function goToApp(page) {
@@ -14144,7 +14131,8 @@ function goToInspection() { goToLorry(); }
 const INSP_GAS_URL = 'https://script.google.com/macros/s/AKfycbynoXNjgS1swI8BCoNiYGzpIAWP3xmDoDTMHH5L88hYn8lUV1u8zYVd9HlL5nKGfSS0/exec';
 
 // !! INFO GAS URL !!
-const INFO_GAS_URL = 'https://script.google.com/macros/s/AKfycbwCbsXOC6QjKh1T--Oq7Lac0wrpYCOayBE-x25jwbSFNht7E98Qi8FvzOPfuUMlcR3G/exec';
+const INFO_GAS_URL   = 'https://script.google.com/macros/s/AKfycbwCbsXOC6QjKh1T--Oq7Lac0wrpYCOayBE-x25jwbSFNht7E98Qi8FvzOPfuUMlcR3G/exec';
+const INFO_CACHE_KEY = 'j2hub_cache_info';
 // !! INFO GAS URL END !!
 
 // ============================================================
@@ -14795,21 +14783,14 @@ function showInfoOverlay() {
 
 // ── J2Hub INFO 機能 ─────────────────────────────────────────
 // 投稿一覧を読み込んでカード描画
-// ── INFO キャッシュキー ───────────────────────────────────────
-const INFO_CACHE_KEY = 'j2hub_cache_info';
-const INFO_CACHE_TTL = 5 * 60 * 1000; // 5分
-
-// ── INFO View URL ────────────────────────────────────────────
-function infoViewUrl(driveUrl) {
-  return driveUrl;
-}
-
 // ── INFO投稿カード描画 ────────────────────────────────────────
 function infoRenderPosts(posts) {
   const l      = (typeof lang !== 'undefined') ? lang : 'en';
   const t      = T[l] || T.en;
   const listEl = document.getElementById('info-post-list');
+  const loadingEl = document.getElementById('info-loading');
   if (!listEl) return;
+  if (loadingEl) loadingEl.style.display = 'none';
   listEl.innerHTML = '';
   if (!posts || posts.length === 0) {
     listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:24px;font-size:13px;">' + t.info_no_posts + '</div>';
@@ -14838,7 +14819,7 @@ function infoRenderPosts(posts) {
     left.appendChild(titleRow);
     left.appendChild(meta);
     const viewBtn = document.createElement('a');
-    viewBtn.href          = infoViewUrl(post.driveUrl);
+    viewBtn.href          = post.driveUrl;
     viewBtn.target        = '_blank';
     viewBtn.rel           = 'noopener';
     viewBtn.style.cssText = 'background:var(--blue-dark);color:#fff;font-size:12px;font-weight:700;font-family:Montserrat,sans-serif;padding:8px 14px;border-radius:8px;text-decoration:none;flex-shrink:0;';
@@ -14850,108 +14831,41 @@ function infoRenderPosts(posts) {
   });
 }
 
+// ── INFO投稿一覧取得 ─────────────────────────────────────────
 async function loadInfoPosts() {
   const listEl    = document.getElementById('info-post-list');
   const loadingEl = document.getElementById('info-loading');
   if (!listEl) return;
 
-  // キャッシュから即時表示（Loadingなし）
+  // キャッシュから即時表示（ログイン時に取得済み）
   try {
     const cached = localStorage.getItem(INFO_CACHE_KEY + '_' + _currentUser);
     if (cached) {
       const obj = JSON.parse(cached);
       if (loadingEl) loadingEl.style.display = 'none';
       infoRenderPosts(obj.posts);
-      // バックグラウンドで最新を取得してキャッシュ更新
-      fetchInfoPosts();
       return;
     }
   } catch(e) {}
 
-  // キャッシュなし → Loadingを表示してfetch
+  // キャッシュなし → fetchして取得
   if (loadingEl) loadingEl.style.display = 'block';
   listEl.innerHTML = '';
-  await fetchInfoPosts();
-}
-
-// ── info-badgeをキャッシュから更新 ──────────────────────────
-function updateInfoBadgeFromCache() {
-  const badge = document.getElementById('info-badge');
-  if (!badge || !_currentUser) return;
-  try {
-    const cached = localStorage.getItem(INFO_CACHE_KEY + '_' + _currentUser);
-    if (cached) {
-      const obj    = JSON.parse(cached);
-      const unread = (obj.posts || []).filter(function(p) { return !p.isRead; }).length;
-      if (unread > 0) { badge.textContent = unread; badge.style.display = 'flex'; }
-      else            { badge.style.display = 'none'; }
-    }
-  } catch(e) {}
-}
-
-// ── INFOログイン時事前取得 ───────────────────────────────────
-async function prefetchInfoPosts(name) {
-  try {
-    const res  = await fetch(INFO_GAS_URL + '?action=getInfoPosts&name=' + encodeURIComponent(name), { cache: 'no-store' });
-    const data = await res.json();
-    if (data.posts) {
-      try { localStorage.setItem(INFO_CACHE_KEY + '_' + name, JSON.stringify({ posts: data.posts, ts: Date.now() })); } catch(e) {}
-      // HOMEのinfo-badge更新
-      const unread = data.posts.filter(function(p) { return !p.isRead; }).length;
-      const badge  = document.getElementById('info-badge');
-      if (badge) {
-        if (unread > 0) { badge.textContent = unread; badge.style.display = 'flex'; }
-        else            { badge.style.display = 'none'; }
-      }
-    }
-  } catch(e) {}
-}
-
-async function fetchInfoPosts() {
-  const listEl    = document.getElementById('info-post-list');
-  const loadingEl = document.getElementById('info-loading');
   try {
     const res  = await fetch(INFO_GAS_URL + '?action=getInfoPosts&name=' + encodeURIComponent(_currentUser), { cache: 'no-store' });
     const data = await res.json();
-    if (loadingEl) loadingEl.style.display = 'none';
-    if (data.posts) {
-      // キャッシュ保存
-      try { localStorage.setItem(INFO_CACHE_KEY + '_' + _currentUser, JSON.stringify({ posts: data.posts, ts: Date.now() })); } catch(e) {}
-      infoRenderPosts(data.posts);
-    }
+    if (data.posts) infoRenderPosts(data.posts);
   } catch (err) {
     if (loadingEl) loadingEl.style.display = 'none';
-    if (listEl && !listEl.innerHTML) {
-      listEl.innerHTML = '<div style="text-align:center;color:#dc2626;padding:24px;font-size:13px;">Failed to load. Please try again.</div>';
-    }
+    listEl.innerHTML = '<div style="text-align:center;color:#dc2626;padding:24px;font-size:13px;">Failed to load. Please try again.</div>';
   }
 }
 
-// 既読記録
+// ── 既読記録 ─────────────────────────────────────────────────
 async function markInfoAsRead(postId) {
   try {
     const payload = { action: 'markAsRead', staffName: _currentUser, postId: String(postId) };
     await fetch(INFO_GAS_URL, { method: 'POST', cache: 'no-store', body: JSON.stringify(payload) });
-  } catch (err) {}
-  // info-badge をキャッシュから更新
-  updateInfoBadgeFromCache();
-}
-
-// HOMEのinfo-badge更新
-async function updateInfoBadge() {
-  const badge = document.getElementById('info-badge');
-  if (!badge || !_currentUser) return;
-  try {
-    const res  = await fetch(INFO_GAS_URL + '?action=getInfoPosts&name=' + encodeURIComponent(_currentUser), { cache: 'no-store' });
-    const data = await res.json();
-    if (!data.posts) return;
-    const unread = data.posts.filter(function(p) { return !p.isRead; }).length;
-    if (unread > 0) {
-      badge.textContent    = unread;
-      badge.style.display  = 'flex';
-    } else {
-      badge.style.display  = 'none';
-    }
   } catch (err) {}
 }
 
@@ -15113,7 +15027,13 @@ async function loadInitialData(name) {
     balSection.style.display  = 'block';
     formSection.style.display = 'flex';
 
-    const res  = await fetch(GAS_URL + '?action=getInitialData&name=' + encodeURIComponent(name));
+    // 3つのGASを同時並列実行
+    const [res, attRes, infoRes] = await Promise.all([
+      fetch(GAS_URL + '?action=getInitialData&name=' + encodeURIComponent(name)),
+      fetch(ATT_GAS_URL + '?action=getAttStatus&name=' + encodeURIComponent(name)).catch(() => null),
+      fetch(INFO_GAS_URL + '?action=getInfoPosts&name=' + encodeURIComponent(name)).catch(() => null)
+    ]);
+
     const data = await res.json();
     if (data.status !== 'success') return;
 
@@ -15124,11 +15044,28 @@ async function loadInitialData(name) {
       localStorage.setItem(CACHE_KEY + '_' + name, JSON.stringify({ data: data, ts: Date.now() }));
     } catch(e) {}
 
-    // ログイン時にAttendance打刻状態を取得してキャッシュ（ローディング完了前に実施）
+    // Attendance打刻状態を保存
     try {
-      const attRes  = await fetch(ATT_GAS_URL + '?action=getAttStatus&name=' + encodeURIComponent(name));
-      const attData = await attRes.json();
-      if (attData.nextType) localStorage.setItem('att_status_' + name, attData.nextType);
+      if (attRes) {
+        const attData = await attRes.json();
+        if (attData.nextType) localStorage.setItem('att_status_' + name, attData.nextType);
+      }
+    } catch(e) {}
+
+    // INFO一覧をキャッシュに保存・バッジ更新
+    try {
+      if (infoRes) {
+        const infoData = await infoRes.json();
+        if (infoData.posts) {
+          localStorage.setItem(INFO_CACHE_KEY + '_' + name, JSON.stringify({ posts: infoData.posts, ts: Date.now() }));
+          const unread = infoData.posts.filter(function(p) { return !p.isRead; }).length;
+          const badge  = document.getElementById('info-badge');
+          if (badge) {
+            if (unread > 0) { badge.textContent = unread; badge.style.display = 'flex'; }
+            else            { badge.style.display = 'none'; }
+          }
+        }
+      }
     } catch(e) {}
 
     hideLoading();
