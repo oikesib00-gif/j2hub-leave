@@ -14000,8 +14000,8 @@ function launchApp(name) {
 
   // Attendance History事前取得（バックグラウンド）
   prefetchAttHistory(name);
-  // INFO一覧事前取得（バックグラウンド・遅延実行）
-  setTimeout(function() { prefetchInfoPosts(name); }, 3000);
+  // HOMEのinfo-badgeをキャッシュから更新
+  setTimeout(function() { updateInfoBadgeFromCache(); }, 500);
 }
 
 function goToApp(page) {
@@ -14874,6 +14874,21 @@ async function loadInfoPosts() {
   await fetchInfoPosts();
 }
 
+// ── info-badgeをキャッシュから更新 ──────────────────────────
+function updateInfoBadgeFromCache() {
+  const badge = document.getElementById('info-badge');
+  if (!badge || !_currentUser) return;
+  try {
+    const cached = localStorage.getItem(INFO_CACHE_KEY + '_' + _currentUser);
+    if (cached) {
+      const obj    = JSON.parse(cached);
+      const unread = (obj.posts || []).filter(function(p) { return !p.isRead; }).length;
+      if (unread > 0) { badge.textContent = unread; badge.style.display = 'flex'; }
+      else            { badge.style.display = 'none'; }
+    }
+  } catch(e) {}
+}
+
 // ── INFOログイン時事前取得 ───────────────────────────────────
 async function prefetchInfoPosts(name) {
   try {
@@ -14918,8 +14933,8 @@ async function markInfoAsRead(postId) {
     const payload = { action: 'markAsRead', staffName: _currentUser, postId: String(postId) };
     await fetch(INFO_GAS_URL, { method: 'POST', cache: 'no-store', body: JSON.stringify(payload) });
   } catch (err) {}
-  // info-badge を更新
-  updateInfoBadge();
+  // info-badge をキャッシュから更新
+  updateInfoBadgeFromCache();
 }
 
 // HOMEのinfo-badge更新
