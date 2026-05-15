@@ -12716,6 +12716,27 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   </div>
 
   <!-- ══════════════════════════════════════════
+       PAGE: J2Hub INFO
+  ══════════════════════════════════════════ -->
+  <div id="page-info" class="page">
+    <div class="page-header">
+      <div class="page-title" id="info-title-sub" data-key="info_company">Company News</div>
+      <div class="page-title-main">J2Hub <em>INFO</em></div>
+    </div>
+
+    <div class="form-main">
+
+      <!-- 投稿一覧 -->
+      <div class="form-card">
+        <div class="form-section-label" id="info-label-latest" data-key="info_latest">Latest Posts</div>
+        <div id="info-loading" style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px;">Loading…</div>
+        <div id="info-post-list"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
        PAGE: INSPECTION（運行前点検）
   ══════════════════════════════════════════ -->
   <div id="page-inspection" class="page">
@@ -13062,6 +13083,7 @@ const T = {
     att_scan_in:'Please scan the QR Code to Clock In.',
     att_scan_out:'Please scan the QR Code to Clock Out.',
     nav_att:'Attendance', nav_att_hist:'History',
+    info_company:'Company News', info_latest:'Latest Posts', info_no_posts:'No posts yet.', info_view:'View', info_new:'NEW',
   },
   zh: {
     nav_leave:'请假', nav_history:'记录', nav_notices:'公告',
@@ -13091,6 +13113,7 @@ const T = {
     att_scan_in:'请扫描二维码打上班卡。',
     att_scan_out:'请扫描二维码打下班卡。',
     nav_att:'打卡', nav_att_hist:'记录',
+    info_company:'公司新闻', info_latest:'最新帖子', info_no_posts:'暂无内容。', info_view:'查看', info_new:'新',
   },
   ta: {
     nav_leave:'விடுப்பு', nav_history:'வரலாறு', nav_notices:'அறிவிப்பு',
@@ -13120,6 +13143,7 @@ const T = {
     att_scan_in:'வருகை பதிவு செய்ய QR குறியீட்டை ஸ்கேன் செய்யவும்.',
     att_scan_out:'புறப்பாடு பதிவு செய்ய QR குறியீட்டை ஸ்கேன் செய்யவும்.',
     nav_att:'வருகை', nav_att_hist:'பதிவு',
+    info_company:'நிறுவன செய்தி', info_latest:'சமீபத்திய இடுகைகள்', info_no_posts:'இடுகைகள் இல்லை.', info_view:'பார்க்க', info_new:'புதிய',
   }
 };
 
@@ -14051,8 +14075,20 @@ function showLorryPage(name, btn) {
 
 // ── J2Hub INFO ───────────────────────────────────────────────
 function goToInfo() {
-  // Phase 2実装予定 — 現在は準備中メッセージをオーバーレイで表示
-  showInfoOverlay();
+  document.getElementById('home-screen').classList.remove('show');
+  // 全ナビ非表示
+  const navApp   = document.getElementById('nav-application');
+  const navLorry = document.getElementById('nav-lorry');
+  const navAtt   = document.getElementById('nav-attendance');
+  if (navApp)   navApp.style.display   = 'none';
+  if (navLorry) navLorry.style.display = 'none';
+  if (navAtt)   navAtt.style.display   = 'none';
+  // J2Hub INFOページをアクティブに
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const infoPage = document.getElementById('page-info');
+  if (infoPage) infoPage.classList.add('active');
+  // 投稿一覧を読み込む
+  loadInfoPosts();
 }
 
 // ── ATTENDANCE ───────────────────────────────────────────────
@@ -14100,7 +14136,12 @@ function goToInspection() { goToLorry(); }
 
 // !! INSPECTION GAS URL — デプロイ後に設定 !!
 // !! INSPECTION GAS URL !!
-const INSP_GAS_URL = 'https://script.google.com/macros/s/AKfycbynoXNjgS1swI8BCoNiYGzpIAWP3xmDoDTMHH5L88hYn8lUV1u8zYVd9HlL5nKGfSS0/exec';
+const INSP_GAS_URL   = 'https://script.google.com/macros/s/AKfycbynoXNjgS1swI8BCoNiYGzpIAWP3xmDoDTMHH5L88hYn8lUV1u8zYVd9HlL5nKGfSS0/exec';
+
+// !! INFO GAS URL !!
+const INFO_GAS_URL   = 'https://script.google.com/macros/s/AKfycbwCbsXOC6QjKh1T--Oq7Lac0wrpYCOayBE-x25jwbSFNht7E98Qi8FvzOPfuUMlcR3G/exec';
+const INFO_CACHE_KEY = 'j2hub_cache_info';
+// !! INFO GAS URL END !!
 
 // ============================================================
 // Inspection 3言語対応
@@ -14733,19 +14774,92 @@ function closeInspSuccess() {
   if (navLorry) navLorry.style.display = 'none';
 }
 
-// ── J2Hub INFO オーバーレイ（Phase 2実装予定） ───────────────
-function showInfoOverlay() {
-  // 既存のsuccess-overlayのデザインを流用して準備中メッセージを表示
-  const overlay = document.getElementById('insp-success-overlay');
-  const title   = document.getElementById('insp-success-title');
-  const msg     = document.getElementById('insp-success-msg');
-  const sub     = document.getElementById('insp-success-sub');
-  const closeBtn= document.getElementById('insp-success-close-btn');
-  if (title)    title.textContent   = '📰 J2Hub INFO';
-  if (msg)      msg.textContent     = 'Coming soon.';
-  if (sub)      sub.textContent     = 'Stay tuned for company news and updates.';
-  if (closeBtn) closeBtn.textContent= 'Close';
-  if (overlay)  overlay.classList.add('show');
+
+
+// ── INFO投稿カード描画 ────────────────────────────────────────
+function infoRenderPosts(posts) {
+  const l      = (typeof lang !== 'undefined') ? lang : 'en';
+  const t      = T[l] || T.en;
+  const listEl = document.getElementById('info-post-list');
+  const loadingEl = document.getElementById('info-loading');
+  if (!listEl) return;
+  if (loadingEl) loadingEl.style.display = 'none';
+  listEl.innerHTML = '';
+  if (!posts || posts.length === 0) {
+    listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:24px;font-size:13px;">' + t.info_no_posts + '</div>';
+    return;
+  }
+  posts.forEach(function(post) {
+    const card = document.createElement('div');
+    card.style.cssText = 'padding:14px 0;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;gap:12px;';
+    const left = document.createElement('div');
+    left.style.cssText = 'flex:1;min-width:0;';
+    const titleRow = document.createElement('div');
+    titleRow.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:4px;';
+    const titleEl = document.createElement('span');
+    titleEl.style.cssText = 'font-size:14px;font-weight:700;color:var(--text);word-break:break-all;';
+    titleEl.textContent = '📄 ' + post.fileName;
+    titleRow.appendChild(titleEl);
+    if (!post.isRead) {
+      const badge = document.createElement('span');
+      badge.style.cssText = 'background:#dc2626;color:#fff;font-size:9px;font-weight:800;font-family:Montserrat,sans-serif;border-radius:6px;padding:2px 6px;flex-shrink:0;';
+      badge.textContent = t.info_new;
+      titleRow.appendChild(badge);
+    }
+    const meta = document.createElement('div');
+    meta.style.cssText = 'font-size:11px;color:var(--text-muted);';
+    meta.textContent = post.uploader + ' · ' + String(post.uploadDate).substring(0, 11);
+    left.appendChild(titleRow);
+    left.appendChild(meta);
+    const viewBtn = document.createElement('a');
+    viewBtn.href          = post.driveUrl;
+    viewBtn.target        = '_blank';
+    viewBtn.rel           = 'noopener';
+    viewBtn.style.cssText = 'background:var(--blue-dark);color:#fff;font-size:12px;font-weight:700;font-family:Montserrat,sans-serif;padding:8px 14px;border-radius:8px;text-decoration:none;flex-shrink:0;';
+    viewBtn.textContent   = t.info_view;
+    viewBtn.addEventListener('click', function() { markInfoAsRead(post.postId); });
+    card.appendChild(left);
+    card.appendChild(viewBtn);
+    listEl.appendChild(card);
+  });
+}
+
+// ── INFO投稿一覧取得 ─────────────────────────────────────────
+async function loadInfoPosts() {
+  const listEl    = document.getElementById('info-post-list');
+  const loadingEl = document.getElementById('info-loading');
+  if (!listEl) return;
+
+  // キャッシュから即時表示（ログイン時に取得済み）
+  try {
+    const cached = localStorage.getItem(INFO_CACHE_KEY + '_' + _currentUser);
+    if (cached) {
+      const obj = JSON.parse(cached);
+      if (loadingEl) loadingEl.style.display = 'none';
+      infoRenderPosts(obj.posts);
+      return;
+    }
+  } catch(e) {}
+
+  // キャッシュなし → fetchして取得
+  if (loadingEl) loadingEl.style.display = 'block';
+  listEl.innerHTML = '';
+  try {
+    const res  = await fetch(INFO_GAS_URL + '?action=getInfoPosts&name=' + encodeURIComponent(_currentUser), { cache: 'no-store' });
+    const data = await res.json();
+    if (data.posts) infoRenderPosts(data.posts);
+  } catch (err) {
+    if (loadingEl) loadingEl.style.display = 'none';
+    listEl.innerHTML = '<div style="text-align:center;color:#dc2626;padding:24px;font-size:13px;">Failed to load. Please try again.</div>';
+  }
+}
+
+// ── 既読記録 ─────────────────────────────────────────────────
+async function markInfoAsRead(postId) {
+  try {
+    const payload = { action: 'markAsRead', staffName: _currentUser, postId: String(postId) };
+    await fetch(INFO_GAS_URL, { method: 'POST', cache: 'no-store', body: JSON.stringify(payload) });
+  } catch (err) {}
 }
 
 // ── Inspection History ────────────────────────────────────────
@@ -14906,7 +15020,13 @@ async function loadInitialData(name) {
     balSection.style.display  = 'block';
     formSection.style.display = 'flex';
 
-    const res  = await fetch(GAS_URL + '?action=getInitialData&name=' + encodeURIComponent(name));
+    // 3つのGASを同時並列実行
+    const [res, attRes, infoRes] = await Promise.all([
+      fetch(GAS_URL + '?action=getInitialData&name=' + encodeURIComponent(name)),
+      fetch(ATT_GAS_URL + '?action=getAttStatus&name=' + encodeURIComponent(name)).catch(() => null),
+      fetch(INFO_GAS_URL + '?action=getInfoPosts&name=' + encodeURIComponent(name)).catch(() => null)
+    ]);
+
     const data = await res.json();
     if (data.status !== 'success') return;
 
@@ -14917,11 +15037,28 @@ async function loadInitialData(name) {
       localStorage.setItem(CACHE_KEY + '_' + name, JSON.stringify({ data: data, ts: Date.now() }));
     } catch(e) {}
 
-    // ログイン時にAttendance打刻状態を取得してキャッシュ（ローディング完了前に実施）
+    // Attendance打刻状態を保存
     try {
-      const attRes  = await fetch(ATT_GAS_URL + '?action=getAttStatus&name=' + encodeURIComponent(name));
-      const attData = await attRes.json();
-      if (attData.nextType) localStorage.setItem('att_status_' + name, attData.nextType);
+      if (attRes) {
+        const attData = await attRes.json();
+        if (attData.nextType) localStorage.setItem('att_status_' + name, attData.nextType);
+      }
+    } catch(e) {}
+
+    // INFO一覧をキャッシュに保存・バッジ更新
+    try {
+      if (infoRes) {
+        const infoData = await infoRes.json();
+        if (infoData.posts) {
+          localStorage.setItem(INFO_CACHE_KEY + '_' + name, JSON.stringify({ posts: infoData.posts, ts: Date.now() }));
+          const unread = infoData.posts.filter(function(p) { return !p.isRead; }).length;
+          const badge  = document.getElementById('info-badge');
+          if (badge) {
+            if (unread > 0) { badge.textContent = unread; badge.style.display = 'flex'; }
+            else            { badge.style.display = 'none'; }
+          }
+        }
+      }
     } catch(e) {}
 
     hideLoading();
