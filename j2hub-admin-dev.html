@@ -16046,35 +16046,24 @@ function renderAttHistory(records, listEl, t) {
   const totalHoursEl = document.getElementById('att-total-hours');
   const totalOtEl    = document.getElementById('att-total-ot');
   if (summaryEl && records && records.length > 0) {
-    // EmployeeTypeで1日の所定労働時間を決定
-    const empType = currentStaffType || 'Office';
-    let totalHours = 0;
-    let totalOT    = 0;
+    let totalDays = 0;
+    let totalOT   = 0;
 
     records.forEach(r => {
       // 🚩フラグのある行・Leaveの行は除外
       if (r.flag) return;
       if (r.note && (r.note.indexOf('Annual Leave') >= 0 || r.note.indexOf('Emergency') >= 0)) return;
 
-      if (r.hours) {
-        const h = parseFloat(r.hours.replace('h',''));
-        if (!isNaN(h)) totalHours += h;
-      }
+      // Clock Inがある行を1日としてカウント
+      if (r.clockIn) totalDays += 1;
+
+      // OT合計
       if (r.ot) {
         const o = parseFloat(r.ot);
         if (!isNaN(o)) totalOT += o;
       }
     });
 
-    // 日数換算
-    let hoursPerDay;
-    if (empType === 'Office') {
-      hoursPerDay = 8;
-    } else {
-      // Drive: 平日9.5h（土曜は別途4h）→ ここでは単純に9.5で換算
-      hoursPerDay = 9.5;
-    }
-    const totalDays = Math.round(totalHours / hoursPerDay * 2) / 2; // 0.5単位
     totalOT = Math.round(totalOT * 2) / 2;
 
     if (totalHoursEl) totalHoursEl.textContent = totalDays + ' Days';
