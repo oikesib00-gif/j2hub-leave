@@ -16054,8 +16054,8 @@ function renderAttHistory(records, listEl, t) {
       if (r.flag) return;
       if (r.note && (r.note.indexOf('Annual Leave') >= 0 || r.note.indexOf('Emergency') >= 0)) return;
 
-      // Clock Inがある行を1日としてカウント
-      if (r.clockIn) totalDays += 1;
+      // Clock Inあり・Clock Outあり・🚩なしの行のみ確定として1日カウント
+      if (r.clockIn && r.clockOut) totalDays += 1;
 
       // OT合計
       if (r.ot) {
