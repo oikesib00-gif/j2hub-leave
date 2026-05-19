@@ -2310,6 +2310,29 @@
     </div>
   </div>
 
+
+  <!-- ══════════════════════════════════════════
+       PAGE: J2Hub INFO
+  ══════════════════════════════════════════ -->
+  <div id="page-info" class="page">
+    <div class="page-header">
+      <div class="page-title" id="info-title-sub" data-key="info_company">Company News</div>
+      <div class="page-title-main">J2Hub <em>INFO</em></div>
+    </div>
+
+    <div class="form-main">
+
+      <!-- 投稿一覧 -->
+      <div class="form-card">
+        <div class="form-section-label" id="info-label-latest" data-key="info_latest">Latest Posts</div>
+        <div id="info-loading" style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px;">Loading…</div>
+        <div id="info-post-list"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
   <!-- ══════════════════════════════════════════
        PAGE: INSPECTION（運行前点検）
   ══════════════════════════════════════════ -->
@@ -3453,7 +3476,7 @@ function launchApp(name) {
   // Jennifer Ho・Shige OikeはMedical・Petty Cashタブを表示
   const medBtn = document.getElementById('nav-medical-btn');
   const pcBtn  = document.getElementById('nav-pettycash-btn');
-  const isAdmin = (name === 'Jennifer Ho' || name === 'Shige Oike');
+  const isAdmin = (name === 'Jennifer Ho' || name === 'Shige Oike' || name === 'Tan Boon Long');
   if (medBtn) medBtn.style.display = isAdmin ? 'flex' : 'none';
   if (pcBtn)  pcBtn.style.display  = isAdmin ? 'flex' : 'none';
   // 初期ナビ状態：管理者はホーム画面から入るので両ナビ非表示、従業員は申請系ナビのみ表示
@@ -3505,7 +3528,7 @@ function goToApp(page) {
 
 // ── ホームへ戻る（ロゴクリック・管理者のみ） ─────────────────
 function goHome() {
-  const isAdmin = _currentUser === 'Jennifer Ho' || _currentUser === 'Shige Oike';
+  const isAdmin = _currentUser === 'Jennifer Ho' || _currentUser === 'Shige Oike' || _currentUser === 'Tan Boon Long';
   if (!isAdmin) return;
   // 全ページ非アクティブ
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -3566,9 +3589,23 @@ function showLorryPage(name, btn) {
 
 // ── J2Hub INFO ───────────────────────────────────────────────
 function goToInfo() {
-  // Phase 2実装予定 — 現在は準備中メッセージをオーバーレイで表示
-  showInfoOverlay();
+  document.getElementById('home-screen').classList.remove('show');
+  // 全ナビ非表示
+  const navApp   = document.getElementById('nav-application');
+  const navLorry = document.getElementById('nav-lorry');
+  const navAtt   = document.getElementById('nav-attendance');
+  if (navApp)   navApp.style.display   = 'none';
+  if (navLorry) navLorry.style.display = 'none';
+  if (navAtt)   navAtt.style.display   = 'none';
+  // J2Hub INFOページをアクティブに
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const infoPage = document.getElementById('page-info');
+  if (infoPage) infoPage.classList.add('active');
+  // 投稿一覧を読み込む
+  loadInfoPosts();
 }
+
+
 
 // 後方互換
 function goToLorryMenu() { goToLorry(); }
@@ -4213,6 +4250,98 @@ function closeInspSuccess() {
   if (navApp)   navApp.style.display   = 'none';
   if (navLorry) navLorry.style.display = 'none';
 }
+
+const INFO_GAS_URL   = 'https://script.google.com/macros/s/AKfycbwCbsXOC6QjKh1T--Oq7Lac0wrpYCOayBE-x25jwbSFNht7E98Qi8FvzOPfuUMlcR3G/exec';
+const INFO_CACHE_KEY = 'j2hub_cache_info';
+// !! INFO GAS URL END !!
+
+function infoRenderPosts(posts) {
+  const l      = (typeof lang !== 'undefined') ? lang : 'en';
+  const t      = T[l] || T.en;
+  const listEl = document.getElementById('info-post-list');
+  const loadingEl = document.getElementById('info-loading');
+  if (!listEl) return;
+  if (loadingEl) loadingEl.style.display = 'none';
+  listEl.innerHTML = '';
+  if (!posts || posts.length === 0) {
+    listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:24px;font-size:13px;">' + t.info_no_posts + '</div>';
+    return;
+  }
+  posts.forEach(function(post) {
+    const card = document.createElement('div');
+    card.style.cssText = 'padding:14px 0;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;gap:12px;';
+    const left = document.createElement('div');
+    left.style.cssText = 'flex:1;min-width:0;';
+    const titleRow = document.createElement('div');
+    titleRow.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:4px;';
+    const titleEl = document.createElement('span');
+    titleEl.style.cssText = 'font-size:14px;font-weight:700;color:var(--text);word-break:break-all;';
+    titleEl.textContent = '📄 ' + post.fileName;
+    titleRow.appendChild(titleEl);
+    if (!post.isRead) {
+      const badge = document.createElement('span');
+      badge.style.cssText = 'background:#dc2626;color:#fff;font-size:9px;font-weight:800;font-family:Montserrat,sans-serif;border-radius:6px;padding:2px 6px;flex-shrink:0;';
+      badge.textContent = t.info_new;
+      titleRow.appendChild(badge);
+    }
+    const meta = document.createElement('div');
+    meta.style.cssText = 'font-size:11px;color:var(--text-muted);';
+    meta.textContent = post.uploader + ' · ' + String(post.uploadDate).substring(0, 11);
+    left.appendChild(titleRow);
+    left.appendChild(meta);
+    const viewBtn = document.createElement('a');
+    viewBtn.href          = post.driveUrl;
+    viewBtn.target        = '_blank';
+    viewBtn.rel           = 'noopener';
+    viewBtn.style.cssText = 'background:var(--blue-dark);color:#fff;font-size:12px;font-weight:700;font-family:Montserrat,sans-serif;padding:8px 14px;border-radius:8px;text-decoration:none;flex-shrink:0;';
+    viewBtn.textContent   = t.info_view;
+    viewBtn.addEventListener('click', function() { markInfoAsRead(post.postId); });
+    card.appendChild(left);
+    card.appendChild(viewBtn);
+    listEl.appendChild(card);
+  });
+}
+
+// ── INFO投稿一覧取得 ─────────────────────────────────────────
+
+async function loadInfoPosts() {
+  const listEl    = document.getElementById('info-post-list');
+  const loadingEl = document.getElementById('info-loading');
+  if (!listEl) return;
+
+  // キャッシュから即時表示（ログイン時に取得済み）
+  try {
+    const cached = localStorage.getItem(INFO_CACHE_KEY + '_' + _currentUser);
+    if (cached) {
+      const obj = JSON.parse(cached);
+      if (loadingEl) loadingEl.style.display = 'none';
+      infoRenderPosts(obj.posts);
+      return;
+    }
+  } catch(e) {}
+
+  // キャッシュなし → fetchして取得
+  if (loadingEl) loadingEl.style.display = 'block';
+  listEl.innerHTML = '';
+  try {
+    const res  = await fetch(INFO_GAS_URL + '?action=getInfoPosts&name=' + encodeURIComponent(_currentUser), { cache: 'no-store' });
+    const data = await res.json();
+    if (data.posts) infoRenderPosts(data.posts);
+  } catch (err) {
+    if (loadingEl) loadingEl.style.display = 'none';
+    listEl.innerHTML = '<div style="text-align:center;color:#dc2626;padding:24px;font-size:13px;">Failed to load. Please try again.</div>';
+  }
+}
+
+// ── 既読記録 ─────────────────────────────────────────────────
+
+async function markInfoAsRead(postId) {
+  try {
+    const payload = { action: 'markAsRead', staffName: _currentUser, postId: String(postId) };
+    await fetch(INFO_GAS_URL, { method: 'POST', cache: 'no-store', body: JSON.stringify(payload) });
+  } catch (err) {}
+}
+
 
 // ── J2Hub INFO オーバーレイ（Phase 2実装予定） ───────────────
 function showInfoOverlay() {
