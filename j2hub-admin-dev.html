@@ -13950,7 +13950,7 @@ function launchApp(name) {
   // Jennifer Ho・Shige OikeはMedical・Petty Cashタブを表示
   const medBtn = document.getElementById('nav-medical-btn');
   const pcBtn  = document.getElementById('nav-pettycash-btn');
-  const isAdmin = (name === 'Jennifer Ho' || name === 'Shige Oike' || name === 'Tan Boon Long');
+  const isAdmin = (name === 'Jennifer Ho' || name === 'Shige Oike');
   if (medBtn) medBtn.style.display = isAdmin ? 'flex' : 'none';
   if (pcBtn)  pcBtn.style.display  = isAdmin ? 'flex' : 'none';
   // 初期ナビ状態：管理者はホーム画面から入るので両ナビ非表示、従業員は申請系ナビのみ表示
@@ -14012,7 +14012,7 @@ function goToApp(page) {
 
 // ── ホームへ戻る（ロゴクリック・管理者のみ） ─────────────────
 function goHome() {
-  const isAdmin = _currentUser === 'Jennifer Ho' || _currentUser === 'Shige Oike' || _currentUser === 'Tan Boon Long';
+  const isAdmin = _currentUser === 'Jennifer Ho' || _currentUser === 'Shige Oike';
   if (!isAdmin) return;
   // 全ページ非アクティブ
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -14845,7 +14845,7 @@ async function loadInfoPosts() {
   if (loadingEl) loadingEl.style.display = 'block';
   listEl.innerHTML = '';
   try {
-    const res  = await fetch(INFO_GAS_URL + '?action=getInfoPosts&name=' + encodeURIComponent(_currentUser), { cache: 'no-store' });
+    const res  = await fetch(INFO_GAS_URL + '?action=getInfoPosts&name=' + encodeURIComponent(_currentUser) + '&lang=' + (lang || 'en'), { cache: 'no-store' });
     const data = await res.json();
     if (data.posts) infoRenderPosts(data.posts);
   } catch (err) {
@@ -15024,7 +15024,7 @@ async function loadInitialData(name) {
     const [res, attRes, infoRes] = await Promise.all([
       fetch(GAS_URL + '?action=getInitialData&name=' + encodeURIComponent(name)),
       fetch(ATT_GAS_URL + '?action=getAttStatus&name=' + encodeURIComponent(name)).catch(() => null),
-      fetch(INFO_GAS_URL + '?action=getInfoPosts&name=' + encodeURIComponent(name)).catch(() => null)
+      fetch(INFO_GAS_URL + '?action=getInfoPosts&name=' + encodeURIComponent(name) + '&lang=' + (lang || 'en')).catch(() => null)
     ]);
 
     const data = await res.json();
