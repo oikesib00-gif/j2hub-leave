@@ -14829,6 +14829,7 @@ function infoRenderPosts(posts) {
 
 // ── INFO投稿一覧取得 ─────────────────────────────────────────
 async function loadInfoPosts() {
+  if (!_currentUser) return;
   const listEl    = document.getElementById('info-post-list');
   const loadingEl = document.getElementById('info-loading');
   if (!listEl) return;
