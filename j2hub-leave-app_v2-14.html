@@ -3531,8 +3531,6 @@ function goToApp(page) {
 
 // ── ホームへ戻る（ロゴクリック・管理者のみ） ─────────────────
 function goHome() {
-  const isAdmin = _currentUser === 'Jennifer Ho' || _currentUser === 'Shige Oike' || _currentUser === 'Tan Boon Long';
-  if (!isAdmin) return;
   // 全ページ非アクティブ
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
