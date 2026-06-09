@@ -2682,6 +2682,9 @@ function setLang(l, btn) {
   btn.classList.add('active');
   apply();
   inspApplyLang(l);
+  // INFO：言語切替時にキャッシュクリアして再取得
+  localStorage.removeItem(INFO_CACHE_KEY + '_' + _currentUser + '_' + l);
+  loadInfoPosts();
 }
 
 function apply() {
@@ -4253,7 +4256,7 @@ function closeInspSuccess() {
   if (navLorry) navLorry.style.display = 'none';
 }
 
-const INFO_GAS_URL   = 'https://script.google.com/macros/s/AKfycbwCbsXOC6QjKh1T--Oq7Lac0wrpYCOayBE-x25jwbSFNht7E98Qi8FvzOPfuUMlcR3G/exec';
+const INFO_GAS_URL   = 'https://script.google.com/macros/s/AKfycbx-NKZsuwObjfb7OLRlHxwceV5FCHjcT4I45b3hqgEGn-IvxrARGdPR6OA1bDtolxt2/exec';
 const INFO_CACHE_KEY = 'j2hub_cache_info';
 // !! INFO GAS URL END !!
 
@@ -4307,13 +4310,14 @@ function infoRenderPosts(posts) {
 // ── INFO投稿一覧取得 ─────────────────────────────────────────
 
 async function loadInfoPosts() {
+  if (!_currentUser) return;
   const listEl    = document.getElementById('info-post-list');
   const loadingEl = document.getElementById('info-loading');
   if (!listEl) return;
 
   // キャッシュから即時表示（ログイン時に取得済み）
   try {
-    const cached = localStorage.getItem(INFO_CACHE_KEY + '_' + _currentUser);
+    const cached = localStorage.getItem(INFO_CACHE_KEY + '_' + _currentUser + '_' + (lang || 'en'));
     if (cached) {
       const obj = JSON.parse(cached);
       if (loadingEl) loadingEl.style.display = 'none';
@@ -4326,7 +4330,7 @@ async function loadInfoPosts() {
   if (loadingEl) loadingEl.style.display = 'block';
   listEl.innerHTML = '';
   try {
-    const res  = await fetch(INFO_GAS_URL + '?action=getInfoPosts&name=' + encodeURIComponent(_currentUser), { cache: 'no-store' });
+    const res  = await fetch(INFO_GAS_URL + '?action=getInfoPosts&name=' + encodeURIComponent(_currentUser) + '&lang=' + (lang || 'en'), { cache: 'no-store' });
     const data = await res.json();
     if (data.posts) infoRenderPosts(data.posts);
   } catch (err) {
@@ -4340,7 +4344,25 @@ async function loadInfoPosts() {
 async function markInfoAsRead(postId) {
   try {
     const payload = { action: 'markAsRead', staffName: _currentUser, postId: String(postId) };
-    await fetch(INFO_GAS_URL, { method: 'POST', cache: 'no-store', body: JSON.stringify(payload) });
+    fetch(INFO_GAS_URL, { method: 'POST', cache: 'no-store', body: JSON.stringify(payload) }).catch(() => {});
+    // キャッシュのisReadを即時更新
+    const cacheKey = INFO_CACHE_KEY + '_' + _currentUser + '_' + (lang || 'en');
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      const obj = JSON.parse(cached);
+      obj.posts = obj.posts.map(function(p) {
+        if (String(p.postId) === String(postId)) p.isRead = true;
+        return p;
+      });
+      localStorage.setItem(cacheKey, JSON.stringify(obj));
+      // バッジを即時更新
+      const unread = obj.posts.filter(function(p) { return !p.isRead; }).length;
+      const badge  = document.getElementById('info-badge');
+      if (badge) {
+        if (unread > 0) { badge.textContent = unread; badge.style.display = 'flex'; }
+        else            { badge.style.display = 'none'; }
+      }
+    }
   } catch (err) {}
 }
 
@@ -4518,7 +4540,10 @@ async function loadInitialData(name) {
     balSection.style.display  = 'block';
     formSection.style.display = 'flex';
 
-    const res  = await fetch(GAS_URL + '?action=getInitialData&name=' + encodeURIComponent(name));
+    const [res, infoRes] = await Promise.all([
+      fetch(GAS_URL + '?action=getInitialData&name=' + encodeURIComponent(name)),
+      fetch(INFO_GAS_URL + '?action=getInfoPosts&name=' + encodeURIComponent(name) + '&lang=' + (lang || 'en')).catch(() => null)
+    ]);
     const data = await res.json();
     if (data.status !== 'success') return;
 
@@ -4527,6 +4552,22 @@ async function loadInitialData(name) {
     // キャッシュに保存
     try {
       localStorage.setItem(CACHE_KEY + '_' + name, JSON.stringify({ data: data, ts: Date.now() }));
+    } catch(e) {}
+
+    // INFOキャッシュに保存・バッジ更新
+    try {
+      if (infoRes) {
+        const infoData = await infoRes.json();
+        if (infoData.posts) {
+          localStorage.setItem(INFO_CACHE_KEY + '_' + name + '_' + (lang || 'en'), JSON.stringify({ posts: infoData.posts, ts: Date.now() }));
+          const unread = infoData.posts.filter(function(p) { return !p.isRead; }).length;
+          const badge  = document.getElementById('info-badge');
+          if (badge) {
+            if (unread > 0) { badge.textContent = unread; badge.style.display = 'flex'; }
+            else            { badge.style.display = 'none'; }
+          }
+        }
+      }
     } catch(e) {}
 
     hideLoading();
