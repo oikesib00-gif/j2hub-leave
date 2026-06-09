@@ -3180,7 +3180,7 @@ function calDone() {
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwAXrw_Hex1V8fzuXXBZa95u1cLwos4z38-ZlqL3olXlD-TTL25a0hO5JascLVRZL0u/exec';
 
 async function submitLeave() {
-  const name   = document.getElementById('employee-name').value;
+  const name   = document.getElementById('employee-name').value || _currentUser;
   const from   = document.getElementById('date-from').value;
   const to     = halfday ? from : (document.getElementById('date-to').value || from);
   const reason = document.getElementById('reason').value;
