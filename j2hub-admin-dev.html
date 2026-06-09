@@ -13158,6 +13158,9 @@ function setLang(l, btn) {
   // Attendance系も言語更新
   loadAttStatusHighlight();
   setAttSort(_attSortOrder);
+  // INFO：言語切替時にキャッシュクリアして再取得
+  localStorage.removeItem(INFO_CACHE_KEY + '_' + _currentUser + '_' + l);
+  loadInfoPosts();
 }
 
 function apply() {
@@ -14858,7 +14861,25 @@ async function loadInfoPosts() {
 async function markInfoAsRead(postId) {
   try {
     const payload = { action: 'markAsRead', staffName: _currentUser, postId: String(postId) };
-    await fetch(INFO_GAS_URL, { method: 'POST', cache: 'no-store', body: JSON.stringify(payload) });
+    fetch(INFO_GAS_URL, { method: 'POST', cache: 'no-store', body: JSON.stringify(payload) }).catch(() => {});
+    // キャッシュのisReadを即時更新
+    const cacheKey = INFO_CACHE_KEY + '_' + _currentUser + '_' + (lang || 'en');
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      const obj = JSON.parse(cached);
+      obj.posts = obj.posts.map(function(p) {
+        if (String(p.postId) === String(postId)) p.isRead = true;
+        return p;
+      });
+      localStorage.setItem(cacheKey, JSON.stringify(obj));
+      // バッジを即時更新
+      const unread = obj.posts.filter(function(p) { return !p.isRead; }).length;
+      const badge  = document.getElementById('info-badge');
+      if (badge) {
+        if (unread > 0) { badge.textContent = unread; badge.style.display = 'flex'; }
+        else            { badge.style.display = 'none'; }
+      }
+    }
   } catch (err) {}
 }
 
