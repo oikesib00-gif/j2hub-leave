@@ -14832,7 +14832,7 @@ async function loadInfoPosts() {
 
   // キャッシュから即時表示（ログイン時に取得済み）
   try {
-    const cached = localStorage.getItem(INFO_CACHE_KEY + '_' + _currentUser);
+    const cached = localStorage.getItem(INFO_CACHE_KEY + '_' + _currentUser + '_' + (lang || 'en'));
     if (cached) {
       const obj = JSON.parse(cached);
       if (loadingEl) loadingEl.style.display = 'none';
@@ -15050,7 +15050,7 @@ async function loadInitialData(name) {
       if (infoRes) {
         const infoData = await infoRes.json();
         if (infoData.posts) {
-          localStorage.setItem(INFO_CACHE_KEY + '_' + name, JSON.stringify({ posts: infoData.posts, ts: Date.now() }));
+          localStorage.setItem(INFO_CACHE_KEY + '_' + name + '_' + (lang || 'en'), JSON.stringify({ posts: infoData.posts, ts: Date.now() }));
           const unread = infoData.posts.filter(function(p) { return !p.isRead; }).length;
           const badge  = document.getElementById('info-badge');
           if (badge) {
