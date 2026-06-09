@@ -3499,17 +3499,15 @@ function launchApp(name) {
   // 初回データを1回のリクエストでまとめて取得
   loadInitialData(name);
   checkBirthday(name);
-  // Jennifer Ho・Shige Oikeはホーム画面を表示
-  if (isAdmin) {
-    document.getElementById('home-greeting').textContent = 'Hello, ' + name + '!';
-    document.getElementById('home-screen').classList.add('show');
-    // Inspection初期化
-    const inspDriverEl = document.getElementById('insp-driver');
-    if (inspDriverEl) inspDriverEl.textContent = name;
-    inspResetChecklist();
-    inspUpdateDateTime();
-    inspApplyLang(lang || 'en');
-  }
+  // 全スタッフにホーム画面を表示
+  document.getElementById('home-greeting').textContent = 'Hello, ' + name + '!';
+  document.getElementById('home-screen').classList.add('show');
+  // Inspection初期化（全スタッフ）
+  const inspDriverEl = document.getElementById('insp-driver');
+  if (inspDriverEl) inspDriverEl.textContent = name;
+  inspResetChecklist();
+  inspUpdateDateTime();
+  inspApplyLang(lang || 'en');
   // Firebase Cloud Messaging初期化
   if ('serviceWorker' in navigator && 'Notification' in window) {
     if (Notification.permission === 'granted') {
