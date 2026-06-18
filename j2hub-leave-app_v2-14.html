@@ -2310,6 +2310,28 @@
     </div>
   </div>
 
+
+  <!-- ══════════════════════════════════════════
+       PAGE: J2Hub INFO
+  ══════════════════════════════════════════ -->
+  <div id="page-info" class="page">
+    <div class="page-header">
+      <div class="page-title" id="info-title-sub" data-key="info_company">Company News</div>
+      <div class="page-title-main">J2Hub <em>INFO</em></div>
+    </div>
+
+    <div class="form-main">
+
+      <!-- 投稿一覧 -->
+      <div class="form-card">
+        <div class="form-section-label" id="info-label-latest" data-key="info_latest">Latest Posts</div>
+        <div id="info-loading" style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px;">Loading…</div>
+        <div id="info-post-list"></div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- ══════════════════════════════════════════
        PAGE: INSPECTION（運行前点検）
   ══════════════════════════════════════════ -->
@@ -2594,6 +2616,7 @@ const T = {
     suc_title:'Submitted!', suc_close:'Back to Home',
     suc_detail:(n,t,f,to)=>`${n}'s ${t} leave\n${f} → ${to}\nhas been submitted for approval.`,
     reason_ph:'Briefly describe the reason…',
+    info_company:'Company News', info_latest:'Latest Posts', info_no_posts:'No posts yet.', info_view:'View', info_new:'NEW',
   },
   zh: {
     nav_leave:'请假', nav_history:'记录', nav_notices:'公告',
@@ -2620,6 +2643,7 @@ const T = {
     suc_title:'提交成功！', suc_close:'返回主页',
     suc_detail:(n,t,f,to)=>`${n} 的${t}\n${f} → ${to}\n已提交，等待审批。`,
     reason_ph:'请简述原因…',
+    info_company:'公司新闻', info_latest:'最新帖子', info_no_posts:'暂无内容。', info_view:'查看', info_new:'新',
   },
   ta: {
     nav_leave:'விடுப்பு', nav_history:'வரலாறு', nav_notices:'அறிவிப்பு',
@@ -2646,6 +2670,7 @@ const T = {
     suc_title:'சமர்ப்பிக்கப்பட்டது!', suc_close:'முகப்பிற்கு திரும்பவும்',
     suc_detail:(n,t,f,to)=>`${n} அவர்களின் ${t}\n${f} → ${to}\nஒப்புதலுக்காக சமர்ப்பிக்கப்பட்டது.`,
     reason_ph:'காரணத்தை சுருக்கமாக விவரிக்கவும்…',
+    info_company:'நிறுவன செய்தி', info_latest:'சமீபத்திய இடுகைகள்', info_no_posts:'இடுகைகள் இல்லை.', info_view:'பார்க்க', info_new:'புதிய',
   }
 };
 
@@ -3155,7 +3180,7 @@ function calDone() {
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwAXrw_Hex1V8fzuXXBZa95u1cLwos4z38-ZlqL3olXlD-TTL25a0hO5JascLVRZL0u/exec';
 
 async function submitLeave() {
-  const name   = document.getElementById('employee-name').value;
+  const name   = document.getElementById('employee-name').value || _currentUser;
   const from   = document.getElementById('date-from').value;
   const to     = halfday ? from : (document.getElementById('date-to').value || from);
   const reason = document.getElementById('reason').value;
@@ -3456,7 +3481,7 @@ function launchApp(name) {
   // Jennifer Ho・Shige OikeはMedical・Petty Cashタブを表示
   const medBtn = document.getElementById('nav-medical-btn');
   const pcBtn  = document.getElementById('nav-pettycash-btn');
-  const isAdmin = (name === 'Jennifer Ho' || name === 'Shige Oike');
+  const isAdmin = (name === 'Jennifer Ho' || name === 'Shige Oike' || name === 'Tan Boon Long');
   if (medBtn) medBtn.style.display = isAdmin ? 'flex' : 'none';
   if (pcBtn)  pcBtn.style.display  = isAdmin ? 'flex' : 'none';
   // 初期ナビ状態：管理者はホーム画面から入るので両ナビ非表示、従業員は申請系ナビのみ表示
@@ -3474,17 +3499,15 @@ function launchApp(name) {
   // 初回データを1回のリクエストでまとめて取得
   loadInitialData(name);
   checkBirthday(name);
-  // Jennifer Ho・Shige Oikeはホーム画面を表示
-  if (isAdmin) {
-    document.getElementById('home-greeting').textContent = 'Hello, ' + name + '!';
-    document.getElementById('home-screen').classList.add('show');
-    // Inspection初期化
-    const inspDriverEl = document.getElementById('insp-driver');
-    if (inspDriverEl) inspDriverEl.textContent = name;
-    inspResetChecklist();
-    inspUpdateDateTime();
-    inspApplyLang(lang || 'en');
-  }
+  // 全スタッフにホーム画面を表示
+  document.getElementById('home-greeting').textContent = 'Hello, ' + name + '!';
+  document.getElementById('home-screen').classList.add('show');
+  // Inspection初期化（全スタッフ）
+  const inspDriverEl = document.getElementById('insp-driver');
+  if (inspDriverEl) inspDriverEl.textContent = name;
+  inspResetChecklist();
+  inspUpdateDateTime();
+  inspApplyLang(lang || 'en');
   // Firebase Cloud Messaging初期化
   if ('serviceWorker' in navigator && 'Notification' in window) {
     if (Notification.permission === 'granted') {
@@ -3508,8 +3531,6 @@ function goToApp(page) {
 
 // ── ホームへ戻る（ロゴクリック・管理者のみ） ─────────────────
 function goHome() {
-  const isAdmin = _currentUser === 'Jennifer Ho' || _currentUser === 'Shige Oike';
-  if (!isAdmin) return;
   // 全ページ非アクティブ
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
@@ -3570,20 +3591,22 @@ function showLorryPage(name, btn) {
 // ── J2Hub INFO ───────────────────────────────────────────────
 function goToInfo() {
   document.getElementById('home-screen').classList.remove('show');
+  // 全ナビ非表示
   const navApp   = document.getElementById('nav-application');
   const navLorry = document.getElementById('nav-lorry');
+  const navAtt   = document.getElementById('nav-attendance');
   if (navApp)   navApp.style.display   = 'none';
   if (navLorry) navLorry.style.display = 'none';
+  if (navAtt)   navAtt.style.display   = 'none';
+  // J2Hub INFOページをアクティブに
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const infoPage = document.getElementById('page-info');
   if (infoPage) infoPage.classList.add('active');
+  // 投稿一覧を読み込む
   loadInfoPosts();
 }
 
-// !! INFO GAS URL !!
-const INFO_GAS_URL   = 'https://script.google.com/macros/s/AKfycbx-NKZsuwObjfb7OLRlHxwceV5FCHjcT4I45b3hqgEGn-IvxrARGdPR6OA1bDtolxt2/exec';
-const INFO_CACHE_KEY = 'j2hub_cache_info';
-// !! INFO GAS URL END !!
+
 
 // 後方互換
 function goToLorryMenu() { goToLorry(); }
@@ -4106,7 +4129,6 @@ function inspApplyLang(l) {
     'insp-lbl-datetime':t.lblDatetime,
     'insp-lbl-vehicle': t.lblVehicle,
     'insp-lbl-odometer':t.lblOdo,
-    'insp-lbl-remarks': t.lblRemarks,
     'insp-notice':      t.notice,
     'insp-s1-title':    t.s1,
     'insp-s2-title':    t.s2,
@@ -4229,6 +4251,117 @@ function closeInspSuccess() {
   if (navApp)   navApp.style.display   = 'none';
   if (navLorry) navLorry.style.display = 'none';
 }
+
+const INFO_GAS_URL   = 'https://script.google.com/macros/s/AKfycbx-NKZsuwObjfb7OLRlHxwceV5FCHjcT4I45b3hqgEGn-IvxrARGdPR6OA1bDtolxt2/exec';
+const INFO_CACHE_KEY = 'j2hub_cache_info';
+// !! INFO GAS URL END !!
+
+function infoRenderPosts(posts) {
+  const l      = (typeof lang !== 'undefined') ? lang : 'en';
+  const t      = T[l] || T.en;
+  const listEl = document.getElementById('info-post-list');
+  const loadingEl = document.getElementById('info-loading');
+  if (!listEl) return;
+  if (loadingEl) loadingEl.style.display = 'none';
+  listEl.innerHTML = '';
+  if (!posts || posts.length === 0) {
+    listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:24px;font-size:13px;">' + t.info_no_posts + '</div>';
+    return;
+  }
+  posts.forEach(function(post) {
+    const card = document.createElement('div');
+    card.style.cssText = 'padding:14px 0;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;gap:12px;';
+    const left = document.createElement('div');
+    left.style.cssText = 'flex:1;min-width:0;';
+    const titleRow = document.createElement('div');
+    titleRow.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:4px;';
+    const titleEl = document.createElement('span');
+    titleEl.style.cssText = 'font-size:14px;font-weight:700;color:var(--text);word-break:break-all;';
+    titleEl.textContent = '📄 ' + post.fileName;
+    titleRow.appendChild(titleEl);
+    if (!post.isRead) {
+      const badge = document.createElement('span');
+      badge.style.cssText = 'background:#dc2626;color:#fff;font-size:9px;font-weight:800;font-family:Montserrat,sans-serif;border-radius:6px;padding:2px 6px;flex-shrink:0;';
+      badge.textContent = t.info_new;
+      titleRow.appendChild(badge);
+    }
+    const meta = document.createElement('div');
+    meta.style.cssText = 'font-size:11px;color:var(--text-muted);';
+    meta.textContent = post.uploader + ' · ' + String(post.uploadDate).substring(0, 11);
+    left.appendChild(titleRow);
+    left.appendChild(meta);
+    const viewBtn = document.createElement('a');
+    viewBtn.href          = post.driveUrl;
+    viewBtn.target        = '_blank';
+    viewBtn.rel           = 'noopener';
+    viewBtn.style.cssText = 'background:var(--blue-dark);color:#fff;font-size:12px;font-weight:700;font-family:Montserrat,sans-serif;padding:8px 14px;border-radius:8px;text-decoration:none;flex-shrink:0;';
+    viewBtn.textContent   = t.info_view;
+    viewBtn.addEventListener('click', function() { markInfoAsRead(post.postId); });
+    card.appendChild(left);
+    card.appendChild(viewBtn);
+    listEl.appendChild(card);
+  });
+}
+
+// ── INFO投稿一覧取得 ─────────────────────────────────────────
+
+async function loadInfoPosts() {
+  if (!_currentUser) return;
+  const listEl    = document.getElementById('info-post-list');
+  const loadingEl = document.getElementById('info-loading');
+  if (!listEl) return;
+
+  // キャッシュから即時表示（ログイン時に取得済み）
+  try {
+    const cached = localStorage.getItem(INFO_CACHE_KEY + '_' + _currentUser + '_' + (lang || 'en'));
+    if (cached) {
+      const obj = JSON.parse(cached);
+      if (loadingEl) loadingEl.style.display = 'none';
+      infoRenderPosts(obj.posts);
+      return;
+    }
+  } catch(e) {}
+
+  // キャッシュなし → fetchして取得
+  if (loadingEl) loadingEl.style.display = 'block';
+  listEl.innerHTML = '';
+  try {
+    const res  = await fetch(INFO_GAS_URL + '?action=getInfoPosts&name=' + encodeURIComponent(_currentUser) + '&lang=' + (lang || 'en'), { cache: 'no-store' });
+    const data = await res.json();
+    if (data.posts) infoRenderPosts(data.posts);
+  } catch (err) {
+    if (loadingEl) loadingEl.style.display = 'none';
+    listEl.innerHTML = '<div style="text-align:center;color:#dc2626;padding:24px;font-size:13px;">Failed to load. Please try again.</div>';
+  }
+}
+
+// ── 既読記録 ─────────────────────────────────────────────────
+
+async function markInfoAsRead(postId) {
+  try {
+    const payload = { action: 'markAsRead', staffName: _currentUser, postId: String(postId) };
+    fetch(INFO_GAS_URL, { method: 'POST', cache: 'no-store', body: JSON.stringify(payload) }).catch(() => {});
+    // キャッシュのisReadを即時更新
+    const cacheKey = INFO_CACHE_KEY + '_' + _currentUser + '_' + (lang || 'en');
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      const obj = JSON.parse(cached);
+      obj.posts = obj.posts.map(function(p) {
+        if (String(p.postId) === String(postId)) p.isRead = true;
+        return p;
+      });
+      localStorage.setItem(cacheKey, JSON.stringify(obj));
+      // バッジを即時更新
+      const unread = obj.posts.filter(function(p) { return !p.isRead; }).length;
+      const badge  = document.getElementById('info-badge');
+      if (badge) {
+        if (unread > 0) { badge.textContent = unread; badge.style.display = 'flex'; }
+        else            { badge.style.display = 'none'; }
+      }
+    }
+  } catch (err) {}
+}
+
 
 // ── J2Hub INFO オーバーレイ（Phase 2実装予定） ───────────────
 function showInfoOverlay() {
@@ -4403,7 +4536,10 @@ async function loadInitialData(name) {
     balSection.style.display  = 'block';
     formSection.style.display = 'flex';
 
-    const res  = await fetch(GAS_URL + '?action=getInitialData&name=' + encodeURIComponent(name));
+    const [res, infoRes] = await Promise.all([
+      fetch(GAS_URL + '?action=getInitialData&name=' + encodeURIComponent(name)),
+      fetch(INFO_GAS_URL + '?action=getInfoPosts&name=' + encodeURIComponent(name) + '&lang=' + (lang || 'en')).catch(() => null)
+    ]);
     const data = await res.json();
     if (data.status !== 'success') return;
 
@@ -4414,17 +4550,18 @@ async function loadInitialData(name) {
       localStorage.setItem(CACHE_KEY + '_' + name, JSON.stringify({ data: data, ts: Date.now() }));
     } catch(e) {}
 
-    // INFOデータをバックグラウンドで取得・キャッシュ保存
+    // INFOキャッシュに保存・バッジ更新
     try {
-      const infoRes  = await fetch(INFO_GAS_URL + '?action=getInfoPosts&name=' + encodeURIComponent(name) + '&lang=' + (lang || 'en'), { cache: 'no-store' });
-      const infoData = await infoRes.json();
-      if (infoData.posts) {
-        localStorage.setItem(INFO_CACHE_KEY + '_' + name + '_' + (lang || 'en'), JSON.stringify({ posts: infoData.posts, ts: Date.now() }));
-        const unread = infoData.posts.filter(function(p) { return !p.isRead; }).length;
-        const badge  = document.getElementById('info-badge');
-        if (badge) {
-          if (unread > 0) { badge.textContent = unread; badge.style.display = 'flex'; }
-          else            { badge.style.display = 'none'; }
+      if (infoRes) {
+        const infoData = await infoRes.json();
+        if (infoData.posts) {
+          localStorage.setItem(INFO_CACHE_KEY + '_' + name + '_' + (lang || 'en'), JSON.stringify({ posts: infoData.posts, ts: Date.now() }));
+          const unread = infoData.posts.filter(function(p) { return !p.isRead; }).length;
+          const badge  = document.getElementById('info-badge');
+          if (badge) {
+            if (unread > 0) { badge.textContent = unread; badge.style.display = 'flex'; }
+            else            { badge.style.display = 'none'; }
+          }
         }
       }
     } catch(e) {}
@@ -4438,103 +4575,6 @@ async function loadInitialData(name) {
     document.getElementById('bal-pending').textContent   = '—';
     hideLoading();
   }
-}
-
-// ── J2Hub INFO 投稿表示 ───────────────────────────────────────
-function infoRenderPosts(posts) {
-  const l      = (typeof lang !== 'undefined') ? lang : 'en';
-  const t      = T[l] || T.en;
-  const listEl = document.getElementById('info-post-list');
-  const loadingEl = document.getElementById('info-loading');
-  if (!listEl) return;
-  if (loadingEl) loadingEl.style.display = 'none';
-  listEl.innerHTML = '';
-  if (!posts || posts.length === 0) {
-    listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:24px;font-size:13px;">' + t.info_no_posts + '</div>';
-    return;
-  }
-  posts.forEach(function(post) {
-    const card = document.createElement('div');
-    card.style.cssText = 'padding:14px 0;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;gap:12px;';
-    const left = document.createElement('div');
-    left.style.cssText = 'flex:1;min-width:0;';
-    const titleRow = document.createElement('div');
-    titleRow.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:4px;';
-    const titleEl = document.createElement('span');
-    titleEl.style.cssText = 'font-size:14px;font-weight:700;color:var(--text);word-break:break-all;';
-    titleEl.textContent = '📄 ' + post.fileName;
-    titleRow.appendChild(titleEl);
-    if (!post.isRead) {
-      const badge = document.createElement('span');
-      badge.style.cssText = 'background:#dc2626;color:#fff;font-size:9px;font-weight:800;font-family:Montserrat,sans-serif;border-radius:6px;padding:2px 6px;flex-shrink:0;';
-      badge.textContent = t.info_new;
-      titleRow.appendChild(badge);
-    }
-    const meta = document.createElement('div');
-    meta.style.cssText = 'font-size:11px;color:var(--text-muted);';
-    meta.textContent = post.uploader + ' · ' + String(post.uploadDate).substring(0, 11);
-    left.appendChild(titleRow);
-    left.appendChild(meta);
-    const viewBtn = document.createElement('a');
-    viewBtn.href          = post.driveUrl;
-    viewBtn.target        = '_blank';
-    viewBtn.rel           = 'noopener';
-    viewBtn.style.cssText = 'background:var(--blue-dark);color:#fff;font-size:12px;font-weight:700;font-family:Montserrat,sans-serif;padding:8px 14px;border-radius:8px;text-decoration:none;flex-shrink:0;';
-    viewBtn.textContent   = t.info_view;
-    viewBtn.addEventListener('click', function() { markInfoAsRead(post.postId); });
-    card.appendChild(left);
-    card.appendChild(viewBtn);
-    listEl.appendChild(card);
-  });
-}
-
-async function loadInfoPosts() {
-  if (!_currentUser) return;
-  const listEl    = document.getElementById('info-post-list');
-  const loadingEl = document.getElementById('info-loading');
-  if (!listEl) return;
-  try {
-    const cached = localStorage.getItem(INFO_CACHE_KEY + '_' + _currentUser + '_' + (lang || 'en'));
-    if (cached) {
-      const obj = JSON.parse(cached);
-      if (loadingEl) loadingEl.style.display = 'none';
-      infoRenderPosts(obj.posts);
-      return;
-    }
-  } catch(e) {}
-  if (loadingEl) loadingEl.style.display = 'block';
-  listEl.innerHTML = '';
-  try {
-    const res  = await fetch(INFO_GAS_URL + '?action=getInfoPosts&name=' + encodeURIComponent(_currentUser) + '&lang=' + (lang || 'en'), { cache: 'no-store' });
-    const data = await res.json();
-    if (data.posts) infoRenderPosts(data.posts);
-  } catch (err) {
-    if (loadingEl) loadingEl.style.display = 'none';
-    listEl.innerHTML = '<div style="text-align:center;color:#dc2626;padding:24px;font-size:13px;">Failed to load. Please try again.</div>';
-  }
-}
-
-async function markInfoAsRead(postId) {
-  try {
-    const payload = { action: 'markAsRead', staffName: _currentUser, postId: String(postId) };
-    fetch(INFO_GAS_URL, { method: 'POST', cache: 'no-store', body: JSON.stringify(payload) }).catch(() => {});
-    const cacheKey = INFO_CACHE_KEY + '_' + _currentUser + '_' + (lang || 'en');
-    const cached = localStorage.getItem(cacheKey);
-    if (cached) {
-      const obj = JSON.parse(cached);
-      obj.posts = obj.posts.map(function(p) {
-        if (String(p.postId) === String(postId)) p.isRead = true;
-        return p;
-      });
-      localStorage.setItem(cacheKey, JSON.stringify(obj));
-      const unread = obj.posts.filter(function(p) { return !p.isRead; }).length;
-      const badge  = document.getElementById('info-badge');
-      if (badge) {
-        if (unread > 0) { badge.textContent = unread; badge.style.display = 'flex'; }
-        else            { badge.style.display = 'none'; }
-      }
-    }
-  } catch (err) {}
 }
 
 // ── [追加] Passkeyリセット ────────────────────────────────────
