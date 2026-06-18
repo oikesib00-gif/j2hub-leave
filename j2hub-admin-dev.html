@@ -12754,6 +12754,10 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
         <div class="insp-info-row">
           <div class="insp-info-label" id="insp-lbl-driver">Driver</div>
           <div class="insp-info-value" id="insp-driver">—</div>
+          <select class="insp-select" id="insp-proxy-driver" style="display:none;">
+            <option value="">— Submitting for: —</option>
+            <option>Seah Tang Chew</option>
+          </select>
         </div>
 
         <!-- ② Date / Time（自動セット） -->
@@ -14064,6 +14068,7 @@ function goToLorry() {
   if (inspTab)  inspTab.classList.add('active');
   if (inspPage) inspPage.classList.add('active');
   inspUpdateDateTime();
+  inspShowProxyIfAdmin();
 }
 
 // ── トラック系ページ切替 ─────────────────────────────────────
@@ -14612,6 +14617,14 @@ function inspUpdateDateTime() {
   if (el) el.textContent = d + '-' + m + '-' + y + '  ' + hh + ':' + mm;
 }
 
+function inspShowProxyIfAdmin() {
+  const PROXY_ADMINS = ['shige@j2hub.com.sg', 'jennifer@j2hub.com.sg'];
+  const el = document.getElementById('insp-proxy-driver');
+  if (!el) return;
+  el.style.display = PROXY_ADMINS.includes(_currentUser) ? 'block' : 'none';
+  if (el.style.display === 'none') el.value = '';
+}
+
 // 写真選択
 function inspPhotoSelected(input) {
   if (!input.files || !input.files[0]) return;
@@ -14685,7 +14698,10 @@ function inspApplyLang(l) {
 async function submitInspection() {
   const l         = (typeof lang !== 'undefined') ? lang : 'en';
   const t         = INSP_T[l] || INSP_T.en;
-  const driver    = _currentUser || document.getElementById('insp-driver').textContent.trim();
+  const proxyEl   = document.getElementById('insp-proxy-driver');
+  const driver    = (proxyEl && proxyEl.style.display !== 'none' && proxyEl.value)
+                    ? proxyEl.value
+                    : (_currentUser || document.getElementById('insp-driver').textContent.trim());
   const vehicleNo = document.getElementById('insp-vehicle').value;
   const odometer  = document.getElementById('insp-odometer').value;
   const remarks   = document.getElementById('insp-remarks').value.trim();
@@ -14752,6 +14768,8 @@ async function submitInspection() {
   inspResetChecklist();
   inspUpdateDateTime();
   const app = document.querySelector('.app');
+  const proxyReset1 = document.getElementById('insp-proxy-driver');
+  if (proxyReset1) proxyReset1.value = '';
   if (app) app.scrollTop = 0;
   document.documentElement.scrollTop = 0;
   document.body.scrollTop = 0;
@@ -14766,6 +14784,8 @@ function closeInspSuccess() {
   document.getElementById('insp-vehicle').value  = '';
   document.getElementById('insp-odometer').value = '';
   document.getElementById('insp-remarks').value  = '';
+  const proxyReset2 = document.getElementById('insp-proxy-driver');
+  if (proxyReset2) proxyReset2.value = '';
   inspResetChecklist();
   inspUpdateDateTime();
   // Home画面に戻る
