@@ -2657,6 +2657,9 @@ function setLang(l, btn) {
   btn.classList.add('active');
   apply();
   inspApplyLang(l);
+  // INFO：言語切替時にキャッシュクリアして再取得
+  localStorage.removeItem(INFO_CACHE_KEY + '_' + _currentUser + '_' + l);
+  loadInfoPosts();
 }
 
 function apply() {
@@ -3566,9 +3569,21 @@ function showLorryPage(name, btn) {
 
 // ── J2Hub INFO ───────────────────────────────────────────────
 function goToInfo() {
-  // Phase 2実装予定 — 現在は準備中メッセージをオーバーレイで表示
-  showInfoOverlay();
+  document.getElementById('home-screen').classList.remove('show');
+  const navApp   = document.getElementById('nav-application');
+  const navLorry = document.getElementById('nav-lorry');
+  if (navApp)   navApp.style.display   = 'none';
+  if (navLorry) navLorry.style.display = 'none';
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const infoPage = document.getElementById('page-info');
+  if (infoPage) infoPage.classList.add('active');
+  loadInfoPosts();
 }
+
+// !! INFO GAS URL !!
+const INFO_GAS_URL   = 'https://script.google.com/macros/s/AKfycbx-NKZsuwObjfb7OLRlHxwceV5FCHjcT4I45b3hqgEGn-IvxrARGdPR6OA1bDtolxt2/exec';
+const INFO_CACHE_KEY = 'j2hub_cache_info';
+// !! INFO GAS URL END !!
 
 // 後方互換
 function goToLorryMenu() { goToLorry(); }
@@ -4399,6 +4414,21 @@ async function loadInitialData(name) {
       localStorage.setItem(CACHE_KEY + '_' + name, JSON.stringify({ data: data, ts: Date.now() }));
     } catch(e) {}
 
+    // INFOデータをバックグラウンドで取得・キャッシュ保存
+    try {
+      const infoRes  = await fetch(INFO_GAS_URL + '?action=getInfoPosts&name=' + encodeURIComponent(name) + '&lang=' + (lang || 'en'), { cache: 'no-store' });
+      const infoData = await infoRes.json();
+      if (infoData.posts) {
+        localStorage.setItem(INFO_CACHE_KEY + '_' + name + '_' + (lang || 'en'), JSON.stringify({ posts: infoData.posts, ts: Date.now() }));
+        const unread = infoData.posts.filter(function(p) { return !p.isRead; }).length;
+        const badge  = document.getElementById('info-badge');
+        if (badge) {
+          if (unread > 0) { badge.textContent = unread; badge.style.display = 'flex'; }
+          else            { badge.style.display = 'none'; }
+        }
+      }
+    } catch(e) {}
+
     hideLoading();
 
   } catch (err) {
@@ -4408,6 +4438,103 @@ async function loadInitialData(name) {
     document.getElementById('bal-pending').textContent   = '—';
     hideLoading();
   }
+}
+
+// ── J2Hub INFO 投稿表示 ───────────────────────────────────────
+function infoRenderPosts(posts) {
+  const l      = (typeof lang !== 'undefined') ? lang : 'en';
+  const t      = T[l] || T.en;
+  const listEl = document.getElementById('info-post-list');
+  const loadingEl = document.getElementById('info-loading');
+  if (!listEl) return;
+  if (loadingEl) loadingEl.style.display = 'none';
+  listEl.innerHTML = '';
+  if (!posts || posts.length === 0) {
+    listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:24px;font-size:13px;">' + t.info_no_posts + '</div>';
+    return;
+  }
+  posts.forEach(function(post) {
+    const card = document.createElement('div');
+    card.style.cssText = 'padding:14px 0;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;gap:12px;';
+    const left = document.createElement('div');
+    left.style.cssText = 'flex:1;min-width:0;';
+    const titleRow = document.createElement('div');
+    titleRow.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:4px;';
+    const titleEl = document.createElement('span');
+    titleEl.style.cssText = 'font-size:14px;font-weight:700;color:var(--text);word-break:break-all;';
+    titleEl.textContent = '📄 ' + post.fileName;
+    titleRow.appendChild(titleEl);
+    if (!post.isRead) {
+      const badge = document.createElement('span');
+      badge.style.cssText = 'background:#dc2626;color:#fff;font-size:9px;font-weight:800;font-family:Montserrat,sans-serif;border-radius:6px;padding:2px 6px;flex-shrink:0;';
+      badge.textContent = t.info_new;
+      titleRow.appendChild(badge);
+    }
+    const meta = document.createElement('div');
+    meta.style.cssText = 'font-size:11px;color:var(--text-muted);';
+    meta.textContent = post.uploader + ' · ' + String(post.uploadDate).substring(0, 11);
+    left.appendChild(titleRow);
+    left.appendChild(meta);
+    const viewBtn = document.createElement('a');
+    viewBtn.href          = post.driveUrl;
+    viewBtn.target        = '_blank';
+    viewBtn.rel           = 'noopener';
+    viewBtn.style.cssText = 'background:var(--blue-dark);color:#fff;font-size:12px;font-weight:700;font-family:Montserrat,sans-serif;padding:8px 14px;border-radius:8px;text-decoration:none;flex-shrink:0;';
+    viewBtn.textContent   = t.info_view;
+    viewBtn.addEventListener('click', function() { markInfoAsRead(post.postId); });
+    card.appendChild(left);
+    card.appendChild(viewBtn);
+    listEl.appendChild(card);
+  });
+}
+
+async function loadInfoPosts() {
+  if (!_currentUser) return;
+  const listEl    = document.getElementById('info-post-list');
+  const loadingEl = document.getElementById('info-loading');
+  if (!listEl) return;
+  try {
+    const cached = localStorage.getItem(INFO_CACHE_KEY + '_' + _currentUser + '_' + (lang || 'en'));
+    if (cached) {
+      const obj = JSON.parse(cached);
+      if (loadingEl) loadingEl.style.display = 'none';
+      infoRenderPosts(obj.posts);
+      return;
+    }
+  } catch(e) {}
+  if (loadingEl) loadingEl.style.display = 'block';
+  listEl.innerHTML = '';
+  try {
+    const res  = await fetch(INFO_GAS_URL + '?action=getInfoPosts&name=' + encodeURIComponent(_currentUser) + '&lang=' + (lang || 'en'), { cache: 'no-store' });
+    const data = await res.json();
+    if (data.posts) infoRenderPosts(data.posts);
+  } catch (err) {
+    if (loadingEl) loadingEl.style.display = 'none';
+    listEl.innerHTML = '<div style="text-align:center;color:#dc2626;padding:24px;font-size:13px;">Failed to load. Please try again.</div>';
+  }
+}
+
+async function markInfoAsRead(postId) {
+  try {
+    const payload = { action: 'markAsRead', staffName: _currentUser, postId: String(postId) };
+    fetch(INFO_GAS_URL, { method: 'POST', cache: 'no-store', body: JSON.stringify(payload) }).catch(() => {});
+    const cacheKey = INFO_CACHE_KEY + '_' + _currentUser + '_' + (lang || 'en');
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      const obj = JSON.parse(cached);
+      obj.posts = obj.posts.map(function(p) {
+        if (String(p.postId) === String(postId)) p.isRead = true;
+        return p;
+      });
+      localStorage.setItem(cacheKey, JSON.stringify(obj));
+      const unread = obj.posts.filter(function(p) { return !p.isRead; }).length;
+      const badge  = document.getElementById('info-badge');
+      if (badge) {
+        if (unread > 0) { badge.textContent = unread; badge.style.display = 'flex'; }
+        else            { badge.style.display = 'none'; }
+      }
+    }
+  } catch (err) {}
 }
 
 // ── [追加] Passkeyリセット ────────────────────────────────────
