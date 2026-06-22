@@ -3419,10 +3419,14 @@ async function passkeyRegister() {
     localStorage.setItem(PK_NAME_KEY, name);
     localStorage.setItem(PK_CRED_KEY, credId);
 
-    // GASにPasskey登録を通知
+    // 公開鍵をBase64で取得
+    const pubKeyBytes = new Uint8Array(credential.response.getPublicKey());
+    const publicKeyB64 = btoa(String.fromCharCode(...pubKeyBytes));
+
+    // GASにPasskey登録を通知（公開鍵・credIdも送信）
     await fetch(GAS_URL, {
       method: 'POST',
-      body: JSON.stringify({ action: 'registerPasskey', name })
+      body: JSON.stringify({ action: 'registerPasskey', name, publicKey: publicKeyB64, credId })
     });
 
     // アプリを起動
@@ -3435,6 +3439,21 @@ async function passkeyRegister() {
     btn.disabled = false;
     btn.textContent = '🔑 Register with Passkey';
   }
+}
+
+// ── ECDSA ASN.1署名をr+s形式に変換 ──────────────────────────
+function convertEcdsaAsn1ToRS(asn1) {
+  let offset = 2;
+  if (asn1[1] === 0x81) offset = 3;
+  const rLen = asn1[offset + 1];
+  const r = asn1.slice(offset + 2, offset + 2 + rLen);
+  offset = offset + 2 + rLen;
+  const sLen = asn1[offset + 1];
+  const s = asn1.slice(offset + 2, offset + 2 + sLen);
+  const pad = a => { while (a.length < 32) a = new Uint8Array([0, ...a]); return a.slice(-32); };
+  const out = new Uint8Array(64);
+  out.set(pad(r), 0); out.set(pad(s), 32);
+  return out;
 }
 
 // ── Passkey 認証 ──────────────────────────────────────────────
@@ -3464,6 +3483,30 @@ async function passkeyAuthenticate() {
     });
 
     if (!assertion) throw new Error('Authentication cancelled.');
+
+    // GASから公開鍵を取得して署名検証
+    const pkRes = await fetch(GAS_URL + '?action=getPublicKey&name=' + encodeURIComponent(name));
+    const pkData = await pkRes.json();
+    if (pkData.status === 'success' && pkData.publicKey) {
+      const pubKeyBytes = Uint8Array.from(atob(pkData.publicKey), c => c.charCodeAt(0));
+      const cryptoKey = await crypto.subtle.importKey(
+        'spki', pubKeyBytes.buffer,
+        { name: 'ECDSA', namedCurve: 'P-256' },
+        false, ['verify']
+      );
+      const authData = new Uint8Array(assertion.response.authenticatorData);
+      const clientDataHash = await crypto.subtle.digest('SHA-256', assertion.response.clientDataJSON);
+      const sigData = new Uint8Array(assertion.response.signature);
+      const signedData = new Uint8Array(authData.length + 32);
+      signedData.set(authData);
+      signedData.set(new Uint8Array(clientDataHash), authData.length);
+      const rsSignature = convertEcdsaAsn1ToRS(sigData);
+      const valid = await crypto.subtle.verify(
+        { name: 'ECDSA', hash: 'SHA-256' },
+        cryptoKey, rsSignature.buffer, signedData.buffer
+      );
+      if (!valid) throw new Error('Signature verification failed. Please try again.');
+    }
 
     // 認証成功 → アプリ起動
     document.getElementById('passkey-screen').classList.remove('show');
