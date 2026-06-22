@@ -3272,7 +3272,7 @@ const PK_CRED_KEY = 'j2hub_passkey_credid';
 
   // Ver.2.0バージョンチェック：旧バージョンのlocalStorageを自動クリア
   const APP_VERSION    = '2.0';
-  const PK_VERSION_KEY = 'j2hub_app_version';
+  const PK_VERSION_KEY = 'j2hub_pk_version';
   const savedVersion   = localStorage.getItem(PK_VERSION_KEY);
   if (savedVersion !== APP_VERSION) {
     localStorage.removeItem(PK_NAME_KEY);
