@@ -12163,6 +12163,12 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
         <span class="label">ATTENDANCE</span>
       </button>
 
+      <!-- REGISTRATION LINK（Ver.3.0：署名付きURL発行） -->
+      <button class="home-cat-btn" onclick="goToRegLink()">
+        <span class="icon">🔑</span>
+        <span class="label">REG. LINK</span>
+      </button>
+
     </div>
   </div>
 
@@ -12737,6 +12743,38 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   </div>
 
   <!-- ══════════════════════════════════════════
+       PAGE: REGISTRATION LINK（Ver.3.0：署名付きURL発行）
+  ══════════════════════════════════════════ -->
+  <div id="page-reglink" class="page">
+    <div class="page-header">
+      <div class="page-title">Passkey</div>
+      <div class="page-title-main">Registration <em>Link</em></div>
+    </div>
+
+    <div class="form-main">
+
+      <div class="form-card">
+        <div class="form-section-label">Select Staff</div>
+        <select id="reglink-name-select" style="width:100%;padding:12px;border-radius:10px;border:1px solid #d0d7e8;font-family:'Montserrat',sans-serif;font-size:15px;margin-bottom:16px;">
+          <option value="">— Select name —</option>
+        </select>
+        <button id="reglink-issue-btn" onclick="issueRegLink()" style="width:100%;padding:14px;background:#003087;color:#fff;border:none;border-radius:10px;font-family:'Montserrat',sans-serif;font-size:15px;font-weight:700;cursor:pointer;">Issue Link</button>
+        <div id="reglink-error" style="display:none;color:#dc2626;font-size:13px;margin-top:10px;"></div>
+      </div>
+
+      <div class="form-card" id="reglink-result-card" style="display:none;">
+        <div class="form-section-label">Generated Link</div>
+        <div id="reglink-name-out" style="font-family:'Montserrat',sans-serif;font-weight:700;color:#003087;margin-bottom:6px;"></div>
+        <div id="reglink-exp-out" style="font-size:12px;color:#6b7280;margin-bottom:12px;"></div>
+        <textarea id="reglink-url-out" readonly style="width:100%;min-height:80px;padding:10px;border-radius:8px;border:1px solid #d0d7e8;font-size:13px;word-break:break-all;margin-bottom:12px;"></textarea>
+        <button onclick="copyRegLink()" style="width:100%;padding:14px;background:#e87722;color:#fff;border:none;border-radius:10px;font-family:'Montserrat',sans-serif;font-size:15px;font-weight:700;cursor:pointer;">Copy Link (send via WhatsApp)</button>
+        <div id="reglink-copied-msg" style="display:none;text-align:center;color:#059669;font-size:13px;margin-top:8px;">Copied ✓</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
        PAGE: INSPECTION（運行前点検）
   ══════════════════════════════════════════ -->
   <div id="page-inspection" class="page">
@@ -12998,14 +13036,16 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     <button onclick="document.getElementById('reset-overlay').style.display='none'" style="padding:13px 36px;background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,0.5);border-radius:8px;font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">Cancel</button>
   </div>
 
-  <!-- 初回登録画面（未登録端末） -->
+  <!-- 初回登録画面（Ver.3.0：署名付きURL経由のみ・名前選択プルダウンは廃止） -->
   <div id="pk-register-panel" class="pk-card" style="display:none;">
-    <p class="pk-msg">Select your name and register your Passkey.</p>
-    <select class="form-select" id="pk-name-select">
-      <option value="">— Select your name —</option>
-    </select>
+    <p class="pk-msg">Register as <strong id="pk-register-name-display"></strong></p>
     <button class="pk-btn primary" id="pk-register-btn" onclick="passkeyRegister()">🔑 Register with Passkey</button>
     <p class="pk-error" id="pk-register-error"></p>
+  </div>
+
+  <!-- 真のロックアウト画面（端末に鍵の記憶がなく、署名付きURLも無い場合） -->
+  <div id="pk-notregistered-panel" class="pk-card" style="display:none;">
+    <p class="pk-msg">This device is not registered.<br>Please contact Shige Oike directly.</p>
   </div>
 </div>
 
@@ -13766,106 +13806,114 @@ const PK_CRED_KEY = 'j2hub_passkey_credid';
     // 登録済み端末 → 認証画面を表示
     document.getElementById('pk-auth-name-msg').querySelector('strong').textContent = savedName;
     document.getElementById('pk-auth-panel').style.display = 'block';
+    await holidayPromise;
   } else {
-    // 未登録端末 → 登録画面を表示（未登録社員名のみプルダウンに表示）
-    await Promise.all([holidayPromise, buildRegisterDropdown()]);
-    document.getElementById('pk-register-panel').style.display = 'block';
+    // 【防御策=n関数】名簿を見せず、端末が覚えている鍵だけで自動確認を試みる
+    const recovered = await tryDiscoverableRecovery_();
+    await holidayPromise;
+
+    if (recovered) {
+      localStorage.setItem(PK_NAME_KEY, recovered.name);
+      localStorage.setItem(PK_CRED_KEY, recovered.credId);
+      document.getElementById('passkey-screen').classList.remove('show');
+      launchApp(recovered.name);
+      return;
+    }
+
+    // n関数が失敗 → 署名付きURL(name・exp・sig)を確認
+    const params  = new URLSearchParams(location.search);
+    const urlName = params.get('name');
+    const urlExp  = params.get('exp');
+    const urlSig  = params.get('sig');
+
+    if (urlName && urlExp && urlSig) {
+      window._pkRegName = urlName;
+      window._pkRegExp  = urlExp;
+      window._pkRegSig  = urlSig;
+      document.getElementById('pk-register-name-display').textContent = urlName;
+      document.getElementById('pk-register-panel').style.display = 'block';
+    } else {
+      // 真のロックアウト：署名付きURLも無い → Shige Oikeへの直接連絡を案内
+      document.getElementById('pk-notregistered-panel').style.display = 'block';
+    }
   }
   document.getElementById('passkey-screen').classList.add('show');
 })();
 
-// ── 登録プルダウン構築（未登録社員のみ）────────────────────────
-function buildDropdownOptions(sel, registered) {
-  // ============================================================
-  // !! 名簿 CONFIRMED & LOCKED — DO NOT TOUCH — 絶対に変更禁止 !!
-  // ============================================================
-  const ALL_NAMES = [
-    'Cheng Liang Chye','Jennifer Ho','Kader Mydeen Seik','Kuan Tee Tee',
-    'Leong Weng Yuen','Liu GuangYue','Ng Chye Kim','Ng Yew Huat',
-    'Seah Tang Chew','Shige Oike','Sim Soon Wah','Sivabalan Arumugan',
-    'Tan Boon Long','Tan Thiam Hock','Tan Yew Seng','Tay Ban Liang',
-    'Yau Soo Kee','Zhang Xianwei'
-  ];
-  // ============================================================
-  // !! 名簿 END — DO NOT TOUCH — 絶対に変更禁止 !!
-  // ============================================================
-  sel.innerHTML = '<option value="">— Select your name —</option>';
-  ALL_NAMES.forEach(name => {
-    if (!registered.includes(name)) {
-      const opt = document.createElement('option');
-      opt.value = name;
-      opt.textContent = name;
-      sel.appendChild(opt);
-    }
-  });
+// ── ECDSA ASN.1署名をr+s形式に変換（n関数の署名検証に使用） ───
+function convertEcdsaAsn1ToRS(asn1) {
+  let offset = 2;
+  if (asn1[1] === 0x81) offset = 3;
+  const rLen = asn1[offset + 1];
+  const r = asn1.slice(offset + 2, offset + 2 + rLen);
+  offset = offset + 2 + rLen;
+  const sLen = asn1[offset + 1];
+  const s = asn1.slice(offset + 2, offset + 2 + sLen);
+  const pad = a => { while (a.length < 32) a = new Uint8Array([0, ...a]); return a.slice(-32); };
+  const out = new Uint8Array(64);
+  out.set(pad(r), 0); out.set(pad(s), 32);
+  return out;
 }
 
-async function buildRegisterDropdown() {
-  const sel = document.getElementById('pk-name-select');
+// ── n関数：発見可能な資格情報による自動確認（名簿は一切表示しない） ──
+async function tryDiscoverableRecovery_() {
   try {
-    // キャッシュから即座に表示
-    const CACHE_REG_KEY = 'j2hub_cache_registered';
-    let registered = [];
-    const regCached = localStorage.getItem(CACHE_REG_KEY);
-    if (regCached) {
-      const obj = JSON.parse(regCached);
-      if (Date.now() - obj.ts < 30 * 60 * 1000) {
-        registered = obj.registered;
-        buildDropdownOptions(sel, registered);
+    const challenge = new Uint8Array(32);
+    crypto.getRandomValues(challenge);
+
+    const assertion = await navigator.credentials.get({
+      publicKey: {
+        challenge,
+        allowCredentials: [],
+        userVerification: 'preferred',
+        timeout: 15000
       }
-    }
-    // バックグラウンドで最新を取得
-    const res  = await fetch(GAS_URL + '?action=getRegisteredNames');
-    const data = await res.json();
-    registered = (data.status === 'success') ? data.registered : registered;
-    try { localStorage.setItem(CACHE_REG_KEY, JSON.stringify({ registered, ts: Date.now() })); } catch(e) {}
-
-    // ============================================================
-    // !! 名簿 CONFIRMED & LOCKED — DO NOT TOUCH — 絶対に変更禁止 !!
-    // ============================================================
-    const ALL_NAMES = [
-      'Cheng Liang Chye','Jennifer Ho','Kader Mydeen Seik','Kuan Tee Tee',
-      'Leong Weng Yuen','Liu GuangYue','Ng Chye Kim','Ng Yew Huat',
-      'Seah Tang Chew','Shige Oike','Sim Soon Wah','Sivabalan Arumugan',
-      'Tan Boon Long','Tan Thiam Hock','Tan Yew Seng','Tay Ban Liang',
-      'Yau Soo Kee','Zhang Xianwei'
-    ];
-    // ============================================================
-    // !! 名簿 END — DO NOT TOUCH — 絶対に変更禁止 !!
-    // ============================================================
-
-    buildDropdownOptions(sel, registered);
-  } catch (err) {
-    // GAS取得失敗時は全員表示（フォールバック）
-    // ============================================================
-    // !! 名簿 CONFIRMED & LOCKED — DO NOT TOUCH — 絶対に変更禁止 !!
-    // ============================================================
-    const ALL_NAMES = [
-      'Cheng Liang Chye','Jennifer Ho','Kader Mydeen Seik','Kuan Tee Tee',
-      'Leong Weng Yuen','Liu GuangYue','Ng Chye Kim','Ng Yew Huat',
-      'Seah Tang Chew','Shige Oike','Sim Soon Wah','Sivabalan Arumugan',
-      'Tan Boon Long','Tan Thiam Hock','Tan Yew Seng','Tay Ban Liang',
-      'Yau Soo Kee','Zhang Xianwei'
-    ];
-    // ============================================================
-    // !! 名簿 END — DO NOT TOUCH — 絶対に変更禁止 !!
-    // ============================================================
-    ALL_NAMES.forEach(name => {
-      const opt = document.createElement('option');
-      opt.value = name;
-      opt.textContent = name;
-      sel.appendChild(opt);
     });
+
+    if (!assertion || !assertion.response.userHandle) return null;
+    const name = new TextDecoder().decode(assertion.response.userHandle);
+
+    // GASから公開鍵を取得して署名検証
+    const pkRes  = await fetch(GAS_URL + '?action=getPublicKey&name=' + encodeURIComponent(name));
+    const pkData = await pkRes.json();
+    if (pkData.status !== 'success' || !pkData.publicKey) return null;
+
+    const pubKeyBytes = Uint8Array.from(atob(pkData.publicKey), c => c.charCodeAt(0));
+    const cryptoKey = await crypto.subtle.importKey(
+      'spki', pubKeyBytes.buffer,
+      { name: 'ECDSA', namedCurve: 'P-256' },
+      false, ['verify']
+    );
+    const authData = new Uint8Array(assertion.response.authenticatorData);
+    const clientDataHash = await crypto.subtle.digest('SHA-256', assertion.response.clientDataJSON);
+    const sigData = new Uint8Array(assertion.response.signature);
+    const signedData = new Uint8Array(authData.length + 32);
+    signedData.set(authData);
+    signedData.set(new Uint8Array(clientDataHash), authData.length);
+    const rsSignature = convertEcdsaAsn1ToRS(sigData);
+    const valid = await crypto.subtle.verify(
+      { name: 'ECDSA', hash: 'SHA-256' },
+      cryptoKey, rsSignature.buffer, signedData.buffer
+    );
+    if (!valid) return null;
+
+    const credId = btoa(String.fromCharCode(...new Uint8Array(assertion.rawId)));
+    return { name, credId };
+  } catch (err) {
+    // 端末が鍵を覚えていない・ユーザーがキャンセル等 → 静かに失敗（真のロックアウトとして扱う）
+    return null;
   }
 }
 
 // ── Passkey 新規登録 ──────────────────────────────────────────
 async function passkeyRegister() {
-  const name = document.getElementById('pk-name-select').value;
+  const name = window._pkRegName;
+  const exp  = window._pkRegExp;
+  const sig  = window._pkRegSig;
   const errEl = document.getElementById('pk-register-error');
   errEl.classList.remove('show');
 
-  if (!name) { errEl.textContent = 'Please select your name.'; errEl.classList.add('show'); return; }
+  if (!name || !exp || !sig) { errEl.textContent = 'Invalid registration link. Please ask Shige Oike for a new link.'; errEl.classList.add('show'); return; }
 
   const btn = document.getElementById('pk-register-btn');
   btn.disabled = true;
@@ -13895,11 +13943,13 @@ async function passkeyRegister() {
     localStorage.setItem(PK_NAME_KEY, name);
     localStorage.setItem(PK_CRED_KEY, credId);
 
-    // GASにPasskey登録を通知
-    await fetch(GAS_URL, {
+    // GASにPasskey登録を通知（署名情報も送信）
+    const regRes  = await fetch(GAS_URL, {
       method: 'POST',
-      body: JSON.stringify({ action: 'registerPasskey', name })
+      body: JSON.stringify({ action: 'registerPasskey', name, credId, exp, sig })
     });
+    const regData = await regRes.json();
+    if (regData.status !== 'success') throw new Error(regData.message || 'Registration failed. Please try again.');
 
     // アプリを起動
     document.getElementById('passkey-screen').classList.remove('show');
@@ -14108,6 +14158,182 @@ function goToInfo() {
   if (infoPage) infoPage.classList.add('active');
   // 投稿一覧を読み込む
   loadInfoPosts();
+}
+
+// ── REGISTRATION LINK（Ver.3.0：署名付きURL発行） ─────────────
+function goToRegLink() {
+  document.getElementById('home-screen').classList.remove('show');
+  const navApp   = document.getElementById('nav-application');
+  const navLorry = document.getElementById('nav-lorry');
+  const navAtt   = document.getElementById('nav-attendance');
+  if (navApp)   navApp.style.display   = 'none';
+  if (navLorry) navLorry.style.display = 'none';
+  if (navAtt)   navAtt.style.display   = 'none';
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const page = document.getElementById('page-reglink');
+  if (page) page.classList.add('active');
+  buildRegLinkDropdown();
+  document.getElementById('reglink-result-card').style.display = 'none';
+  document.getElementById('reglink-error').style.display = 'none';
+}
+
+function buildRegLinkDropdown() {
+  // ============================================================
+  // !! 名簿 CONFIRMED & LOCKED — DO NOT TOUCH — 絶対に変更禁止 !!
+  // ============================================================
+  const ALL_NAMES = [
+    'Cheng Liang Chye','Jennifer Ho','Kader Mydeen Seik','Kuan Tee Tee',
+    'Leong Weng Yuen','Liu GuangYue','Ng Chye Kim','Ng Yew Huat',
+    'Seah Tang Chew','Shige Oike','Sim Soon Wah','Sivabalan Arumugan',
+    'Tan Boon Long','Tan Thiam Hock','Tan Yew Seng','Tay Ban Liang',
+    'Yau Soo Kee','Zhang Xianwei'
+  ];
+  // ============================================================
+  // !! 名簿 END — DO NOT TOUCH — 絶対に変更禁止 !!
+  // ============================================================
+  const sel = document.getElementById('reglink-name-select');
+  sel.innerHTML = '<option value="">— Select name —</option>';
+  ALL_NAMES.forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    sel.appendChild(opt);
+  });
+}
+
+async function issueRegLink() {
+  const name = document.getElementById('reglink-name-select').value;
+  const errEl = document.getElementById('reglink-error');
+  errEl.style.display = 'none';
+  document.getElementById('reglink-result-card').style.display = 'none';
+  document.getElementById('reglink-copied-msg').style.display = 'none';
+
+  if (!name) { errEl.textContent = 'Please select a name.'; errEl.style.display = 'block'; return; }
+
+  const btn = document.getElementById('reglink-issue-btn');
+  btn.disabled = true;
+  btn.textContent = 'Issuing…';
+
+  try {
+    const res  = await fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'issueRegistrationLink', name })
+    });
+    const data = await res.json();
+    if (data.status !== 'success') throw new Error(data.message || 'Failed to issue link.');
+
+    document.getElementById('reglink-name-out').textContent = data.name;
+    const expDate = new Date(Number(data.exp));
+    document.getElementById('reglink-exp-out').textContent = 'Valid until: ' + expDate.toLocaleString();
+    document.getElementById('reglink-url-out').value = data.url;
+    document.getElementById('reglink-result-card').style.display = 'block';
+  } catch (err) {
+    errEl.textContent = err.message || 'Failed to issue link.';
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Issue Link';
+  }
+}
+
+function copyRegLink() {
+  const urlEl = document.getElementById('reglink-url-out');
+  urlEl.select();
+  urlEl.setSelectionRange(0, 99999);
+  navigator.clipboard.writeText(urlEl.value).then(() => {
+    document.getElementById('reglink-copied-msg').style.display = 'block';
+  }).catch(() => {
+    document.execCommand('copy');
+    document.getElementById('reglink-copied-msg').style.display = 'block';
+  });
+}
+
+// ── REGISTRATION LINK（Ver.3.0：署名付きURL発行） ─────────────
+function goToRegLink() {
+  document.getElementById('home-screen').classList.remove('show');
+  const navApp   = document.getElementById('nav-application');
+  const navLorry = document.getElementById('nav-lorry');
+  const navAtt   = document.getElementById('nav-attendance');
+  if (navApp)   navApp.style.display   = 'none';
+  if (navLorry) navLorry.style.display = 'none';
+  if (navAtt)   navAtt.style.display   = 'none';
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const page = document.getElementById('page-reglink');
+  if (page) page.classList.add('active');
+  buildRegLinkDropdown();
+  document.getElementById('reglink-result-card').style.display = 'none';
+  document.getElementById('reglink-error').style.display = 'none';
+}
+
+function buildRegLinkDropdown() {
+  // ============================================================
+  // !! 名簿 CONFIRMED & LOCKED — DO NOT TOUCH — 絶対に変更禁止 !!
+  // ============================================================
+  const ALL_NAMES = [
+    'Cheng Liang Chye','Jennifer Ho','Kader Mydeen Seik','Kuan Tee Tee',
+    'Leong Weng Yuen','Liu GuangYue','Ng Chye Kim','Ng Yew Huat',
+    'Seah Tang Chew','Shige Oike','Sim Soon Wah','Sivabalan Arumugan',
+    'Tan Boon Long','Tan Thiam Hock','Tan Yew Seng','Tay Ban Liang',
+    'Yau Soo Kee','Zhang Xianwei'
+  ];
+  // ============================================================
+  // !! 名簿 END — DO NOT TOUCH — 絶対に変更禁止 !!
+  // ============================================================
+  const sel = document.getElementById('reglink-name-select');
+  sel.innerHTML = '<option value="">— Select name —</option>';
+  ALL_NAMES.forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    sel.appendChild(opt);
+  });
+}
+
+async function issueRegLink() {
+  const name = document.getElementById('reglink-name-select').value;
+  const errEl = document.getElementById('reglink-error');
+  errEl.style.display = 'none';
+  document.getElementById('reglink-result-card').style.display = 'none';
+  document.getElementById('reglink-copied-msg').style.display = 'none';
+
+  if (!name) { errEl.textContent = 'Please select a name.'; errEl.style.display = 'block'; return; }
+
+  const btn = document.getElementById('reglink-issue-btn');
+  btn.disabled = true;
+  btn.textContent = 'Issuing…';
+
+  try {
+    const res  = await fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'issueRegistrationLink', name })
+    });
+    const data = await res.json();
+    if (data.status !== 'success') throw new Error(data.message || 'Failed to issue link.');
+
+    document.getElementById('reglink-name-out').textContent = data.name;
+    const expDate = new Date(Number(data.exp));
+    document.getElementById('reglink-exp-out').textContent = 'Valid until: ' + expDate.toLocaleString();
+    document.getElementById('reglink-url-out').value = data.url;
+    document.getElementById('reglink-result-card').style.display = 'block';
+  } catch (err) {
+    errEl.textContent = err.message || 'Failed to issue link.';
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Issue Link';
+  }
+}
+
+function copyRegLink() {
+  const urlEl = document.getElementById('reglink-url-out');
+  urlEl.select();
+  urlEl.setSelectionRange(0, 99999);
+  navigator.clipboard.writeText(urlEl.value).then(() => {
+    document.getElementById('reglink-copied-msg').style.display = 'block';
+  }).catch(() => {
+    document.execCommand('copy');
+    document.getElementById('reglink-copied-msg').style.display = 'block';
+  });
 }
 
 // ── ATTENDANCE ───────────────────────────────────────────────
