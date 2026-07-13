@@ -13757,32 +13757,32 @@ const PK_CRED_KEY = 'j2hub_passkey_credid';
   // loadHolidays と Passkey初期化を並行実行
   const holidayPromise = loadHolidays();
 
-  if (savedName && savedCredId) {
-    // 登録済み端末 → 認証画面を表示
+  // ── [修正 Ver.3.0] 署名付きURL(name/exp/sig)を最優先で判定 ──
+  // Shige様が発行したURLは、端末のlocalStorage(古い記憶)の状態に関わらず
+  // 常に優先される。これにより「URLを開くだけで更新される」設計を実現する。
+  const urlParams = new URLSearchParams(window.location.search);
+  const regName = urlParams.get('name');
+  const regExp  = urlParams.get('exp');
+  const regSig  = urlParams.get('sig');
+
+  await holidayPromise;
+
+  if (regName && regExp && regSig) {
+    // 署名付きURLあり → localStorageの状態に関わらず、名前固定の登録画面（ドロップダウンなし）
+    window._regParams = { name: regName, exp: regExp, sig: regSig };
+    document.getElementById('pk-name-select').style.display = 'none';
+    const fixedEl = document.getElementById('pk-register-fixed-name');
+    fixedEl.textContent = 'Register as ' + regName;
+    fixedEl.style.display = 'block';
+    document.getElementById('pk-register-msg').textContent = 'Tap below to register your Passkey.';
+    document.getElementById('pk-register-panel').style.display = 'block';
+  } else if (savedName && savedCredId) {
+    // 署名付きURLなし・登録済み端末 → 認証画面を表示
     document.getElementById('pk-auth-name-msg').querySelector('strong').textContent = savedName;
     document.getElementById('pk-auth-panel').style.display = 'block';
   } else {
-    // ── [追加 Ver.3.0] 未登録端末 → 署名付きURL(name/exp/sig)の有無で分岐 ──
-    const urlParams = new URLSearchParams(window.location.search);
-    const regName = urlParams.get('name');
-    const regExp  = urlParams.get('exp');
-    const regSig  = urlParams.get('sig');
-
-    await holidayPromise;
-
-    if (regName && regExp && regSig) {
-      // 署名付きURLあり → 名前固定の登録画面（ドロップダウンなし）
-      window._regParams = { name: regName, exp: regExp, sig: regSig };
-      document.getElementById('pk-name-select').style.display = 'none';
-      const fixedEl = document.getElementById('pk-register-fixed-name');
-      fixedEl.textContent = 'Register as ' + regName;
-      fixedEl.style.display = 'block';
-      document.getElementById('pk-register-msg').textContent = 'Tap below to register your Passkey.';
-      document.getElementById('pk-register-panel').style.display = 'block';
-    } else {
-      // 署名付きURLなし → 連絡案内のみ表示
-      document.getElementById('pk-contact-panel').style.display = 'block';
-    }
+    // 署名付きURLなし・未登録端末 → 連絡案内のみ表示
+    document.getElementById('pk-contact-panel').style.display = 'block';
   }
   document.getElementById('passkey-screen').classList.add('show');
 })();
