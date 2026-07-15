@@ -1,0 +1,15 @@
+{
+  "name": "J2Hub Staff Portal",
+  "short_name": "J2Hub",
+  "start_url": "https://oikesib00-gif.github.io/j2hub-leave/j2hub-leave-app_v2-14.html",
+  "display": "standalone",
+  "background_color": "#003087",
+  "theme_color": "#003087",
+  "icons": [
+    {
+      "src": "https://oikesib00-gif.github.io/j2hub-leave/j2hub-icon.png",
+      "sizes": "196x196",
+      "type": "image/png"
+    }
+  ]
+}
