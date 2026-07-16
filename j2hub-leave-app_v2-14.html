@@ -2557,24 +2557,27 @@ const CACHE_TTL     = 60 * 60 * 1000;
 // ── Public Holidays — GASから取得 ────────────────────────────────
 const PUBLIC_HOLIDAYS = new Set();
 
-async function loadHolidays() {
+async function loadHolidays(name) {
   try {
     const holCached = localStorage.getItem(CACHE_HOL_KEY);
-    if (holCached) {
+    if (holCached && !name) {
       const obj = JSON.parse(holCached);
       if (Date.now() - obj.ts < 24 * 60 * 60 * 1000) {
         obj.holidays.forEach(d => PUBLIC_HOLIDAYS.add(d));
-        return;
+        return null;
       }
     }
-    const res  = await fetch(GAS_URL + '?action=getHolidays');
+    const url  = GAS_URL + '?action=getHolidays' + (name ? '&name=' + encodeURIComponent(name) : '');
+    const res  = await fetch(url);
     const data = await res.json();
     if (data.status === 'success') {
       data.holidays.forEach(d => PUBLIC_HOLIDAYS.add(d));
       try { localStorage.setItem(CACHE_HOL_KEY, JSON.stringify({ holidays: data.holidays, ts: Date.now() })); } catch(e) {}
     }
+    return data;
   } catch (err) {
     console.error('Holiday load error:', err);
+    return null;
   }
 }
 
@@ -3290,9 +3293,6 @@ const PK_CRED_KEY = 'j2hub_passkey_credid';
   const savedName   = localStorage.getItem(PK_NAME_KEY);
   const savedCredId = localStorage.getItem(PK_CRED_KEY);
 
-  // loadHolidays と Passkey初期化を並行実行
-  const holidayPromise = loadHolidays();
-
   // ── [追加 Ver.3.0] 署名付きURL(name/exp/sig)を最優先で判定 ──
   // Shige様が発行したURLは、localStorage(端末の記憶)の状態に関わらず優先される。
   // URLが無い場合は、従来通りlocalStorageの状態で分岐する(Ver.2.0の挙動を維持)。
@@ -3301,9 +3301,13 @@ const PK_CRED_KEY = 'j2hub_passkey_credid';
   const regExp  = urlParams.get('exp');
   const regSig  = urlParams.get('sig');
 
+  // ── [Ver.3.0] 祝日取得と同じ1本の通信で、Ver.表示も一緒に受け取る(通信本数を増やさない) ──
+  const nameForVersion = regName || savedName || null;
+  const holidayPromise = loadHolidays(nameForVersion);
+
   if (regName && regExp && regSig) {
     // 署名付きURLあり → localStorageの状態に関わらず、名前固定の登録画面
-    await holidayPromise;
+    const holResult = await holidayPromise;
     window._regParams = { name: regName, exp: regExp, sig: regSig };
     document.getElementById('pk-name-select').style.display = 'none';
     const fixedEl = document.getElementById('pk-register-fixed-name');
@@ -3311,20 +3315,13 @@ const PK_CRED_KEY = 'j2hub_passkey_credid';
     fixedEl.style.display = 'block';
     document.getElementById('pk-register-msg').textContent = 'Tap below to register your Passkey.';
     document.getElementById('pk-register-panel').style.display = 'block';
-    // ── [Ver.3.0] 決め打ちせず、スプレッドシートV列をそのまま見て表示する ──
-    fetch(GAS_URL + '?action=getVersion&name=' + encodeURIComponent(regName))
-      .then(r => r.json())
-      .then(d => { if (d.version) document.getElementById('pk-version-label').textContent = d.version; })
-      .catch(() => {});
+    if (holResult && holResult.version) document.getElementById('pk-version-label').textContent = holResult.version;
   } else if (savedName && savedCredId) {
     // 従来通り：登録済み端末 → 認証画面を表示
+    const holResult = await holidayPromise;
     document.getElementById('pk-auth-name-msg').querySelector('strong').textContent = savedName;
     document.getElementById('pk-auth-panel').style.display = 'block';
-    // ── [Ver.3.0] スプレッドシートV列をそのまま見て表示するだけ(localStorageの記憶は使わない) ──
-    fetch(GAS_URL + '?action=getVersion&name=' + encodeURIComponent(savedName))
-      .then(r => r.json())
-      .then(d => { if (d.version) document.getElementById('pk-version-label').textContent = d.version; })
-      .catch(() => {});
+    if (holResult && holResult.version) document.getElementById('pk-version-label').textContent = holResult.version;
   } else {
     // 従来通り：未登録端末 → 登録画面を表示（未登録社員名のみプルダウンに表示）
     await Promise.all([holidayPromise, buildRegisterDropdown()]);
