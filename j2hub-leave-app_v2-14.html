@@ -3267,7 +3267,6 @@ apply();
 
 const PK_NAME_KEY = 'j2hub_passkey_name';
 const PK_CRED_KEY = 'j2hub_passkey_credid';
-const PK_VER3_KEY = 'j2hub_pk_ver3'; // ── [追加 Ver.3.0] この端末がVer.3.0で登録済みかの印(表示専用、APP_VERSIONとは別物)
 
 // ── 起動時チェック ────────────────────────────────────────────
 // [修正2] loadHolidays()を並行実行して起動時間を短縮
@@ -3317,10 +3316,11 @@ const PK_VER3_KEY = 'j2hub_pk_ver3'; // ── [追加 Ver.3.0] この端末がV
     // 従来通り：登録済み端末 → 認証画面を表示
     document.getElementById('pk-auth-name-msg').querySelector('strong').textContent = savedName;
     document.getElementById('pk-auth-panel').style.display = 'block';
-    // ── [追加 Ver.3.0] この端末がVer.3.0で登録済みなら、表示を切替(APP_VERSION定数は無変更) ──
-    if (localStorage.getItem(PK_VER3_KEY) === '1') {
-      document.getElementById('pk-version-label').textContent = 'Ver. 3.0';
-    }
+    // ── [Ver.3.0] スプレッドシートV列をそのまま見て表示するだけ(localStorageの記憶は使わない) ──
+    fetch(GAS_URL + '?action=getVersion&name=' + encodeURIComponent(savedName))
+      .then(r => r.json())
+      .then(d => { if (d.version) document.getElementById('pk-version-label').textContent = d.version; })
+      .catch(() => {});
   } else {
     // 従来通り：未登録端末 → 登録画面を表示（未登録社員名のみプルダウンに表示）
     await Promise.all([holidayPromise, buildRegisterDropdown()]);
@@ -3468,8 +3468,6 @@ async function passkeyRegister() {
 
     localStorage.setItem(PK_NAME_KEY, name);
     localStorage.setItem(PK_CRED_KEY, credId);
-    // ── [追加 Ver.3.0] 署名付きURL経由の登録だった場合のみ、この端末に印を残す ──
-    if (regParams) { localStorage.setItem(PK_VER3_KEY, '1'); }
 
     // アプリを起動
     document.getElementById('passkey-screen').classList.remove('show');
@@ -4682,7 +4680,6 @@ function resetPasskey() {
 function confirmReset() {
   localStorage.removeItem(PK_NAME_KEY);
   localStorage.removeItem(PK_CRED_KEY);
-  localStorage.removeItem(PK_VER3_KEY); // ── [追加 Ver.3.0] リセット時は表示印も消す
   try { localStorage.removeItem('j2hub_cache_registered'); } catch(e) {}
   location.reload();
 }
