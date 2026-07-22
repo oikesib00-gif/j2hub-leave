@@ -3270,7 +3270,18 @@ const PK_CRED_KEY = 'j2hub_passkey_credid';
 
 // ── 起動時チェック ────────────────────────────────────────────
 // [修正2] loadHolidays()を並行実行して起動時間を短縮
+// ── [追加] 凍結復元(bfcache)を検知したら、強制的に読み込み直す(公式パターン) ──
+window.addEventListener('pageshow', function(event) {
+  if (event.persisted) { location.reload(); }
+});
+
 (async function initPasskey() {
+  // ── [追加] URLに#home目印があり、かつ登録済み端末なら、他の判定より先に、無条件でホーム画面だけを表示 ──
+  if (location.hash === '#home' && localStorage.getItem(PK_NAME_KEY) && localStorage.getItem(PK_CRED_KEY)) {
+    launchApp(localStorage.getItem(PK_NAME_KEY));
+    return;
+  }
+
   // WebAuthn非対応ブラウザはスキップ（アプリをそのまま表示）
   if (!window.PublicKeyCredential) {
     loadHolidays();
@@ -3600,6 +3611,8 @@ function launchApp(name) {
   // 全スタッフにホーム画面を表示
   document.getElementById('home-greeting').textContent = 'Hello, ' + name + '!';
   document.getElementById('home-screen').classList.add('show');
+  // ── [追加] ホーム画面に到達した目印をURLに残す(次回起動時、必ずここへ戻すため) ──
+  try { history.replaceState(null, '', location.pathname + location.search + '#home'); } catch(e) {}
   // Inspection初期化（全スタッフ）
   const inspDriverEl = document.getElementById('insp-driver');
   if (inspDriverEl) inspDriverEl.textContent = name;
