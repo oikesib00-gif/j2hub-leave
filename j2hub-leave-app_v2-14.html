@@ -3579,19 +3579,15 @@ function launchApp(name) {
   // Jennifer Ho・Shige OikeはMedical・Petty Cashタブを表示
   const medBtn = document.getElementById('nav-medical-btn');
   const pcBtn  = document.getElementById('nav-pettycash-btn');
-  const isAdmin = (name === 'Jennifer Ho' || name === 'Shige Oike' || name === 'Tan Boon Long');
+  const isAdmin = (name === 'Jennifer Ho' || name === 'Tan Boon Long');
   if (medBtn) medBtn.style.display = isAdmin ? 'flex' : 'none';
   if (pcBtn)  pcBtn.style.display  = isAdmin ? 'flex' : 'none';
   // 初期ナビ状態：管理者はホーム画面から入るので両ナビ非表示、従業員は申請系ナビのみ表示
   const navApp   = document.getElementById('nav-application');
   const navLorry = document.getElementById('nav-lorry');
-  if (isAdmin) {
-    if (navApp)   navApp.style.display   = 'none';
-    if (navLorry) navLorry.style.display = 'none';
-  } else {
-    if (navApp)   navApp.style.display   = '';
-    if (navLorry) navLorry.style.display = 'none';
-  }
+  // ── [修正] 全スタッフ、ログイン直後は両ナビを非表示にし、必ずホーム画面(3アイコン)を経由させる ──
+  if (navApp)   navApp.style.display   = 'none';
+  if (navLorry) navLorry.style.display = 'none';
   // データ取得中はローディング表示
   showLoading('Loading your data…', 'Please wait while we load your information.');
   // 初回データを1回のリクエストでまとめて取得
