@@ -3614,6 +3614,11 @@ function launchApp(name) {
       document.getElementById('notif-overlay').style.display = 'flex';
     }
   }
+  // ── [追加] URLの?page=指定があれば、ホーム画面を経由せず直接その画面へ強制移動(iOS不具合の当面の回避策) ──
+  const forcedPage = new URLSearchParams(location.search).get('page');
+  if (forcedPage === 'lorry') { goToLorry(); }
+  else if (forcedPage === 'application') { goToCategoryApp(); }
+  else if (forcedPage === 'info') { goToInfo(); }
 }
 
 function goToApp(page) {
