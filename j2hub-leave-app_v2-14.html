@@ -2546,6 +2546,13 @@
   <div id="pk-contact-panel" class="pk-card" style="display:none;">
     <p class="pk-msg">This device is not registered.<br>Please contact Shige Oike directly.</p>
   </div>
+
+  <!-- ── [追加 #6・#8] 署名付きURLが期限切れ・無効な場合(名前は判明) ── -->
+  <div id="pk-expired-panel" class="pk-card" style="display:none;">
+    <p class="pk-msg">This link has expired.<br><strong id="pk-expired-name"></strong>, please tap below to notify Shige Oike.</p>
+    <button class="pk-btn primary" id="pk-notify-btn" onclick="notifyShigeLockout()">🔔 Notify Shige Oike</button>
+    <p class="pk-msg" id="pk-notify-sent" style="display:none;color:#2d8a4e;font-weight:700;">Notified. Please wait for a new link.</p>
+  </div>
 </div>
 
 <script>
@@ -3271,6 +3278,10 @@ const PK_CRED_KEY = 'j2hub_passkey_credid';
 // ── 起動時チェック ────────────────────────────────────────────
 // [修正2] loadHolidays()を並行実行して起動時間を短縮
 (async function initPasskey() {
+  // ── [追加 #10] localStorage消去への補助的対策(navigator.storage.persist) ──
+  if (navigator.storage && navigator.storage.persist) {
+    navigator.storage.persist().catch(() => {});
+  }
   // WebAuthn非対応ブラウザはスキップ（アプリをそのまま表示）
   if (!window.PublicKeyCredential) {
     loadHolidays();
@@ -3326,12 +3337,72 @@ const PK_CRED_KEY = 'j2hub_passkey_credid';
       .then(d => { if (d.version) document.getElementById('pk-version-label').textContent = d.version; })
       .catch(() => {});
   } else {
-    // 従来通り：未登録端末 → 登録画面を表示（未登録社員名のみプルダウンに表示）
-    await Promise.all([holidayPromise, buildRegisterDropdown()]);
-    document.getElementById('pk-register-panel').style.display = 'block';
+    // ── [追加 #5] localStorageが空でも、まず静かな自動復旧を試みる ──
+    const recoveredName = await silentPasskeyRecovery();
+    if (recoveredName) {
+      await holidayPromise;
+      document.getElementById('passkey-screen').classList.remove('show');
+      launchApp(recoveredName);
+      return;
+    }
+    // ── [追加 #6] 静かな自動復旧が失敗した場合のみ、真のロックアウト画面 ──
+    await holidayPromise;
+    document.getElementById('pk-contact-panel').style.display = 'block';
   }
   document.getElementById('passkey-screen').classList.add('show');
 })();
+
+// ── [追加 #5] 静かな自動復旧(allowCredentialsを空にしたdiscoverable credential確認) ──
+async function silentPasskeyRecovery() {
+  try {
+    const challenge = new Uint8Array(32);
+    crypto.getRandomValues(challenge);
+    const assertion = await navigator.credentials.get({
+      publicKey: {
+        challenge,
+        allowCredentials: [],
+        userVerification: 'preferred',
+        timeout: 15000
+      },
+      mediation: 'silent'
+    });
+    if (!assertion || !assertion.response || !assertion.response.userHandle) return null;
+
+    const name = new TextDecoder().decode(assertion.response.userHandle);
+    if (!name) return null;
+
+    // GASから公開鍵を取得して署名検証（既存の認証と同じロジック）
+    const pkRes = await fetch(GAS_URL + '?action=getPublicKey&name=' + encodeURIComponent(name));
+    const pkData = await pkRes.json();
+    if (!(pkData.status === 'success' && pkData.publicKey)) return null;
+
+    const pubKeyBytes = Uint8Array.from(atob(pkData.publicKey), c => c.charCodeAt(0));
+    const cryptoKey = await crypto.subtle.importKey(
+      'spki', pubKeyBytes.buffer,
+      { name: 'ECDSA', namedCurve: 'P-256' },
+      false, ['verify']
+    );
+    const authData = new Uint8Array(assertion.response.authenticatorData);
+    const clientDataHash = await crypto.subtle.digest('SHA-256', assertion.response.clientDataJSON);
+    const sigData = new Uint8Array(assertion.response.signature);
+    const signedData = new Uint8Array(authData.length + 32);
+    signedData.set(authData);
+    signedData.set(new Uint8Array(clientDataHash), authData.length);
+    const rsSignature = convertEcdsaAsn1ToRS(sigData);
+    const valid = await crypto.subtle.verify(
+      { name: 'ECDSA', hash: 'SHA-256' },
+      cryptoKey, rsSignature.buffer, signedData.buffer
+    );
+    if (!valid) return null;
+
+    const credId = btoa(String.fromCharCode(...new Uint8Array(assertion.rawId)));
+    localStorage.setItem(PK_NAME_KEY, name);
+    localStorage.setItem(PK_CRED_KEY, credId);
+    return name;
+  } catch (e) {
+    return null;
+  }
+}
 
 // ── 登録プルダウン構築（未登録社員のみ）────────────────────────
 function buildDropdownOptions(sel, registered) {
@@ -3459,7 +3530,8 @@ async function passkeyRegister() {
     const publicKeyB64 = btoa(String.fromCharCode(...pubKeyBytes));
 
     // ── [修正 Ver.3.0] GASへ exp・sig も送信(署名付きURL経由の場合のみ) ──
-    const payload = { action: 'registerPasskey', name, publicKey: publicKeyB64, credId };
+    // ── [追加 #7] DeviceInfoも併せて送信 ──
+    const payload = { action: 'registerPasskey', name, publicKey: publicKeyB64, credId, deviceInfo: navigator.userAgent };
     if (regParams) { payload.exp = regParams.exp; payload.sig = regParams.sig; }
 
     const gasRes  = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
@@ -3478,10 +3550,43 @@ async function passkeyRegister() {
     launchApp(name);
 
   } catch (err) {
-    errEl.textContent = err.message || 'Registration failed. Please try again.';
+    const msg = err.message || 'Registration failed. Please try again.';
+    // ── [追加 #6・#8] 署名が期限切れ・無効な場合は、通知ボタン画面へ切り替える ──
+    if (regParams && /invalid or expired/i.test(msg)) {
+      document.getElementById('pk-register-panel').style.display = 'none';
+      document.getElementById('pk-expired-name').textContent = regParams.name;
+      document.getElementById('pk-expired-panel').style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = '🔑 Register with Passkey';
+      return;
+    }
+    errEl.textContent = msg;
     errEl.classList.add('show');
     btn.disabled = false;
     btn.textContent = '🔑 Register with Passkey';
+  }
+}
+
+// ── [追加 #8・#9] ロックアウト通知ボタン:GASへ異常フラグ+新規リンク自動発行を依頼 ──
+async function notifyShigeLockout() {
+  const name = document.getElementById('pk-expired-name').textContent;
+  const notifyBtn = document.getElementById('pk-notify-btn');
+  notifyBtn.disabled = true;
+  notifyBtn.textContent = 'Sending…';
+  try {
+    const payload = { action: 'reportLockoutAnomaly', name, deviceInfo: navigator.userAgent };
+    const res  = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
+    const data = await res.json();
+    if (data.status === 'success') {
+      notifyBtn.style.display = 'none';
+      document.getElementById('pk-notify-sent').style.display = 'block';
+    } else {
+      notifyBtn.disabled = false;
+      notifyBtn.textContent = '🔔 Notify Shige Oike';
+    }
+  } catch (e) {
+    notifyBtn.disabled = false;
+    notifyBtn.textContent = '🔔 Notify Shige Oike';
   }
 }
 
