@@ -3194,6 +3194,11 @@ function calDone() {
 }
 
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwAXrw_Hex1V8fzuXXBZa95u1cLwos4z38-ZlqL3olXlD-TTL25a0hO5JascLVRZL0u/exec';
+// ── [修正] INFO_GAS_URLは、ファイル後方(元は約4505行目)にあったが、
+// initPasskey(3313行目付近)より前に必ず必要なため、ここへ移動した。
+// これが無いと、ログイン記録の時点でReferenceError(TDZ)が発生し、
+// try/catchで静かに握りつぶされ、ログインだけ記録されない不具合の原因だった。
+const INFO_GAS_URL = 'https://script.google.com/macros/s/AKfycbx-NKZsuwObjfb7OLRlHxwceV5FCHjcT4I45b3hqgEGn-IvxrARGdPR6OA1bDtolxt2/exec';
 // ── [追加] アクセスログ送信先は、既存の INFO_GAS_URL 定数(下記4489行目付近で定義済み)をそのまま使う ──
 // ── [追加] ログ記録用のバージョン。Staff MasterのV列(登録時のみ更新)ではなく、
 // 「今、実際に読み込まれているこのファイル自体の版」を、固定値として記録する。 ──
@@ -4502,7 +4507,6 @@ function closeInspSuccess() {
   if (navLorry) navLorry.style.display = 'none';
 }
 
-const INFO_GAS_URL   = 'https://script.google.com/macros/s/AKfycbx-NKZsuwObjfb7OLRlHxwceV5FCHjcT4I45b3hqgEGn-IvxrARGdPR6OA1bDtolxt2/exec';
 const INFO_CACHE_KEY = 'j2hub_cache_info';
 // !! INFO GAS URL END !!
 
