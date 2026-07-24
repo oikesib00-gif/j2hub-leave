@@ -3194,6 +3194,8 @@ function calDone() {
 
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwAXrw_Hex1V8fzuXXBZa95u1cLwos4z38-ZlqL3olXlD-TTL25a0hO5JascLVRZL0u/exec';
 // ── [追加] アクセスログ送信先は、既存の INFO_GAS_URL 定数(下記4489行目付近で定義済み)をそのまま使う ──
+// ── [追加] ログ記録用のバージョン(IIFE内のAPP_VERSIONはスコープ外のため、別途グローバルに保持) ──
+const LOG_APP_VERSION = '2.0';
 
 // ── [追加] アクセスログ送信(ログイン・休暇申請など)。投げっぱなしで、
 // 成否がLeave Systemの動作に一切影響しない(本線とは無関係な処理)。
@@ -3205,7 +3207,7 @@ function sendAccessLog(name, section, postId) {
       name:    name,
       section: section,
       postId:  postId || '',
-      version: (typeof APP_VERSION !== 'undefined') ? APP_VERSION : '',
+      version: LOG_APP_VERSION,
       mobile:  navigator.platform || '',
       browser: navigator.userAgent
     });
@@ -3251,7 +3253,6 @@ async function submitLeave() {
     const result = await res.json();
     if (result.status === 'success') {
       try { localStorage.removeItem(CACHE_KEY + '_' + name); } catch(e) {}
-      sendAccessLog(name, selectedType + '_Leave');
       const t      = T[lang];
       const typeLbl = t['type_' + selectedType.toLowerCase()] || selectedType;
       document.getElementById('success-detail').innerText =
@@ -3338,6 +3339,10 @@ const PK_CRED_KEY = 'j2hub_passkey_credid';
   const regExp  = urlParams.get('exp');
   const regSig  = urlParams.get('sig');
 
+  // ── [追加] ログイン画面に到達した瞬間(成功・失敗に関わらず)を記録 ──
+  const accessName = regName || savedName;
+  if (accessName) sendAccessLog(accessName, 'Login');
+
   if (regName && regExp && regSig) {
     // 署名付きURLあり → localStorageの状態に関わらず、名前固定の登録画面
     await holidayPromise;
@@ -3368,7 +3373,6 @@ const PK_CRED_KEY = 'j2hub_passkey_credid';
     if (recoveredName) {
       await holidayPromise;
       document.getElementById('passkey-screen').classList.remove('show');
-      sendAccessLog(recoveredName, 'Login');
       launchApp(recoveredName);
       return;
     }
@@ -3574,7 +3578,6 @@ async function passkeyRegister() {
 
     // アプリを起動
     document.getElementById('passkey-screen').classList.remove('show');
-    sendAccessLog(name, 'Login');
     launchApp(name);
 
   } catch (err) {
@@ -3687,7 +3690,6 @@ async function passkeyAuthenticate() {
 
     // 認証成功 → アプリ起動
     document.getElementById('passkey-screen').classList.remove('show');
-    sendAccessLog(name, 'Login');
     launchApp(name);
 
   } catch (err) {
@@ -3779,6 +3781,7 @@ function goHome() {
 // ── APPLICATION タップ → 申請系タブ画面 ─────────────────────
 function goToCategoryApp() {
   document.getElementById('home-screen').classList.remove('show');
+  sendAccessLog(_currentUser, 'Leave');
   // 申請系ナビ表示・Lorry系ナビ非表示
   const navApp   = document.getElementById('nav-application');
   const navLorry = document.getElementById('nav-lorry');
@@ -3796,6 +3799,7 @@ function goToCategoryApp() {
 // ── LORRY タップ → トラック系タブ画面（直接） ───────────────
 function goToLorry() {
   document.getElementById('home-screen').classList.remove('show');
+  sendAccessLog(_currentUser, 'Inspection');
   // Lorry系ナビ表示・申請系ナビ非表示
   const navApp   = document.getElementById('nav-application');
   const navLorry = document.getElementById('nav-lorry');
