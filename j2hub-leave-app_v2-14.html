@@ -2717,6 +2717,7 @@ function showPage(name, btn) {
   document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
   btn.classList.add('active');
+  if (name === 'history') sendAccessLog(_currentUser, 'Leave_History');
 }
 
 function selectType(el) {
@@ -3194,8 +3195,9 @@ function calDone() {
 
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwAXrw_Hex1V8fzuXXBZa95u1cLwos4z38-ZlqL3olXlD-TTL25a0hO5JascLVRZL0u/exec';
 // ── [追加] アクセスログ送信先は、既存の INFO_GAS_URL 定数(下記4489行目付近で定義済み)をそのまま使う ──
-// ── [追加] ログ記録用のバージョン(IIFE内のAPP_VERSIONはスコープ外のため、別途グローバルに保持) ──
-const LOG_APP_VERSION = '2.0';
+// ── [追加] ログ記録用のバージョン。getVersionで実際に取得した値(例:'Ver. 3.0')を、
+// ログイン時に格納しておき、以後のログにはこの実際の値を使う。取得前の初期値は空欄。 ──
+let _logVersion = '';
 
 // ── [追加] アクセスログ送信(ログイン・休暇申請など)。投げっぱなしで、
 // 成否がLeave Systemの動作に一切影響しない(本線とは無関係な処理)。
@@ -3207,7 +3209,7 @@ function sendAccessLog(name, section, postId) {
       name:    name,
       section: section,
       postId:  postId || '',
-      version: LOG_APP_VERSION,
+      version: _logVersion,
       mobile:  navigator.platform || '',
       browser: navigator.userAgent
     });
@@ -3339,10 +3341,6 @@ const PK_CRED_KEY = 'j2hub_passkey_credid';
   const regExp  = urlParams.get('exp');
   const regSig  = urlParams.get('sig');
 
-  // ── [追加] ログイン画面に到達した瞬間(成功・失敗に関わらず)を記録 ──
-  const accessName = regName || savedName;
-  if (accessName) sendAccessLog(accessName, 'Login');
-
   if (regName && regExp && regSig) {
     // 署名付きURLあり → localStorageの状態に関わらず、名前固定の登録画面
     await holidayPromise;
@@ -3356,8 +3354,12 @@ const PK_CRED_KEY = 'j2hub_passkey_credid';
     // ── [Ver.3.0] Ver.専用の独立した通信(他を待たない・待たせない) ──
     fetch(GAS_URL + '?action=getVersion&name=' + encodeURIComponent(regName))
       .then(r => r.json())
-      .then(d => { if (d.version) document.getElementById('pk-version-label').textContent = d.version; })
-      .catch(() => {});
+      .then(d => {
+        if (d.version) document.getElementById('pk-version-label').textContent = d.version;
+        _logVersion = d.version || '';
+        sendAccessLog(regName, 'Login');
+      })
+      .catch(() => { sendAccessLog(regName, 'Login'); });
   } else if (savedName && savedCredId) {
     // 従来通り：登録済み端末 → 認証画面を表示
     document.getElementById('pk-auth-name-msg').querySelector('strong').textContent = savedName;
@@ -3365,8 +3367,12 @@ const PK_CRED_KEY = 'j2hub_passkey_credid';
     // ── [Ver.3.0] Ver.専用の独立した通信(他を待たない・待たせない) ──
     fetch(GAS_URL + '?action=getVersion&name=' + encodeURIComponent(savedName))
       .then(r => r.json())
-      .then(d => { if (d.version) document.getElementById('pk-version-label').textContent = d.version; })
-      .catch(() => {});
+      .then(d => {
+        if (d.version) document.getElementById('pk-version-label').textContent = d.version;
+        _logVersion = d.version || '';
+        sendAccessLog(savedName, 'Login');
+      })
+      .catch(() => { sendAccessLog(savedName, 'Login'); });
   } else {
     // ── [追加 #5] localStorageが空でも、まず静かな自動復旧を試みる ──
     const recoveredName = await silentPasskeyRecovery();
@@ -3781,7 +3787,7 @@ function goHome() {
 // ── APPLICATION タップ → 申請系タブ画面 ─────────────────────
 function goToCategoryApp() {
   document.getElementById('home-screen').classList.remove('show');
-  sendAccessLog(_currentUser, 'Leave');
+  sendAccessLog(_currentUser, selectedType + '_Leave');
   // 申請系ナビ表示・Lorry系ナビ非表示
   const navApp   = document.getElementById('nav-application');
   const navLorry = document.getElementById('nav-lorry');
@@ -3823,11 +3829,14 @@ function showLorryPage(name, btn) {
   if (targetPage) targetPage.classList.add('active');
   if (btn) btn.classList.add('active');
   if (name === 'inspection') inspUpdateDateTime();
+  if (name === 'insp-history') sendAccessLog(_currentUser, 'Inspection_History');
+  if (name === 'maintenance')  sendAccessLog(_currentUser, 'Inspection_Maintenance');
 }
 
 // ── J2Hub INFO ───────────────────────────────────────────────
 function goToInfo() {
   document.getElementById('home-screen').classList.remove('show');
+  sendAccessLog(_currentUser, 'J2Hub_Info');
   // 全ナビ非表示
   const navApp   = document.getElementById('nav-application');
   const navLorry = document.getElementById('nav-lorry');
