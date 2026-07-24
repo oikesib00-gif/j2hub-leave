@@ -3195,9 +3195,11 @@ function calDone() {
 
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwAXrw_Hex1V8fzuXXBZa95u1cLwos4z38-ZlqL3olXlD-TTL25a0hO5JascLVRZL0u/exec';
 // ── [追加] アクセスログ送信先は、既存の INFO_GAS_URL 定数(下記4489行目付近で定義済み)をそのまま使う ──
-// ── [追加] ログ記録用のバージョン。getVersionで実際に取得した値(例:'Ver. 3.0')を、
-// ログイン時に格納しておき、以後のログにはこの実際の値を使う。取得前の初期値は空欄。 ──
-let _logVersion = '';
+// ── [追加] ログ記録用のバージョン。Staff MasterのV列(登録時のみ更新)ではなく、
+// 「今、実際に読み込まれているこのファイル自体の版」を、固定値として記録する。 ──
+const FILE_VERSION = 'Ver. 3.0';
+// ── [追加] アクセス経路(署名付きURL／端末の記憶／自動復旧、のいずれか) ──
+let _accessRoute = '';
 
 // ── [追加] アクセスログ送信(ログイン・休暇申請など)。投げっぱなしで、
 // 成否がLeave Systemの動作に一切影響しない(本線とは無関係な処理)。
@@ -3205,13 +3207,15 @@ let _logVersion = '';
 function sendAccessLog(name, section, postId) {
   try {
     const payload = JSON.stringify({
-      action:  'logAccess',
-      name:    name,
-      section: section,
-      postId:  postId || '',
-      version: _logVersion,
-      mobile:  navigator.platform || '',
-      browser: navigator.userAgent
+      action:   'logAccess',
+      name:     name,
+      section:  section,
+      postId:   postId || '',
+      version:  FILE_VERSION,
+      mobile:   navigator.platform || '',
+      browser:  navigator.userAgent,
+      referrer: document.referrer || '',
+      route:    _accessRoute
     });
     if (navigator.sendBeacon) {
       navigator.sendBeacon(INFO_GAS_URL, payload);
@@ -3341,6 +3345,12 @@ const PK_CRED_KEY = 'j2hub_passkey_credid';
   const regExp  = urlParams.get('exp');
   const regSig  = urlParams.get('sig');
 
+  // ── [追加] ログイン画面に到達した瞬間(成功・失敗に関わらず)を記録 ──
+  const accessName = regName || savedName;
+  if (regName) _accessRoute = 'SignedURL';
+  else if (savedName) _accessRoute = 'SavedDevice';
+  if (accessName) sendAccessLog(accessName, 'Login');
+
   if (regName && regExp && regSig) {
     // 署名付きURLあり → localStorageの状態に関わらず、名前固定の登録画面
     await holidayPromise;
@@ -3354,12 +3364,8 @@ const PK_CRED_KEY = 'j2hub_passkey_credid';
     // ── [Ver.3.0] Ver.専用の独立した通信(他を待たない・待たせない) ──
     fetch(GAS_URL + '?action=getVersion&name=' + encodeURIComponent(regName))
       .then(r => r.json())
-      .then(d => {
-        if (d.version) document.getElementById('pk-version-label').textContent = d.version;
-        _logVersion = d.version || '';
-        sendAccessLog(regName, 'Login');
-      })
-      .catch(() => { sendAccessLog(regName, 'Login'); });
+      .then(d => { if (d.version) document.getElementById('pk-version-label').textContent = d.version; })
+      .catch(() => {});
   } else if (savedName && savedCredId) {
     // 従来通り：登録済み端末 → 認証画面を表示
     document.getElementById('pk-auth-name-msg').querySelector('strong').textContent = savedName;
@@ -3367,16 +3373,14 @@ const PK_CRED_KEY = 'j2hub_passkey_credid';
     // ── [Ver.3.0] Ver.専用の独立した通信(他を待たない・待たせない) ──
     fetch(GAS_URL + '?action=getVersion&name=' + encodeURIComponent(savedName))
       .then(r => r.json())
-      .then(d => {
-        if (d.version) document.getElementById('pk-version-label').textContent = d.version;
-        _logVersion = d.version || '';
-        sendAccessLog(savedName, 'Login');
-      })
-      .catch(() => { sendAccessLog(savedName, 'Login'); });
+      .then(d => { if (d.version) document.getElementById('pk-version-label').textContent = d.version; })
+      .catch(() => {});
   } else {
     // ── [追加 #5] localStorageが空でも、まず静かな自動復旧を試みる ──
     const recoveredName = await silentPasskeyRecovery();
     if (recoveredName) {
+      _accessRoute = 'SilentRecovery';
+      sendAccessLog(recoveredName, 'Login');
       await holidayPromise;
       document.getElementById('passkey-screen').classList.remove('show');
       launchApp(recoveredName);
