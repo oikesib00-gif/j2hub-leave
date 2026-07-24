@@ -3193,6 +3193,31 @@ function calDone() {
 }
 
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwAXrw_Hex1V8fzuXXBZa95u1cLwos4z38-ZlqL3olXlD-TTL25a0hO5JascLVRZL0u/exec';
+// ── [追加] アクセスログ送信先は、既存の INFO_GAS_URL 定数(下記4489行目付近で定義済み)をそのまま使う ──
+
+// ── [追加] アクセスログ送信(ログイン・休暇申請など)。投げっぱなしで、
+// 成否がLeave Systemの動作に一切影響しない(本線とは無関係な処理)。
+// 正面玄関:sendBeacon / 裏口:古いブラウザ向けのfetch(keepalive)フォールバック
+function sendAccessLog(name, section, postId) {
+  try {
+    const payload = JSON.stringify({
+      action:  'logAccess',
+      name:    name,
+      section: section,
+      postId:  postId || '',
+      version: (typeof APP_VERSION !== 'undefined') ? APP_VERSION : '',
+      mobile:  navigator.platform || '',
+      browser: navigator.userAgent
+    });
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon(INFO_GAS_URL, payload);
+    } else {
+      fetch(INFO_GAS_URL, { method: 'POST', body: payload, keepalive: true }).catch(() => {});
+    }
+  } catch (e) {
+    // ログ送信の失敗は、本線の動作に一切影響させない
+  }
+}
 
 async function submitLeave() {
   const name   = document.getElementById('employee-name').value || _currentUser;
@@ -3226,6 +3251,7 @@ async function submitLeave() {
     const result = await res.json();
     if (result.status === 'success') {
       try { localStorage.removeItem(CACHE_KEY + '_' + name); } catch(e) {}
+      sendAccessLog(name, selectedType + '_Leave');
       const t      = T[lang];
       const typeLbl = t['type_' + selectedType.toLowerCase()] || selectedType;
       document.getElementById('success-detail').innerText =
@@ -3342,6 +3368,7 @@ const PK_CRED_KEY = 'j2hub_passkey_credid';
     if (recoveredName) {
       await holidayPromise;
       document.getElementById('passkey-screen').classList.remove('show');
+      sendAccessLog(recoveredName, 'Login');
       launchApp(recoveredName);
       return;
     }
@@ -3547,6 +3574,7 @@ async function passkeyRegister() {
 
     // アプリを起動
     document.getElementById('passkey-screen').classList.remove('show');
+    sendAccessLog(name, 'Login');
     launchApp(name);
 
   } catch (err) {
@@ -3659,6 +3687,7 @@ async function passkeyAuthenticate() {
 
     // 認証成功 → アプリ起動
     document.getElementById('passkey-screen').classList.remove('show');
+    sendAccessLog(name, 'Login');
     launchApp(name);
 
   } catch (err) {
