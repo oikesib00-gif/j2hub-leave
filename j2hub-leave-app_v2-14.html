@@ -3591,12 +3591,17 @@ async function passkeyRegister() {
     localStorage.setItem(PK_NAME_KEY, name);
     localStorage.setItem(PK_CRED_KEY, credId);
 
+    // ── [追加 2026-07-27] 登録成功を、個人ログに1行だけ記録 ──
+    sendAccessLog(name, 'Register_Attempt', 'Success');
+
     // アプリを起動
     document.getElementById('passkey-screen').classList.remove('show');
     launchApp(name);
 
   } catch (err) {
     const msg = err.message || 'Registration failed. Please try again.';
+    // ── [追加 2026-07-27] 登録失敗を、理由付きで個人ログに1行だけ記録 ──
+    sendAccessLog(name, 'Register_Attempt', 'Failed: ' + msg);
     // ── [追加 #6・#8] 署名が期限切れ・無効な場合は、通知ボタン画面へ切り替える ──
     if (regParams && /invalid or expired/i.test(msg)) {
       document.getElementById('pk-register-panel').style.display = 'none';
