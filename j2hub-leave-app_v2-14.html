@@ -292,13 +292,13 @@
     font-weight: 600;
   }
 
-  /* ── 集計起算日の注記（Leave / History 共通デザイン） ── */
-  .balance-note {
-    text-align: center;
-    font-size: 10.5px;
-    font-weight: 600;
+  /* ── 集計起算日の注記（Used タイル内に収める） ── */
+  .balance-tile-note {
+    font-size: 8px;
+    font-weight: 700;
     color: #dc2626;
-    margin-top: 10px;
+    line-height: 1.25;
+    margin-top: 3px;
   }
 
   .page-title-note {
@@ -2055,6 +2055,7 @@
           <div class="balance-val" id="bal-used">—</div>
           <div class="balance-days">Days</div>
           <div class="balance-lbl" data-key="bal_used">Used</div>
+          <div class="balance-tile-note" data-key="bal_note">Since 1 Jan 2026</div>
         </div>
         <div class="balance-tile">
           <div class="balance-val" id="bal-pending">—</div>
@@ -2063,7 +2064,6 @@
           <button class="clock-btn" id="clock-btn" style="display:none;" onclick="showPendingPopup()">⏰</button>
         </div>
       </div>
-      <div class="balance-note" data-key="bal_note">Since 1 Jan 2026</div>
     </div>
 
     <!-- Form — 名前選択後に表示 -->
