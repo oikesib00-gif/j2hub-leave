@@ -292,6 +292,25 @@
     font-weight: 600;
   }
 
+  /* ── 集計起算日の注記（Leave / History 共通デザイン） ── */
+  .balance-note {
+    text-align: center;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: #dc2626;
+    margin-top: 10px;
+  }
+
+  .page-title-note {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: #ff8a80;
+    margin-top: 4px;
+    position: relative;
+    z-index: 1;
+  }
+
   /* ── Form card ── */
   .form-card {
     background: var(--surface);
@@ -2044,6 +2063,7 @@
           <button class="clock-btn" id="clock-btn" style="display:none;" onclick="showPendingPopup()">⏰</button>
         </div>
       </div>
+      <div class="balance-note" data-key="bal_note">Since 1 Jan 2026</div>
     </div>
 
     <!-- Form — 名前選択後に表示 -->
@@ -2190,6 +2210,7 @@
   <div id="page-history" class="page">
     <div class="page-header">
       <div class="page-title-main" data-key="hist_title">My <em>Applications</em></div>
+      <div class="page-title-note" data-key="hist_note">Since 7 Apr 2026</div>
     </div>
     <div style="height:16px;"></div>
     <div class="history-list" id="history-list">
@@ -2611,6 +2632,7 @@ const T = {
     leave_sub:'Annual Leave',
     leave_title:'Apply for Annual Leave',
     bal_remaining:'Remaining', bal_used:'Used', bal_pending:'Pending',
+    bal_note:'Since 1 Jan 2026', hist_note:'Since 7 Apr 2026',
     form_section:'Application Details',
     form_name:'Name', form_name_ph:'— Select your name —',
     form_type:'Leave Type',
@@ -2638,6 +2660,7 @@ const T = {
     leave_sub:'年假申请',
     leave_title:'提交年假申请',
     bal_remaining:'剩余天数', bal_used:'已使用', bal_pending:'待审核',
+    bal_note:'自2026年1月1日起', hist_note:'自2026年4月7日起',
     form_section:'申请详情',
     form_name:'姓名', form_name_ph:'— 请选择您的姓名 —',
     form_type:'假期类型',
@@ -2665,6 +2688,7 @@ const T = {
     leave_sub:'ஆண்டு விடுப்பு',
     leave_title:'ஆண்டு விடுப்பு விண்ணப்பம்',
     bal_remaining:'மீதமுள்ளது', bal_used:'பயன்படுத்தியது', bal_pending:'நிலுவையில்',
+    bal_note:'2026 ஜனவரி 1 முதல்', hist_note:'2026 ஏப்ரல் 7 முதல்',
     form_section:'விண்ணப்ப விவரங்கள்',
     form_name:'பெயர்', form_name_ph:'— உங்கள் பெயரை தேர்வு செய்க —',
     form_type:'விடுப்பு வகை',
