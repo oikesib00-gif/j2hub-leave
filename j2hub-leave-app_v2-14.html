@@ -3617,8 +3617,9 @@ async function passkeyRegister() {
     }
 
     // ── [追加 Ver.3.0] GAS側の検証結果を確認してから確定 ──
+    // ── [変更 2026-08-19] messageが空の場合でも、生の応答を残し、原因不明のまま握りつぶさない ──
     if (gasData.status !== 'success') {
-      throw new Error(gasData.message || 'Registration rejected by server.');
+      throw new Error((gasData.message || 'Registration rejected by server.') + ' | raw: ' + gasRawText.substring(0, 200));
     }
 
     localStorage.setItem(PK_NAME_KEY, name);
@@ -3718,8 +3719,15 @@ async function passkeyAuthenticate() {
     if (!assertion) throw new Error('Authentication cancelled.');
 
     // GASから公開鍵を取得して署名検証
-    const pkRes = await fetch(GAS_URL + '?action=getPublicKey&name=' + encodeURIComponent(name));
-    const pkData = await pkRes.json();
+    // ── [変更 2026-08-19] JSON以外の応答(HTML等)への耐性を追加 ──
+    const pkRes     = await fetch(GAS_URL + '?action=getPublicKey&name=' + encodeURIComponent(name));
+    const pkRawText = await pkRes.text();
+    let pkData;
+    try {
+      pkData = JSON.parse(pkRawText);
+    } catch (parseErr) {
+      throw new Error('HTTP ' + pkRes.status + ' - ' + pkRawText.substring(0, 200));
+    }
     if (pkData.status === 'success' && pkData.publicKey) {
       const pubKeyBytes = Uint8Array.from(atob(pkData.publicKey), c => c.charCodeAt(0));
       const cryptoKey = await crypto.subtle.importKey(
@@ -3742,11 +3750,16 @@ async function passkeyAuthenticate() {
     }
 
     // 認証成功 → アプリ起動
+    // ── [追加 2026-08-19] ログイン成功を、個人ログに1行だけ記録 ──
+    sendAccessLog(name, 'Login_Attempt', 'Success');
     document.getElementById('passkey-screen').classList.remove('show');
     launchApp(name);
 
   } catch (err) {
-    errEl.textContent = err.message || 'Authentication failed. Please try again.';
+    const msg = err.message || 'Authentication failed. Please try again.';
+    // ── [追加 2026-08-19] ログイン失敗を、理由付きで個人ログに1行だけ記録 ──
+    sendAccessLog(name, 'Login_Attempt', 'Failed: ' + msg);
+    errEl.textContent = msg;
     errEl.classList.add('show');
     btn.disabled = false;
     btn.textContent = '🔐 Authenticate';
