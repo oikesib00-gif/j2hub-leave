@@ -3605,7 +3605,16 @@ async function passkeyRegister() {
     if (regParams) { payload.exp = regParams.exp; payload.sig = regParams.sig; }
 
     const gasRes  = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
-    const gasData = await gasRes.json();
+    // ── [変更 2026-08-19] 応答がJSONでない場合(GoogleのHTMLエラーページ等)、
+    // 原因不明のまま握りつぶさず、HTTPステータスと本文の一部をエラーに含める。
+    // これにより、次回以降は実行数ログを開かずとも、個人ログだけで原因特定できる。
+    const gasRawText = await gasRes.text();
+    let gasData;
+    try {
+      gasData = JSON.parse(gasRawText);
+    } catch (parseErr) {
+      throw new Error('HTTP ' + gasRes.status + ' - ' + gasRawText.substring(0, 200));
+    }
 
     // ── [追加 Ver.3.0] GAS側の検証結果を確認してから確定 ──
     if (gasData.status !== 'success') {
