@@ -4,6 +4,22 @@
 <meta charset="UTF-8">
 <!-- ── [追加 2026-08-19] Chrome等の自動翻訳によるページ改ざん(署名検証失敗の誤爆)を防ぐ ── -->
 <meta name="google" content="notranslate">
+<!-- ── [追加 2026-08-25] Android端末で、VivoBrowser等のOEM独自ブラウザが検出された場合、
+     読込直後に強制的にChromeへ誘導する(署名検証を妨げる、独自の割り込みページを回避するため)。
+     iPhoneおよび、既にChromeで開いている場合は、一切影響しない。Chrome未インストール時は、
+     browser_fallback_urlにより、そのまま今のページへフォールバックする。 ── -->
+<script>
+(function() {
+  var ua = navigator.userAgent;
+  var isAndroid = /Android/.test(ua);
+  var oemBrowserMarkers = /VivoBrowser|MiuiBrowser|HuaweiBrowser|SamsungBrowser|OppoBrowser|HeyTapBrowser|UCBrowser|UCWEB|QQBrowser|MQQBrowser|Quark|OPR\/|EdgA\/|YaBrowser|coc_coc_browser/i;
+  if (isAndroid && oemBrowserMarkers.test(ua)) {
+    var target   = location.href.replace(/^https?:\/\//, '');
+    var fallback = encodeURIComponent(location.href);
+    location.replace('intent://' + target + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + fallback + ';end');
+  }
+})();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#003087">
 <meta name="apple-mobile-web-app-capable" content="yes">
