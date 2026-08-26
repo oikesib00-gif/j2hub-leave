@@ -2600,6 +2600,16 @@
 </div>
 
 <script>
+// ── [追加 2026-08-26] Chromeのインストール条件(Service Worker登録)を満たすため、
+// 通知許可の状態に関係なく、ページ読込時に無条件でService Workerを登録する。
+// 同じURLを後でinitFirebaseMessaging()が再度registerしても、ブラウザは同一の
+// 登録を返すだけで、重複登録や副作用は発生しない(仕様上、安全)。
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/j2hub-leave/firebase-messaging-sw.js').catch(function(e) {
+    console.log('Service Worker registration failed:', e);
+  });
+}
+
 // ── キャッシュキー（グローバル定義） ─────────────────────────────
 const CACHE_KEY     = 'j2hub_cache_data';
 const CACHE_HOL_KEY = 'j2hub_cache_holidays';
