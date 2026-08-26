@@ -7,11 +7,6 @@
   "theme_color": "#003087",
   "icons": [
     {
-      "src": "https://oikesib00-gif.github.io/j2hub-leave/j2hubicon.png",
-      "sizes": "196x196",
-      "type": "image/png"
-    },
-    {
       "src": "https://oikesib00-gif.github.io/j2hub-leave/j2hubicon-512.png",
       "sizes": "512x512",
       "type": "image/png"
