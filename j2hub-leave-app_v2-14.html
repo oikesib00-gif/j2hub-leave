@@ -4804,8 +4804,13 @@ window.addEventListener('beforeinstallprompt', function(e) {
 
 async function installApp() {
   if (!deferredInstallPrompt) return;
-  deferredInstallPrompt.prompt();
-  try { await deferredInstallPrompt.userChoice; } catch (e) {}
+  try {
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+  } catch (e) {
+    // ユーザー操作の直後と認識されずエラーになる場合がある(Google公式ドキュメントで確認済み)。
+    // その場合も、他の動作を止めず、静かに失敗させる。
+  }
   deferredInstallPrompt = null;
   const hintEl = document.getElementById('install-hint');
   if (hintEl) hintEl.style.display = 'none';
@@ -4831,6 +4836,13 @@ async function requestNotificationPermission() {
   document.getElementById('notif-overlay').style.display = 'none';
   if (permission === 'granted') {
     initFirebaseMessaging(name);
+  }
+  // ── [追加 2026-08-26] 通知許可の直後、Android端末であれば、続けて
+  // 「ホーム画面に追加」のAndroid/Chrome標準確認を自動的に表示する。
+  // iPhoneでは何も起きない(従来通り)。beforeinstallpromptがまだ
+  // 発火していない場合は、何も起きず静かに素通りする。
+  if (/Android/.test(navigator.userAgent) && deferredInstallPrompt) {
+    installApp();
   }
 }
 
