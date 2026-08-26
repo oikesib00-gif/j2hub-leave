@@ -3838,6 +3838,12 @@ function launchApp(name) {
       document.getElementById('notif-overlay').style.display = 'flex';
     }
   }
+  // ── [修正 2026-08-26] 通知許可済み・未許可のどちらの分岐でも、確実に実行されるよう、
+  // 「Add to Home」自動呼び出しを、通知許可ボタンの分岐から独立させ、ここ(ログイン成功後、
+  // 必ず1回通る場所)へ移動。通知許可が既に済んでいる端末でも、確実に動作する。
+  if (/Android/.test(navigator.userAgent) && deferredInstallPrompt) {
+    installApp();
+  }
   // ── [追加] URLの?page=指定があれば、ホーム画面を経由せず直接その画面へ強制移動(iOS不具合の当面の回避策) ──
   const forcedPage = new URLSearchParams(location.search).get('page');
   if (forcedPage === 'lorry') { goToLorry(); }
@@ -4836,13 +4842,6 @@ async function requestNotificationPermission() {
   document.getElementById('notif-overlay').style.display = 'none';
   if (permission === 'granted') {
     initFirebaseMessaging(name);
-  }
-  // ── [追加 2026-08-26] 通知許可の直後、Android端末であれば、続けて
-  // 「ホーム画面に追加」のAndroid/Chrome標準確認を自動的に表示する。
-  // iPhoneでは何も起きない(従来通り)。beforeinstallpromptがまだ
-  // 発火していない場合は、何も起きず静かに素通りする。
-  if (/Android/.test(navigator.userAgent) && deferredInstallPrompt) {
-    installApp();
   }
 }
 
