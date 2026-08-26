@@ -13,7 +13,11 @@
   var ua = navigator.userAgent;
   var isAndroid = /Android/.test(ua);
   var oemBrowserMarkers = /VivoBrowser|MiuiBrowser|HuaweiBrowser|SamsungBrowser|OppoBrowser|HeyTapBrowser|UCBrowser|UCWEB|QQBrowser|MQQBrowser|Quark|OPR\/|EdgA\/|YaBrowser|coc_coc_browser/i;
-  if (isAndroid && oemBrowserMarkers.test(ua)) {
+  // ── [変更 2026-08-26] ホーム画面に追加済み(スタンドアロン)の場合は、強制移動を行わない。
+  // スタンドアロン状態でのintent://遷移は正しく機能せず、画面が固まる(ブラックアウトする)
+  // 原因になり得るため。ブラウザのタブとして開いている時だけ、この処理を行う。
+  var isStandaloneNow = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+  if (isAndroid && oemBrowserMarkers.test(ua) && !isStandaloneNow) {
     var target   = location.href.replace(/^https?:\/\//, '');
     var fallback = encodeURIComponent(location.href);
     location.replace('intent://' + target + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + fallback + ';end');
@@ -2515,8 +2519,9 @@
     <button class="success-close" onclick="closeInspSuccess()" id="insp-success-close-btn">Back to Home</button>
   </div>
 
-  <div class="install-hint">
-    <strong data-key="install_tip">📱 Use as an App</strong> — <span data-key="install_desc">Tap Share → "Add to Home Screen" in Safari or Chrome to install on your phone.</span>
+  <div class="install-hint" id="install-hint">
+    <strong data-key="install_tip">📱 Use as an App</strong> — <span data-key="install_desc" id="install-hint-desc">Tap Share → "Add to Home Screen" in Safari or Chrome to install on your phone.</span>
+    <button id="install-hint-btn" data-key="install_btn" onclick="installApp()" style="display:none;margin-top:8px;width:100%;padding:10px;background:#003087;color:#fff;border:none;border-radius:8px;font-family:'Montserrat',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">➕ Add to Home Screen</button>
   </div>
 
 </div><!-- .app -->
@@ -2668,6 +2673,7 @@ const T = {
     ntc_2:'🛢️ Oil change reminder: Unit 3 (SG-4421) is due for servicing. Please schedule with the workshop by end of this week.',
     ntc_3:'📅 Public holiday: Hari Raya Aidilfitri — office will be closed. Please plan leave applications accordingly.',
     install_tip:'📱 Use as an App', install_desc:'Tap Share → "Add to Home Screen" in Safari or Chrome to install on your phone.',
+    install_btn:'➕ Add to Home Screen',
     suc_title:'Submitted!', suc_close:'Back to Home',
     suc_detail:(n,t,f,to)=>`${n}'s ${t} leave\n${f} → ${to}\nhas been submitted for approval.`,
     reason_ph:'Briefly describe the reason…',
@@ -2696,6 +2702,7 @@ const T = {
     ntc_2:'🛢️ 换油提醒：3号车（SG-4421）需要保养，请在本周内安排到维修站。',
     ntc_3:'📅 公共假期提醒：开斋节期间办公室将关闭，请提前安排好假期申请。',
     install_tip:'📱 添加到主屏幕', install_desc:'点击分享 → "添加到主屏幕" 即可像 App 一样使用。',
+    install_btn:'➕ 添加到主屏幕',
     suc_title:'提交成功！', suc_close:'返回主页',
     suc_detail:(n,t,f,to)=>`${n} 的${t}\n${f} → ${to}\n已提交，等待审批。`,
     reason_ph:'请简述原因…',
@@ -2724,6 +2731,7 @@ const T = {
     ntc_2:'🛢️ எண்ணெய் மாற்றம்: யூனிட் 3 (SG-4421) இந்த வாரம் சர்வீஸ் செய்ய வேண்டும்.',
     ntc_3:'📅 பொது விடுமுறை: ஹரி ராயா அன்று அலுவலகம் மூடப்படும். விடுப்பு திட்டமிடுங்கள்.',
     install_tip:'📱 முகப்பில் சேர்க்கவும்', install_desc:'Share → "முகப்பு திரையில் சேர்" என்பதை தட்டுங்கள்.',
+    install_btn:'➕ முகப்பில் சேர்க்கவும்',
     suc_title:'சமர்ப்பிக்கப்பட்டது!', suc_close:'முகப்பிற்கு திரும்பவும்',
     suc_detail:(n,t,f,to)=>`${n} அவர்களின் ${t}\n${f} → ${to}\nஒப்புதலுக்காக சமர்ப்பிக்கப்பட்டது.`,
     reason_ph:'காரணத்தை சுருக்கமாக விவரிக்கவும்…',
@@ -4773,6 +4781,48 @@ function checkBirthday(name) {
       }
     })
     .catch(() => {});
+}
+
+// ── [追加 2026-08-26] Android(Chrome/Samsung Internet)向け「ホーム画面に追加」ボタン。
+// 手動手順の説明を読ませるのではなく、ボタン1つで完結させる。対応していない環境
+// (iPhone等)では、beforeinstallpromptが発火しないため、従来通りの説明文のままとなる。
+let deferredInstallPrompt = null;
+
+function isStandaloneDisplay_() {
+  return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+}
+
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  if (isStandaloneDisplay_()) return; // 既にホーム画面から起動中なら不要
+  const descEl = document.getElementById('install-hint-desc');
+  const btnEl  = document.getElementById('install-hint-btn');
+  if (descEl) descEl.style.display = 'none';
+  if (btnEl)  btnEl.style.display  = 'block';
+});
+
+async function installApp() {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  try { await deferredInstallPrompt.userChoice; } catch (e) {}
+  deferredInstallPrompt = null;
+  const hintEl = document.getElementById('install-hint');
+  if (hintEl) hintEl.style.display = 'none';
+}
+
+window.addEventListener('appinstalled', function() {
+  deferredInstallPrompt = null;
+  const hintEl = document.getElementById('install-hint');
+  if (hintEl) hintEl.style.display = 'none';
+});
+
+// 既にホーム画面から起動している場合は、この案内自体を最初から表示しない
+if (isStandaloneDisplay_()) {
+  document.addEventListener('DOMContentLoaded', function() {
+    const hintEl = document.getElementById('install-hint');
+    if (hintEl) hintEl.style.display = 'none';
+  });
 }
 
 async function requestNotificationPermission() {
