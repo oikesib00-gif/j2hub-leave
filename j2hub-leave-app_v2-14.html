@@ -2600,16 +2600,6 @@
 </div>
 
 <script>
-// ── [追加 2026-08-26] Chromeのインストール条件(Service Worker登録)を満たすため、
-// 通知許可の状態に関係なく、ページ読込時に無条件でService Workerを登録する。
-// 同じURLを後でinitFirebaseMessaging()が再度registerしても、ブラウザは同一の
-// 登録を返すだけで、重複登録や副作用は発生しない(仕様上、安全)。
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/j2hub-leave/firebase-messaging-sw.js').catch(function(e) {
-    console.log('Service Worker registration failed:', e);
-  });
-}
-
 // ── キャッシュキー（グローバル定義） ─────────────────────────────
 const CACHE_KEY     = 'j2hub_cache_data';
 const CACHE_HOL_KEY = 'j2hub_cache_holidays';
@@ -2639,23 +2629,10 @@ async function loadHolidays() {
   }
 }
 
-// ── Staff type lookup (Office/Drive) ─────────────────────────────
-// ============================================================
-// !! 名簿 CONFIRMED & LOCKED — DO NOT TOUCH — 絶対に変更禁止 !!
-// 順番・スペル・大文字小文字、すべて確定事項。変更は一切禁止。
-// ============================================================
-const STAFF_TYPE = {
-  'Cheng Liang Chye':'Drive','Jennifer Ho':'Office','Kader Mydeen Seik':'Drive',
-  'Kuan Tee Tee':'Office','Leong Weng Yuen':'Drive','Liu GuangYue':'Drive',
-  'Ng Chye Kim':'Office','Ng Yew Huat':'Drive','Seah Tang Chew':'Drive',
-  'Shige Oike':'Office','Sim Soon Wah':'Drive','Sivabalan Arumugan':'Drive',
-  'Tan Boon Long':'Drive','Tan Thiam Hock':'Drive','Tan Yew Seng':'Drive',
-  'Tay Ban Liang':'Drive','Yau Soo Kee':'Office','Zhang Xianwei':'Drive'
-};
-// ============================================================
-// !! 名簿 END — DO NOT TOUCH — 絶対に変更禁止 !!
-// ============================================================
-
+// ── Staff type (Office/Drive) ─────────────────────────────────────
+// [変更 2026-09-01] ハードコード表(STAFF_TYPE)を廃止。
+// Staff_Master(The Bible)が唯一の情報源であり、二重管理を禁止する原則に基づき、
+// GASの getStaffBalance() が都度返す employeeType のみを使用する。
 let currentStaffType = 'Office';
 
 // ── i18n ──────────────────────────────────────────────────────────
@@ -2797,7 +2774,8 @@ async function onNameSelect(name) {
     return;
   }
 
-  currentStaffType = STAFF_TYPE[name] || 'Office';
+  // [変更 2026-09-01] currentStaffTypeは、この後のloadBalance(name)が
+  // サーバー(Staff_Master由来のemployeeType)から取得して設定する。
 
   // Set today as minimum selectable date
   const today = new Date().toISOString().split('T')[0];
@@ -2818,6 +2796,8 @@ async function loadBalance(name) {
     const res  = await fetch(GAS_URL + '?action=getStaffBalance&name=' + encodeURIComponent(name));
     const data = await res.json();
     if (data.status === 'success') {
+      // [変更 2026-09-01] Staff_Master(The Bible)由来のemployeeTypeを反映
+      currentStaffType = data.employeeType || currentStaffType;
       document.getElementById('bal-remaining').textContent = data.remaining;
       document.getElementById('bal-used').textContent      = data.used;
       document.getElementById('bal-pending').textContent   = data.pending;
@@ -4868,6 +4848,8 @@ function applyData(data) {
 
   const b = data.balance;
   if (b && b.status === 'success') {
+    // [変更 2026-09-01] Staff_Master(The Bible)由来のemployeeTypeを反映
+    currentStaffType = b.employeeType || currentStaffType;
     document.getElementById('bal-remaining').textContent = b.remaining;
     document.getElementById('bal-used').textContent      = b.used;
     document.getElementById('bal-pending').textContent   = b.pending;
@@ -4898,7 +4880,8 @@ function applyData(data) {
 async function loadInitialData(name) {
   const balSection  = document.getElementById('balance-section');
   const formSection = document.getElementById('form-section');
-  currentStaffType = STAFF_TYPE[name] || 'Office';
+  // [変更 2026-09-01] currentStaffTypeは、この後のapplyData(data)が
+  // サーバー(Staff_Master由来のemployeeType)から取得して設定する。
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('date-from').min = today;
   document.getElementById('date-to').min   = today;
