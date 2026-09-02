@@ -3589,6 +3589,16 @@ async function passkeyRegister() {
   btn.disabled = true;
   btn.textContent = 'Registering…';
 
+  // ── [追加 2026-09-02] 現場検証用:失敗時の原因切り分けのため、
+  // 開始時刻とプラットフォーム認証器の可否を記録する(画面には一切表示しない、ログ専用) ──
+  const _regAttemptStart = Date.now();
+  let _platformAvailable = 'unknown';
+  try {
+    if (window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
+      _platformAvailable = (await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()) ? 'yes' : 'no';
+    }
+  } catch (diagErr) { _platformAvailable = 'check_failed'; }
+
   try {
     const challenge = new Uint8Array(32);
     crypto.getRandomValues(challenge);
@@ -3651,7 +3661,11 @@ async function passkeyRegister() {
   } catch (err) {
     const msg = err.message || 'Registration failed. Please try again.';
     // ── [追加 2026-07-27] 登録失敗を、理由付きで個人ログに1行だけ記録 ──
-    sendAccessLog(name, 'Register_Attempt', 'Failed: ' + msg);
+    // ── [追加 2026-09-02] 現場検証用の付加情報(経過時間・エラー種別・プラットフォーム認証器可否)を
+    // ログにのみ追加。利用者向けのmsg/errElの文言は一切変更しない ──
+    const _elapsedMs = Date.now() - _regAttemptStart;
+    const _diagSuffix = ' [diag: name=' + (err.name || 'unknown') + ', elapsedMs=' + _elapsedMs + ', platformAuth=' + _platformAvailable + ']';
+    sendAccessLog(name, 'Register_Attempt', 'Failed: ' + msg + _diagSuffix);
     // ── [追加 #6・#8] 署名が期限切れ・無効な場合は、通知ボタン画面へ切り替える ──
     if (regParams && /invalid or expired/i.test(msg)) {
       document.getElementById('pk-register-panel').style.display = 'none';
