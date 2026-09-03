@@ -760,6 +760,73 @@
     font-weight: 700;
     cursor: pointer;
   }
+
+  /* ── [追加 2026-09-03] Half Day確認オーバーレイ ── */
+  .halfday-confirm-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,48,135,0.45);
+    z-index: 260;
+    justify-content: center;
+    align-items: center;
+    padding: 32px 24px;
+  }
+  .halfday-confirm-overlay.show { display: flex; }
+  .halfday-confirm-box {
+    background: #fff;
+    border-radius: 14px;
+    padding: 22px 20px 20px;
+    width: 100%;
+    max-width: 320px;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0,48,135,0.18);
+  }
+  .halfday-confirm-icon {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: #fff8e6;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    margin: 0 auto 12px;
+  }
+  .halfday-confirm-title {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 15px;
+    color: var(--text);
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+  .halfday-confirm-body {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 20px;
+  }
+  .halfday-confirm-buttons {
+    display: flex;
+    gap: 10px;
+  }
+  .halfday-confirm-cancel-btn, .halfday-confirm-ok-btn {
+    flex: 1;
+    padding: 11px;
+    border-radius: 8px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .halfday-confirm-cancel-btn {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1.5px solid var(--border);
+  }
+  .halfday-confirm-ok-btn {
+    background: var(--blue-dark);
+    color: #fff;
+    border: none;
+  }
   .clock-btn {
     background: none;
     border: none;
@@ -2526,6 +2593,19 @@
 
 </div><!-- .app -->
 
+<!-- ── [追加 2026-09-03] Half Day確認オーバーレイ（誤操作防止） ── -->
+<div class="halfday-confirm-overlay" id="halfday-confirm-overlay" onclick="if(event.target===this)cancelHalfdayConfirm()">
+  <div class="halfday-confirm-box">
+    <div class="halfday-confirm-icon">🕐</div>
+    <div class="halfday-confirm-title" id="halfday-confirm-title">Select Half Day Leave?</div>
+    <div class="halfday-confirm-body" id="halfday-confirm-body">This will be a half-day (0.5 day) application, not a full day.</div>
+    <div class="halfday-confirm-buttons">
+      <button class="halfday-confirm-cancel-btn" id="halfday-confirm-cancel-btn" onclick="cancelHalfdayConfirm()">Cancel</button>
+      <button class="halfday-confirm-ok-btn" id="halfday-confirm-ok-btn" onclick="confirmHalfday()">Confirm</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── Pending Popup ── -->
 <div class="pending-popup-overlay" id="pending-popup-overlay" onclick="if(event.target===this)closePendingPopup()">
   <div class="pending-popup">
@@ -2665,6 +2745,7 @@ const T = {
     suc_detail:(n,t,f,to)=>`${n}'s ${t} leave\n${f} → ${to}\nhas been submitted for approval.`,
     reason_ph:'Briefly describe the reason…',
     info_company:'Company News', info_latest:'Latest Posts', info_no_posts:'No posts yet.', info_view:'View', info_new:'NEW',
+    halfday_confirm_title:'Select Half Day Leave?', halfday_confirm_body:'This will be a half-day (0.5 day) application, not a full day.', halfday_confirm_ok:'Confirm', halfday_confirm_cancel:'Cancel',
   },
   zh: {
     nav_leave:'请假', nav_history:'记录', nav_notices:'公告',
@@ -2694,6 +2775,7 @@ const T = {
     suc_detail:(n,t,f,to)=>`${n} 的${t}\n${f} → ${to}\n已提交，等待审批。`,
     reason_ph:'请简述原因…',
     info_company:'公司新闻', info_latest:'最新帖子', info_no_posts:'暂无内容。', info_view:'查看', info_new:'新',
+    halfday_confirm_title:'确定选择半天假吗？', halfday_confirm_body:'这将变更为半天（0.5天）申请，而不是全天申请。', halfday_confirm_ok:'确定', halfday_confirm_cancel:'取消',
   },
   ta: {
     nav_leave:'விடுப்பு', nav_history:'வரலாறு', nav_notices:'அறிவிப்பு',
@@ -2723,6 +2805,7 @@ const T = {
     suc_detail:(n,t,f,to)=>`${n} அவர்களின் ${t}\n${f} → ${to}\nஒப்புதலுக்காக சமர்ப்பிக்கப்பட்டது.`,
     reason_ph:'காரணத்தை சுருக்கமாக விவரிக்கவும்…',
     info_company:'நிறுவன செய்தி', info_latest:'சமீபத்திய இடுகைகள்', info_no_posts:'இடுகைகள் இல்லை.', info_view:'பார்க்க', info_new:'புதிய',
+    halfday_confirm_title:'அரை நாள் விடுப்பைத் தேர்வு செய்யவா?', halfday_confirm_body:'இது முழு நாள் விடுப்புக்குப் பதிலாக அரை நாள் (0.5 நாள்) விண்ணப்பமாக மாறும்.', halfday_confirm_ok:'உறுதி செய்', halfday_confirm_cancel:'ரத்து செய்',
   }
 };
 
@@ -3003,14 +3086,36 @@ function updateDisplay(inputId, displayId) {
   el.classList.remove('placeholder');
 }
 
+// ── [変更 2026-09-03] Half Dayの誤操作防止。ONにする瞬間のみ確認オーバーレイを挟む。
+// OFFに戻す操作（誤って有効化したものを取り消す）には確認を挟まない。
 function toggleHalfday() {
-  halfday = !halfday;
-  document.getElementById('halfday-toggle').classList.toggle('on', halfday);
-  if (halfday) {
-    const fromVal = document.getElementById('date-from').value;
-    document.getElementById('date-to').value = fromVal;
-    if (calFromDate) { calToDate = calFromDate; }
+  if (!halfday) {
+    const t = T[lang];
+    document.getElementById('halfday-confirm-title').textContent = t.halfday_confirm_title;
+    document.getElementById('halfday-confirm-body').textContent  = t.halfday_confirm_body;
+    document.getElementById('halfday-confirm-ok-btn').textContent     = t.halfday_confirm_ok;
+    document.getElementById('halfday-confirm-cancel-btn').textContent = t.halfday_confirm_cancel;
+    document.getElementById('halfday-confirm-overlay').classList.add('show');
+    return; // ここで一旦停止。「Confirm」が押されるまでhalfdayは変更しない
   }
+  halfday = false;
+  document.getElementById('halfday-toggle').classList.remove('on');
+  calcDays();
+}
+
+// ── [追加 2026-09-03] Half Day確認オーバーレイ：キャンセル時（トグルはOFFのまま） ──
+function cancelHalfdayConfirm() {
+  document.getElementById('halfday-confirm-overlay').classList.remove('show');
+}
+
+// ── [追加 2026-09-03] Half Day確認オーバーレイ：確定時（ここで初めてhalfdayをONにする） ──
+function confirmHalfday() {
+  document.getElementById('halfday-confirm-overlay').classList.remove('show');
+  halfday = true;
+  document.getElementById('halfday-toggle').classList.add('on');
+  const fromVal = document.getElementById('date-from').value;
+  document.getElementById('date-to').value = fromVal;
+  if (calFromDate) { calToDate = calFromDate; }
   calcDays();
 }
 
@@ -3589,16 +3694,6 @@ async function passkeyRegister() {
   btn.disabled = true;
   btn.textContent = 'Registering…';
 
-  // ── [追加 2026-09-02] 現場検証用:失敗時の原因切り分けのため、
-  // 開始時刻とプラットフォーム認証器の可否を記録する(画面には一切表示しない、ログ専用) ──
-  const _regAttemptStart = Date.now();
-  let _platformAvailable = 'unknown';
-  try {
-    if (window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
-      _platformAvailable = (await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()) ? 'yes' : 'no';
-    }
-  } catch (diagErr) { _platformAvailable = 'check_failed'; }
-
   try {
     const challenge = new Uint8Array(32);
     crypto.getRandomValues(challenge);
@@ -3611,7 +3706,7 @@ async function passkeyRegister() {
         rp: { name: 'J2Hub Staff Portal', id: location.hostname },
         user: { id: userId, name, displayName: name },
         pubKeyCredParams: [{ alg: -7, type: 'public-key' }, { alg: -257, type: 'public-key' }],
-        authenticatorSelection: { userVerification: 'preferred', residentKey: 'preferred', authenticatorAttachment: 'platform' },
+        authenticatorSelection: { userVerification: 'preferred', residentKey: 'preferred' },
         timeout: 60000
       }
     });
@@ -3661,11 +3756,7 @@ async function passkeyRegister() {
   } catch (err) {
     const msg = err.message || 'Registration failed. Please try again.';
     // ── [追加 2026-07-27] 登録失敗を、理由付きで個人ログに1行だけ記録 ──
-    // ── [追加 2026-09-02] 現場検証用の付加情報(経過時間・エラー種別・プラットフォーム認証器可否)を
-    // ログにのみ追加。利用者向けのmsg/errElの文言は一切変更しない ──
-    const _elapsedMs = Date.now() - _regAttemptStart;
-    const _diagSuffix = ' [diag: name=' + (err.name || 'unknown') + ', elapsedMs=' + _elapsedMs + ', platformAuth=' + _platformAvailable + ']';
-    sendAccessLog(name, 'Register_Attempt', 'Failed: ' + msg + _diagSuffix);
+    sendAccessLog(name, 'Register_Attempt', 'Failed: ' + msg);
     // ── [追加 #6・#8] 署名が期限切れ・無効な場合は、通知ボタン画面へ切り替える ──
     if (regParams && /invalid or expired/i.test(msg)) {
       document.getElementById('pk-register-panel').style.display = 'none';
