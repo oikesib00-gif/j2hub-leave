@@ -3089,6 +3089,23 @@ function updateDisplay(inputId, displayId) {
 // ── [変更 2026-09-03] Half Dayの誤操作防止。ONにする瞬間のみ確認オーバーレイを挟む。
 // OFFに戻す操作（誤って有効化したものを取り消す）には確認を挟まない。
 function toggleHalfday() {
+  // ── [追加 2026-09-03・デバッグ用] Half Day確認オーバーレイが表示されない不具合の調査用ログ。
+  // 「関数自体が呼ばれたか」「新しいHTML(overlay要素)が読み込まれているか」
+  // 「PWA/ブラウザどちらで実行されたか」を、既存のアクセスログ経路(sendAccessLog)で記録する。
+  // 原因特定後、この診断ログ呼び出しは削除して構わない。
+  try {
+    const overlayEl    = document.getElementById('halfday-confirm-overlay');
+    const isStandalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+    sendAccessLog(_currentUser, 'HalfDay_Debug',
+      'fn_reached=true' +
+      ' overlay_el_exists=' + (!!overlayEl) +
+      ' standalone(PWA)=' + isStandalone +
+      ' halfday_before=' + halfday
+    );
+  } catch (dbgErr) {
+    // 診断ログ自体の失敗が、本来の機能に影響しないようにする
+  }
+
   if (!halfday) {
     const t = T[lang];
     document.getElementById('halfday-confirm-title').textContent = t.halfday_confirm_title;
