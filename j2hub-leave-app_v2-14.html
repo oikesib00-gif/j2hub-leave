@@ -2125,6 +2125,7 @@
           <option>Tay Ban Liang</option>
           <option>Yau Soo Kee</option>
           <option>Zhang Xianwei</option>
+          <option>Aren Keuh Min Cheng</option>
           <!-- ============================================================ -->
           <!-- !! 名簿 END — DO NOT TOUCH — 絶対に変更禁止 !!               -->
           <!-- ============================================================ -->
@@ -3622,7 +3623,7 @@ function buildDropdownOptions(sel, registered) {
     'Leong Weng Yuen','Liu GuangYue','Ng Chye Kim','Ng Yew Huat',
     'Seah Tang Chew','Shige Oike','Sim Soon Wah','Sivabalan Arumugan',
     'Tan Boon Long','Tan Thiam Hock','Tan Yew Seng','Tay Ban Liang',
-    'Yau Soo Kee','Zhang Xianwei'
+    'Yau Soo Kee','Zhang Xianwei','Aren Keuh Min Cheng'
   ];
   // ============================================================
   // !! 名簿 END — DO NOT TOUCH — 絶対に変更禁止 !!
@@ -3666,7 +3667,7 @@ async function buildRegisterDropdown() {
       'Leong Weng Yuen','Liu GuangYue','Ng Chye Kim','Ng Yew Huat',
       'Seah Tang Chew','Shige Oike','Sim Soon Wah','Sivabalan Arumugan',
       'Tan Boon Long','Tan Thiam Hock','Tan Yew Seng','Tay Ban Liang',
-      'Yau Soo Kee','Zhang Xianwei'
+      'Yau Soo Kee','Zhang Xianwei','Aren Keuh Min Cheng'
     ];
     // ============================================================
     // !! 名簿 END — DO NOT TOUCH — 絶対に変更禁止 !!
@@ -3683,7 +3684,7 @@ async function buildRegisterDropdown() {
       'Leong Weng Yuen','Liu GuangYue','Ng Chye Kim','Ng Yew Huat',
       'Seah Tang Chew','Shige Oike','Sim Soon Wah','Sivabalan Arumugan',
       'Tan Boon Long','Tan Thiam Hock','Tan Yew Seng','Tay Ban Liang',
-      'Yau Soo Kee','Zhang Xianwei'
+      'Yau Soo Kee','Zhang Xianwei','Aren Keuh Min Cheng'
     ];
     // ============================================================
     // !! 名簿 END — DO NOT TOUCH — 絶対に変更禁止 !!
@@ -3845,14 +3846,34 @@ async function passkeyAuthenticate() {
 
     const rawId = Uint8Array.from(atob(credId), c => c.charCodeAt(0));
 
-    const assertion = await navigator.credentials.get({
+    // ── [追加 2026-09-10] 認証ハングアップ対策:明示的な15秒タイムアウト ──
+    // 一部端末(SamsungBrowser等)でnavigator.credentials.get()が
+    // 応答なしのまま無期限に保留状態(ハング)になる不具合への対処。
+    const AUTH_TIMEOUT_MS = 15000;
+    const abortController = ('AbortController' in window) ? new AbortController() : null;
+    const credentialOptions = {
       publicKey: {
         challenge,
         allowCredentials: [{ id: rawId, type: 'public-key' }],
         userVerification: 'preferred',
-        timeout: 60000
+        timeout: AUTH_TIMEOUT_MS
       }
+    };
+    if (abortController) credentialOptions.signal = abortController.signal;
+
+    let authTimeoutId;
+    const authTimeoutPromise = new Promise((_, reject) => {
+      authTimeoutId = setTimeout(() => {
+        if (abortController) abortController.abort();
+        reject(new Error('Authentication timed out. Please try again.'));
+      }, AUTH_TIMEOUT_MS);
     });
+
+    const assertion = await Promise.race([
+      navigator.credentials.get(credentialOptions),
+      authTimeoutPromise
+    ]);
+    clearTimeout(authTimeoutId);
 
     if (!assertion) throw new Error('Authentication cancelled.');
 
