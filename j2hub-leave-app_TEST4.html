@@ -2647,12 +2647,12 @@
     <button id="reset-passkey-btn" style="display:none;margin-top:8px;font-size:12px;color:var(--text-muted);border:none;background:transparent;cursor:pointer;" onclick="resetPasskey()">Reset Passkey</button>
 
     <!-- ── [テスト 2026-09-11] 緊急ログインコード(4桁)。指紋認証が失敗した時のみ表示 ── -->
-    <div id="pk-emergency-panel" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid rgba(0,0,0,0.08);">
-      <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">Emergency code (if fingerprint doesn't work)</p>
-      <input id="pk-emergency-input" type="tel" inputmode="numeric" maxlength="4" placeholder="0000"
-        style="width:100%;box-sizing:border-box;padding:10px;font-size:18px;text-align:center;letter-spacing:8px;border:1px solid #ccc;border-radius:8px;">
-      <button class="pk-btn primary" style="margin-top:8px;" onclick="verifyEmergencyPin()">Submit code</button>
-      <p class="pk-error" id="pk-emergency-error"></p>
+    <div id="pk-emergency-panel" style="display:none;margin-top:18px;padding-top:18px;border-top:1px solid var(--border);text-align:center;">
+      <p class="pk-msg" style="margin-bottom:10px;">Emergency Code.<br>(In case Passkey not work.)</p>
+      <input id="pk-emergency-input" type="tel" inputmode="numeric" maxlength="4" placeholder="••••"
+        style="width:100%;box-sizing:border-box;padding:12px;font-family:'Montserrat',sans-serif;font-size:20px;font-weight:700;text-align:center;letter-spacing:10px;color:var(--blue-dark);border:1.5px solid var(--border);border-radius:10px;outline:none;">
+      <button class="pk-btn primary" style="margin-top:12px;" onclick="verifyEmergencyPin()">Submit Code</button>
+      <p class="pk-error" id="pk-emergency-error" style="margin-top:8px;"></p>
     </div>
   </div>
 
@@ -3950,6 +3950,11 @@ async function verifyEmergencyPin() {
     return;
   }
 
+  // ── [追加 2026-09-11] 処理中の二重送信を防ぐため、ボタンを無効化し状態を表示 ──
+  const btn = document.querySelector('#pk-emergency-panel button');
+  btn.disabled = true;
+  btn.textContent = 'Checking…';
+
   try {
     const res  = await fetch(GAS_URL, {
       method: 'POST',
@@ -3981,6 +3986,9 @@ async function verifyEmergencyPin() {
     sendAccessLog(name, 'Login_Attempt', debugMsg);
     errEl.textContent = debugMsg;
     errEl.classList.add('show');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Submit Code';
   }
 }
 
