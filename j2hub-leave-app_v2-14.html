@@ -3955,10 +3955,7 @@ async function verifyEmergencyPin() {
   btn.textContent = 'Checking…';
 
   try {
-    const res     = await fetch(GAS_URL, {
-      method: 'POST',
-      body: JSON.stringify({ action: 'verifyEmergencyPin', name, pin })
-    });
+    const res     = await fetch(GAS_URL + '?action=verifyEmergencyPin&name=' + encodeURIComponent(name) + '&pin=' + encodeURIComponent(pin));
     const rawText = await res.text();
     let data;
     try {
