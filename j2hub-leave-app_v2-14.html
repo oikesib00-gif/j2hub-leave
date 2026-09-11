@@ -2645,15 +2645,6 @@
     <button class="pk-btn primary" id="pk-auth-btn" onclick="passkeyAuthenticate()">🔐 Authenticate</button>
     <p class="pk-error" id="pk-auth-error"></p>
     <button id="reset-passkey-btn" style="display:none;margin-top:8px;font-size:12px;color:var(--text-muted);border:none;background:transparent;cursor:pointer;" onclick="resetPasskey()">Reset Passkey</button>
-
-    <!-- ── [追加 2026-09-11] 緊急ログインコード(4桁)。指紋認証が失敗した時のみ表示 ── -->
-    <div id="pk-emergency-panel" style="display:none;margin-top:18px;padding-top:18px;border-top:1px solid var(--border);text-align:center;">
-      <p class="pk-msg" style="margin-bottom:10px;">Emergency Code.<br>(In case Passkey not work.)</p>
-      <input id="pk-emergency-input" type="tel" inputmode="numeric" maxlength="4" placeholder="••••"
-        style="width:100%;box-sizing:border-box;padding:12px;font-family:'Montserrat',sans-serif;font-size:20px;font-weight:700;text-align:center;letter-spacing:10px;color:var(--blue-dark);border:1.5px solid var(--border);border-radius:10px;outline:none;">
-      <button class="pk-btn primary" style="margin-top:12px;" onclick="verifyEmergencyPin()">Submit Code</button>
-      <p class="pk-error" id="pk-emergency-error" style="margin-top:8px;"></p>
-    </div>
   </div>
 
   <!-- ── Reset Passkey Overlay（passkey-screen内） ── -->
@@ -3931,55 +3922,6 @@ async function passkeyAuthenticate() {
     errEl.classList.add('show');
     btn.disabled = false;
     btn.textContent = '🔐 Authenticate';
-    // ── [追加 2026-09-11] 指紋認証が失敗した時だけ、緊急コード入力欄を表示 ──
-    const emergPanel = document.getElementById('pk-emergency-panel');
-    if (emergPanel) emergPanel.style.display = 'block';
-  }
-}
-
-// ── [追加 2026-09-11] 緊急ログインコード(4桁)の照合 ──────────────────
-async function verifyEmergencyPin() {
-  const name  = localStorage.getItem(PK_NAME_KEY);
-  const pin   = document.getElementById('pk-emergency-input').value.trim();
-  const errEl = document.getElementById('pk-emergency-error');
-  errEl.classList.remove('show');
-
-  if (!/^\d{4}$/.test(pin)) {
-    errEl.textContent = 'Please enter a 4-digit code.';
-    errEl.classList.add('show');
-    return;
-  }
-
-  const btn = document.querySelector('#pk-emergency-panel button');
-  btn.disabled = true;
-  btn.textContent = 'Checking…';
-
-  try {
-    const res     = await fetch(GAS_URL + '?action=verifyEmergencyPin&name=' + encodeURIComponent(name) + '&pin=' + encodeURIComponent(pin));
-    const rawText = await res.text();
-    let data;
-    try {
-      data = JSON.parse(rawText);
-    } catch (parseErr) {
-      throw new Error('HTTP ' + res.status + ' - ' + rawText.substring(0, 200));
-    }
-    if (data.status === 'success') {
-      sendAccessLog(name, 'Login_Attempt', 'Success (EmergencyPIN)');
-      document.getElementById('passkey-screen').classList.remove('show');
-      launchApp(name);
-    } else {
-      sendAccessLog(name, 'Login_Attempt', 'Failed (EmergencyPIN): ' + (data.message || ''));
-      errEl.textContent = data.message || 'Incorrect code.';
-      errEl.classList.add('show');
-    }
-  } catch (err) {
-    const msg = err.message || 'Network error. Please try again.';
-    sendAccessLog(name, 'Login_Attempt', 'Failed (EmergencyPIN): ' + msg);
-    errEl.textContent = msg;
-    errEl.classList.add('show');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Submit Code';
   }
 }
 
