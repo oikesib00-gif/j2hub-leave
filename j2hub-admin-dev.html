@@ -12983,12 +12983,12 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 
   <!-- 認証画面（登録済み端末・合鍵+PIN方式） -->
   <div id="dk-auth-panel" class="pk-card" style="display:none;">
-    <p class="pk-msg" id="dk-auth-name-msg">Enter your 4-digit PIN, <strong></strong></p>
+    <p class="pk-msg"><span data-key="dk_auth_msg" id="dk-auth-name-msg">Enter your 4-digit PIN,</span> <strong id="dk-auth-name-strong"></strong></p>
     <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4"
            id="dk-pin-input" class="form-input"
            style="text-align:center;font-size:24px;letter-spacing:12px;"
            placeholder="••••">
-    <button class="pk-btn primary" id="dk-auth-btn" onclick="deviceKeyLogin()">🔓 Login</button>
+    <button class="pk-btn primary" id="dk-auth-btn" data-key="dk_login_btn" onclick="deviceKeyLogin()">🔓 Login</button>
     <p class="pk-error" id="dk-auth-error"></p>
     <button id="reset-passkey-btn" style="display:none;margin-top:8px;font-size:12px;color:var(--text-muted);border:none;background:transparent;cursor:pointer;" onclick="resetPasskey()">Reset Device</button>
   </div>
@@ -13004,13 +13004,13 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 
   <!-- 初回登録画面（署名付きリンク経由・未登録端末・合鍵+PIN方式） -->
   <div id="dk-register-panel" class="pk-card" style="display:none;">
-    <p class="pk-msg" id="dk-register-fixed-name" style="font-weight:700;"></p>
-    <p class="pk-msg" id="dk-register-msg">This device will be linked to your account. Then enter your 4-digit PIN.</p>
+    <p class="pk-msg" style="font-weight:700;"><span data-key="dk_register_as">Register as</span> <span id="dk-register-name-strong"></span></p>
+    <p class="pk-msg" data-key="dk_register_msg" id="dk-register-msg">This device will be linked to your account. Then enter your 4-digit PIN.</p>
     <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4"
            id="dk-register-pin-input" class="form-input"
            style="text-align:center;font-size:24px;letter-spacing:12px;"
            placeholder="••••">
-    <button class="pk-btn primary" id="dk-register-btn" onclick="deviceKeyRegisterAndLogin()">🔑 Link Device & Login</button>
+    <button class="pk-btn primary" id="dk-register-btn" data-key="dk_link_btn" onclick="deviceKeyRegisterAndLogin()">🔑 Link Device & Login</button>
     <p class="pk-error" id="dk-register-error"></p>
   </div>
 
@@ -13100,6 +13100,10 @@ const T = {
     att_scan_out:'Please scan the QR Code to Clock Out.',
     nav_att:'Attendance', nav_att_hist:'History',
     info_company:'Company News', info_latest:'Latest Posts', info_no_posts:'No posts yet.', info_view:'View', info_new:'NEW',
+    dk_auth_msg:'Enter your 4-digit PIN,', dk_login_btn:'🔓 Login',
+    dk_register_msg:'This device will be linked to your account. Then enter your 4-digit PIN.', dk_link_btn:'🔑 Link Device & Login',
+    dk_register_as:'Register as', dk_pin_required:'Please enter your 4-digit PIN.',
+    dk_linking:'Linking your device…', dk_checking:'Checking your PIN…', dk_please_wait:'Please wait',
   },
   zh: {
     nav_leave:'请假', nav_history:'记录', nav_notices:'公告',
@@ -13130,6 +13134,10 @@ const T = {
     att_scan_out:'请扫描二维码打下班卡。',
     nav_att:'打卡', nav_att_hist:'记录',
     info_company:'公司新闻', info_latest:'最新帖子', info_no_posts:'暂无内容。', info_view:'查看', info_new:'新',
+    dk_auth_msg:'请输入您的4位PIN码，', dk_login_btn:'🔓 登录',
+    dk_register_msg:'此设备将与您的账户绑定。然后请输入您的4位PIN码。', dk_link_btn:'🔑 绑定设备并登录',
+    dk_register_as:'注册为', dk_pin_required:'请输入您的4位PIN码。',
+    dk_linking:'正在绑定您的设备…', dk_checking:'正在验证您的PIN码…', dk_please_wait:'请稍候',
   },
   ta: {
     nav_leave:'விடுப்பு', nav_history:'வரலாறு', nav_notices:'அறிவிப்பு',
@@ -13160,6 +13168,10 @@ const T = {
     att_scan_out:'புறப்பாடு பதிவு செய்ய QR குறியீட்டை ஸ்கேன் செய்யவும்.',
     nav_att:'வருகை', nav_att_hist:'பதிவு',
     info_company:'நிறுவன செய்தி', info_latest:'சமீபத்திய இடுகைகள்', info_no_posts:'இடுகைகள் இல்லை.', info_view:'பார்க்க', info_new:'புதிய',
+    dk_auth_msg:'உங்கள் 4 இலக்க PIN ஐ உள்ளிடவும்,', dk_login_btn:'🔓 உள்நுழைய',
+    dk_register_msg:'இந்த சாதனம் உங்கள் கணக்குடன் இணைக்கப்படும். பின்னர் உங்கள் 4 இலக்க PIN ஐ உள்ளிடவும்.', dk_link_btn:'🔑 சாதனத்தை இணைத்து உள்நுழையவும்',
+    dk_register_as:'இவராக பதிவு செய்யவும்', dk_pin_required:'உங்கள் 4 இலக்க PIN ஐ உள்ளிடவும்.',
+    dk_linking:'உங்கள் சாதனம் இணைக்கப்படுகிறது…', dk_checking:'உங்கள் PIN சரிபார்க்கப்படுகிறது…', dk_please_wait:'காத்திருக்கவும்',
   }
 };
 
@@ -13757,6 +13769,13 @@ const DK_KEY_KEY  = 'j2hub_dk_key_dev';
 (async function initDeviceKey() {
   const holidayPromise = loadHolidays();
 
+  // ── ログイン前画面のみ、OS/ブラウザの言語設定から自動判定 ──
+  const osLang = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
+  if (osLang.startsWith('zh')) lang = 'zh';
+  else if (osLang.startsWith('ta')) lang = 'ta';
+  else lang = 'en';
+  apply();
+
   const urlParams = new URLSearchParams(window.location.search);
   const regName = urlParams.get('name');
   const regExp  = urlParams.get('exp');
@@ -13769,10 +13788,10 @@ const DK_KEY_KEY  = 'j2hub_dk_key_dev';
 
   if (regName && regExp && regSig) {
     window._regParams = { name: regName, exp: regExp, sig: regSig };
-    document.getElementById('dk-register-fixed-name').textContent = 'Register as ' + regName;
+    document.getElementById('dk-register-name-strong').textContent = regName;
     document.getElementById('dk-register-panel').style.display = 'block';
   } else if (savedName && savedKey) {
-    document.getElementById('dk-auth-name-msg').querySelector('strong').textContent = savedName;
+    document.getElementById('dk-auth-name-strong').textContent = savedName;
     document.getElementById('dk-auth-panel').style.display = 'block';
   } else {
     document.getElementById('pk-contact-panel').style.display = 'block';
@@ -13785,14 +13804,15 @@ async function deviceKeyRegisterAndLogin() {
   const regParams = window._regParams;
   const pin = document.getElementById('dk-register-pin-input').value.trim();
   const errEl = document.getElementById('dk-register-error');
+  const t = T[lang] || T.en;
   errEl.classList.remove('show');
 
   if (!regParams) { errEl.textContent = 'Invalid link.'; errEl.classList.add('show'); return; }
-  if (!/^\d{4}$/.test(pin)) { errEl.textContent = 'Please enter your 4-digit PIN.'; errEl.classList.add('show'); return; }
+  if (!/^\d{4}$/.test(pin)) { errEl.textContent = t.dk_pin_required; errEl.classList.add('show'); return; }
 
   const btn = document.getElementById('dk-register-btn');
   btn.disabled = true;
-  btn.textContent = 'Linking…';
+  showLoading(t.dk_linking, t.dk_please_wait);
 
   try {
     const regRes  = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({
@@ -13815,14 +13835,15 @@ async function deviceKeyRegisterAndLogin() {
 
     localStorage.setItem(DK_NAME_KEY, regParams.name);
     localStorage.setItem(DK_KEY_KEY, regData.deviceKey);
+    hideLoading();
     document.getElementById('passkey-screen').classList.remove('show');
     launchApp(regParams.name);
   } catch (err) {
+    hideLoading();
     const msg = err.message || 'Failed. Please try again.';
     errEl.textContent = msg;
     errEl.classList.add('show');
     btn.disabled = false;
-    btn.textContent = '🔑 Link Device & Login';
   }
 }
 
@@ -13832,13 +13853,14 @@ async function deviceKeyLogin() {
   const deviceKey = localStorage.getItem(DK_KEY_KEY);
   const pin = document.getElementById('dk-pin-input').value.trim();
   const errEl = document.getElementById('dk-auth-error');
+  const t = T[lang] || T.en;
   errEl.classList.remove('show');
 
-  if (!/^\d{4}$/.test(pin)) { errEl.textContent = 'Please enter your 4-digit PIN.'; errEl.classList.add('show'); return; }
+  if (!/^\d{4}$/.test(pin)) { errEl.textContent = t.dk_pin_required; errEl.classList.add('show'); return; }
 
   const btn = document.getElementById('dk-auth-btn');
   btn.disabled = true;
-  btn.textContent = 'Checking…';
+  showLoading(t.dk_checking, t.dk_please_wait);
 
   try {
     const res  = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({
@@ -13850,14 +13872,15 @@ async function deviceKeyLogin() {
     catch (e) { throw new Error('HTTP ' + res.status + ' - ' + rawText.substring(0, 300)); }
     if (data.status !== 'success') throw new Error(data.message || 'Login failed.');
 
+    hideLoading();
     document.getElementById('passkey-screen').classList.remove('show');
     launchApp(name);
   } catch (err) {
+    hideLoading();
     const msg = err.message || 'Login failed. Please try again.';
     errEl.textContent = msg;
     errEl.classList.add('show');
     btn.disabled = false;
-    btn.textContent = '🔓 Login';
     document.getElementById('dk-pin-input').value = '';
   }
 }
