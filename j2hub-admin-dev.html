@@ -13814,6 +13814,7 @@ async function deviceKeyRegisterAndLogin() {
   pinInput.blur();
   const btn = document.getElementById('dk-register-btn');
   btn.disabled = true;
+  document.querySelector('.app').style.display = 'flex'; // ── loading-overlayが.app内にあるため、表示前に一時的に開放 ──
   showLoading(t.dk_linking, t.dk_please_wait);
 
   try {
@@ -13864,6 +13865,7 @@ async function deviceKeyLogin() {
   pinInput.blur();
   const btn = document.getElementById('dk-auth-btn');
   btn.disabled = true;
+  document.querySelector('.app').style.display = 'flex'; // ── loading-overlayが.app内にあるため、表示前に一時的に開放 ──
   showLoading(t.dk_checking, t.dk_please_wait);
 
   try {
