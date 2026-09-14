@@ -13802,7 +13802,8 @@ const DK_KEY_KEY  = 'j2hub_dk_key_dev';
 // ── 初回：合鍵を発行してlocalStorageに保存 → その場でPIN照合してログイン ──
 async function deviceKeyRegisterAndLogin() {
   const regParams = window._regParams;
-  const pin = document.getElementById('dk-register-pin-input').value.trim();
+  const pinInput = document.getElementById('dk-register-pin-input');
+  const pin = pinInput.value.trim();
   const errEl = document.getElementById('dk-register-error');
   const t = T[lang] || T.en;
   errEl.classList.remove('show');
@@ -13810,6 +13811,7 @@ async function deviceKeyRegisterAndLogin() {
   if (!regParams) { errEl.textContent = 'Invalid link.'; errEl.classList.add('show'); return; }
   if (!/^\d{4}$/.test(pin)) { errEl.textContent = t.dk_pin_required; errEl.classList.add('show'); return; }
 
+  pinInput.blur();
   const btn = document.getElementById('dk-register-btn');
   btn.disabled = true;
   showLoading(t.dk_linking, t.dk_please_wait);
@@ -13851,13 +13853,15 @@ async function deviceKeyRegisterAndLogin() {
 async function deviceKeyLogin() {
   const name = localStorage.getItem(DK_NAME_KEY);
   const deviceKey = localStorage.getItem(DK_KEY_KEY);
-  const pin = document.getElementById('dk-pin-input').value.trim();
+  const pinInput = document.getElementById('dk-pin-input');
+  const pin = pinInput.value.trim();
   const errEl = document.getElementById('dk-auth-error');
   const t = T[lang] || T.en;
   errEl.classList.remove('show');
 
   if (!/^\d{4}$/.test(pin)) { errEl.textContent = t.dk_pin_required; errEl.classList.add('show'); return; }
 
+  pinInput.blur();
   const btn = document.getElementById('dk-auth-btn');
   btn.disabled = true;
   showLoading(t.dk_checking, t.dk_please_wait);
