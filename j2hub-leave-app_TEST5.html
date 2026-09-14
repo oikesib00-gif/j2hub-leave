@@ -2125,7 +2125,6 @@
           <option>Tay Ban Liang</option>
           <option>Yau Soo Kee</option>
           <option>Zhang Xianwei</option>
-          <option>Aren Keuh Min Cheng</option>
           <!-- ============================================================ -->
           <!-- !! 名簿 END — DO NOT TOUCH — 絶対に変更禁止 !!               -->
           <!-- ============================================================ -->
@@ -2639,12 +2638,16 @@
   <div class="pk-title">J2Hub Staff Portal</div>
   <div style="font-family:'Montserrat',sans-serif;font-size:13px;font-weight:600;color:rgba(255,255,255,0.7);text-align:center;" id="pk-version-label"></div>
 
-  <!-- 認証画面（登録済み端末） -->
-  <div id="pk-auth-panel" class="pk-card" style="display:none;">
-    <p class="pk-msg" id="pk-auth-name-msg">Authenticate as <strong></strong></p>
-    <button class="pk-btn primary" id="pk-auth-btn" onclick="passkeyAuthenticate()">🔐 Authenticate</button>
-    <p class="pk-error" id="pk-auth-error"></p>
-    <button id="reset-passkey-btn" style="display:none;margin-top:8px;font-size:12px;color:var(--text-muted);border:none;background:transparent;cursor:pointer;" onclick="resetPasskey()">Reset Passkey</button>
+  <!-- 認証画面（登録済み端末・合鍵+PIN方式） -->
+  <div id="dk-auth-panel" class="pk-card" style="display:none;">
+    <p class="pk-msg" id="dk-auth-name-msg">Enter your 4-digit PIN, <strong></strong></p>
+    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4"
+           id="dk-pin-input" class="form-input"
+           style="text-align:center;font-size:24px;letter-spacing:12px;"
+           placeholder="••••">
+    <button class="pk-btn primary" id="dk-auth-btn" onclick="deviceKeyLogin()">🔓 Login</button>
+    <p class="pk-error" id="dk-auth-error"></p>
+    <button id="reset-passkey-btn" style="display:none;margin-top:8px;font-size:12px;color:var(--text-muted);border:none;background:transparent;cursor:pointer;" onclick="resetPasskey()">Reset Device</button>
   </div>
 
   <!-- ── Reset Passkey Overlay（passkey-screen内） ── -->
@@ -2656,15 +2659,16 @@
     <button onclick="document.getElementById('reset-overlay').style.display='none'" style="padding:13px 36px;background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,0.5);border-radius:8px;font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">Cancel</button>
   </div>
 
-  <!-- 初回登録画面（未登録端末） -->
-  <div id="pk-register-panel" class="pk-card" style="display:none;">
-    <p class="pk-msg" id="pk-register-msg">Select your name and register your Passkey.</p>
-    <select class="form-select" id="pk-name-select">
-      <option value="">— Select your name —</option>
-    </select>
-    <p class="pk-msg" id="pk-register-fixed-name" style="display:none;font-weight:700;"></p>
-    <button class="pk-btn primary" id="pk-register-btn" onclick="passkeyRegister()">🔑 Register with Passkey</button>
-    <p class="pk-error" id="pk-register-error"></p>
+  <!-- 初回登録画面（署名付きリンク経由・未登録端末・合鍵+PIN方式） -->
+  <div id="dk-register-panel" class="pk-card" style="display:none;">
+    <p class="pk-msg" id="dk-register-fixed-name" style="font-weight:700;"></p>
+    <p class="pk-msg" id="dk-register-msg">This device will be linked to your account. Then enter your 4-digit PIN.</p>
+    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4"
+           id="dk-register-pin-input" class="form-input"
+           style="text-align:center;font-size:24px;letter-spacing:12px;"
+           placeholder="••••">
+    <button class="pk-btn primary" id="dk-register-btn" onclick="deviceKeyRegisterAndLogin()">🔑 Link Device & Login</button>
+    <p class="pk-error" id="dk-register-error"></p>
   </div>
 
   <!-- ── [追加 Ver.3.0] 署名付きURLが無い未登録端末 ── -->
@@ -3358,7 +3362,7 @@ function calDone() {
 
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbz5wKcCaqnLWtqjlGYGYRkPepC4pZ7oxQeg-wP4yY3SqG_2rdFQYFDIFJHRjOTX8ck/exec'; // ── [テスト限定 2026-09-14] TEST5用・独立デプロイURL ──
 // ── [修正] INFO_GAS_URLは、ファイル後方(元は約4505行目)にあったが、
-// initPasskey(3313行目付近)より前に必ず必要なため、ここへ移動した。
+// initDeviceKeyより前に必ず必要なため、ここへ移動した。
 // これが無いと、ログイン記録の時点でReferenceError(TDZ)が発生し、
 // try/catchで静かに握りつぶされ、ログインだけ記録されない不具合の原因だった。
 const INFO_GAS_URL = 'https://script.google.com/macros/s/AKfycbx-NKZsuwObjfb7OLRlHxwceV5FCHjcT4I45b3hqgEGn-IvxrARGdPR6OA1bDtolxt2/exec';
@@ -3473,143 +3477,120 @@ apply();
 // ── [追加] Passkey（WebAuthn）関連 ──────────────────────────
 // ============================================================
 
-const PK_NAME_KEY = 'j2hub_passkey_name';
-const PK_CRED_KEY = 'j2hub_passkey_credid';
+// ============================================================
+// ── 合鍵(DeviceKey) + PIN(Emergency Code) 認証 ──────────────
+// 削除: Passkey(WebAuthn)方式 → 合鍵+PIN方式へ全面差し替え(2026-09-14)
+// ============================================================
+
+const DK_NAME_KEY = 'j2hub_dk_name';
+const DK_KEY_KEY  = 'j2hub_dk_key';
 
 // ── 起動時チェック ────────────────────────────────────────────
-// [修正2] loadHolidays()を並行実行して起動時間を短縮
-(async function initPasskey() {
-  // ── [追加 #10] localStorage消去への補助的対策(navigator.storage.persist) ──
-  if (navigator.storage && navigator.storage.persist) {
-    navigator.storage.persist().catch(() => {});
-  }
-  // WebAuthn非対応ブラウザはスキップ（アプリをそのまま表示）
-  if (!window.PublicKeyCredential) {
-    loadHolidays();
-    return;
-  }
-
-  // Ver.2.0バージョンチェック：旧バージョンのlocalStorageを自動クリア
-  const APP_VERSION    = '2.0';
-  const PK_VERSION_KEY = 'j2hub_pk_version';
-  const savedVersion   = localStorage.getItem(PK_VERSION_KEY);
-  if (savedVersion !== APP_VERSION) {
-    localStorage.removeItem(PK_NAME_KEY);
-    localStorage.removeItem(PK_CRED_KEY);
-    localStorage.setItem(PK_VERSION_KEY, APP_VERSION);
-  }
-
-  const savedName   = localStorage.getItem(PK_NAME_KEY);
-  const savedCredId = localStorage.getItem(PK_CRED_KEY);
-
-  // loadHolidays と Passkey初期化を並行実行
+(async function initDeviceKey() {
   const holidayPromise = loadHolidays();
 
-  // ── [追加 Ver.3.0] 署名付きURL(name/exp/sig)を最優先で判定 ──
-  // Shige様が発行したURLは、localStorage(端末の記憶)の状態に関わらず優先される。
-  // URLが無い場合は、従来通りlocalStorageの状態で分岐する(Ver.2.0の挙動を維持)。
   const urlParams = new URLSearchParams(window.location.search);
   const regName = urlParams.get('name');
   const regExp  = urlParams.get('exp');
   const regSig  = urlParams.get('sig');
 
-  // ── [追加] ログイン画面に到達した瞬間(成功・失敗に関わらず)を記録 ──
+  const savedName = localStorage.getItem(DK_NAME_KEY);
+  const savedKey  = localStorage.getItem(DK_KEY_KEY);
+
   const accessName = regName || savedName;
   if (regName) _accessRoute = 'SignedURL';
   else if (savedName) _accessRoute = 'SavedDevice';
   if (accessName) sendAccessLog(accessName, 'Login');
 
+  await holidayPromise;
+
   if (regName && regExp && regSig) {
-    // 署名付きURLあり → localStorageの状態に関わらず、名前固定の登録画面
-    await holidayPromise;
     window._regParams = { name: regName, exp: regExp, sig: regSig };
-    document.getElementById('pk-name-select').style.display = 'none';
-    const fixedEl = document.getElementById('pk-register-fixed-name');
-    fixedEl.textContent = 'Register as ' + regName;
-    fixedEl.style.display = 'block';
-    document.getElementById('pk-register-msg').textContent = 'Tap below to register your Passkey.';
-    document.getElementById('pk-register-panel').style.display = 'block';
-    // ── [Ver.3.0] Ver.専用の独立した通信(他を待たない・待たせない) ──
-    fetch(GAS_URL + '?action=getVersion&name=' + encodeURIComponent(regName))
-      .then(r => r.json())
-      .then(d => { if (d.version) document.getElementById('pk-version-label').textContent = d.version; })
-      .catch(() => {});
-  } else if (savedName && savedCredId) {
-    // 従来通り：登録済み端末 → 認証画面を表示
-    document.getElementById('pk-auth-name-msg').querySelector('strong').textContent = savedName;
-    document.getElementById('pk-auth-panel').style.display = 'block';
-    // ── [Ver.3.0] Ver.専用の独立した通信(他を待たない・待たせない) ──
-    fetch(GAS_URL + '?action=getVersion&name=' + encodeURIComponent(savedName))
-      .then(r => r.json())
-      .then(d => { if (d.version) document.getElementById('pk-version-label').textContent = d.version; })
-      .catch(() => {});
+    document.getElementById('dk-register-fixed-name').textContent = 'Register as ' + regName;
+    document.getElementById('dk-register-panel').style.display = 'block';
+  } else if (savedName && savedKey) {
+    document.getElementById('dk-auth-name-msg').querySelector('strong').textContent = savedName;
+    document.getElementById('dk-auth-panel').style.display = 'block';
   } else {
-    // ── [追加 #5] localStorageが空でも、まず静かな自動復旧を試みる ──
-    const recoveredName = await silentPasskeyRecovery();
-    if (recoveredName) {
-      _accessRoute = 'SilentRecovery';
-      sendAccessLog(recoveredName, 'Login');
-      await holidayPromise;
-      document.getElementById('passkey-screen').classList.remove('show');
-      launchApp(recoveredName);
-      return;
-    }
-    // ── [追加 #6] 静かな自動復旧が失敗した場合のみ、真のロックアウト画面 ──
-    await holidayPromise;
     document.getElementById('pk-contact-panel').style.display = 'block';
   }
   document.getElementById('passkey-screen').classList.add('show');
 })();
 
-// ── [追加 #5] 静かな自動復旧(allowCredentialsを空にしたdiscoverable credential確認) ──
-async function silentPasskeyRecovery() {
+// ── 初回：合鍵を発行してlocalStorageに保存 → その場でPIN照合してログイン ──
+async function deviceKeyRegisterAndLogin() {
+  const regParams = window._regParams;
+  const pin = document.getElementById('dk-register-pin-input').value.trim();
+  const errEl = document.getElementById('dk-register-error');
+  errEl.classList.remove('show');
+
+  if (!regParams) { errEl.textContent = 'Invalid link.'; errEl.classList.add('show'); return; }
+  if (!/^\d{4}$/.test(pin)) { errEl.textContent = 'Please enter your 4-digit PIN.'; errEl.classList.add('show'); return; }
+
+  const btn = document.getElementById('dk-register-btn');
+  btn.disabled = true;
+  btn.textContent = 'Linking…';
+
   try {
-    const challenge = new Uint8Array(32);
-    crypto.getRandomValues(challenge);
-    const assertion = await navigator.credentials.get({
-      publicKey: {
-        challenge,
-        allowCredentials: [],
-        userVerification: 'preferred',
-        timeout: 15000
-      },
-      mediation: 'silent'
-    });
-    if (!assertion || !assertion.response || !assertion.response.userHandle) return null;
+    const regRes  = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({
+      action: 'registerDeviceKey', name: regParams.name, exp: regParams.exp, sig: regParams.sig
+    })});
+    const regData = await regRes.json();
+    if (regData.status !== 'success') throw new Error(regData.message || 'Failed to link this device.');
 
-    const name = new TextDecoder().decode(assertion.response.userHandle);
-    if (!name) return null;
+    const loginRes  = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({
+      action: 'verifyDeviceKeyLogin', name: regParams.name, deviceKey: regData.deviceKey, pin: pin
+    })});
+    const loginData = await loginRes.json();
+    if (loginData.status !== 'success') throw new Error(loginData.message || 'Incorrect PIN.');
 
-    // GASから公開鍵を取得して署名検証（既存の認証と同じロジック）
-    const pkRes = await fetch(GAS_URL + '?action=getPublicKey&name=' + encodeURIComponent(name));
-    const pkData = await pkRes.json();
-    if (!(pkData.status === 'success' && pkData.publicKey)) return null;
+    localStorage.setItem(DK_NAME_KEY, regParams.name);
+    localStorage.setItem(DK_KEY_KEY, regData.deviceKey);
+    sendAccessLog(regParams.name, 'Register_Attempt', 'Success');
+    document.getElementById('passkey-screen').classList.remove('show');
+    launchApp(regParams.name);
+  } catch (err) {
+    const msg = err.message || 'Failed. Please try again.';
+    sendAccessLog(regParams.name, 'Register_Attempt', 'Failed: ' + msg);
+    errEl.textContent = msg;
+    errEl.classList.add('show');
+    btn.disabled = false;
+    btn.textContent = '🔑 Link Device & Login';
+  }
+}
 
-    const pubKeyBytes = Uint8Array.from(atob(pkData.publicKey), c => c.charCodeAt(0));
-    const cryptoKey = await crypto.subtle.importKey(
-      'spki', pubKeyBytes.buffer,
-      { name: 'ECDSA', namedCurve: 'P-256' },
-      false, ['verify']
-    );
-    const authData = new Uint8Array(assertion.response.authenticatorData);
-    const clientDataHash = await crypto.subtle.digest('SHA-256', assertion.response.clientDataJSON);
-    const sigData = new Uint8Array(assertion.response.signature);
-    const signedData = new Uint8Array(authData.length + 32);
-    signedData.set(authData);
-    signedData.set(new Uint8Array(clientDataHash), authData.length);
-    const rsSignature = convertEcdsaAsn1ToRS(sigData);
-    const valid = await crypto.subtle.verify(
-      { name: 'ECDSA', hash: 'SHA-256' },
-      cryptoKey, rsSignature.buffer, signedData.buffer
-    );
-    if (!valid) return null;
+// ── 2回目以降：保存済み合鍵 + 入力PINでログイン ──────────────
+async function deviceKeyLogin() {
+  const name = localStorage.getItem(DK_NAME_KEY);
+  const deviceKey = localStorage.getItem(DK_KEY_KEY);
+  const pin = document.getElementById('dk-pin-input').value.trim();
+  const errEl = document.getElementById('dk-auth-error');
+  errEl.classList.remove('show');
 
-    const credId = btoa(String.fromCharCode(...new Uint8Array(assertion.rawId)));
-    localStorage.setItem(PK_NAME_KEY, name);
-    localStorage.setItem(PK_CRED_KEY, credId);
-    return name;
-  } catch (e) {
-    return null;
+  if (!/^\d{4}$/.test(pin)) { errEl.textContent = 'Please enter your 4-digit PIN.'; errEl.classList.add('show'); return; }
+
+  const btn = document.getElementById('dk-auth-btn');
+  btn.disabled = true;
+  btn.textContent = 'Checking…';
+
+  try {
+    const res  = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({
+      action: 'verifyDeviceKeyLogin', name: name, deviceKey: deviceKey, pin: pin
+    })});
+    const data = await res.json();
+    if (data.status !== 'success') throw new Error(data.message || 'Login failed.');
+
+    sendAccessLog(name, 'Login_Attempt', 'Success');
+    document.getElementById('passkey-screen').classList.remove('show');
+    launchApp(name);
+  } catch (err) {
+    const msg = err.message || 'Login failed. Please try again.';
+    sendAccessLog(name, 'Login_Attempt', 'Failed: ' + msg);
+    errEl.textContent = msg;
+    errEl.classList.add('show');
+    btn.disabled = false;
+    btn.textContent = '🔓 Login';
+    document.getElementById('dk-pin-input').value = '';
   }
 }
 
@@ -3623,7 +3604,7 @@ function buildDropdownOptions(sel, registered) {
     'Leong Weng Yuen','Liu GuangYue','Ng Chye Kim','Ng Yew Huat',
     'Seah Tang Chew','Shige Oike','Sim Soon Wah','Sivabalan Arumugan',
     'Tan Boon Long','Tan Thiam Hock','Tan Yew Seng','Tay Ban Liang',
-    'Yau Soo Kee','Zhang Xianwei','Aren Keuh Min Cheng'
+    'Yau Soo Kee','Zhang Xianwei'
   ];
   // ============================================================
   // !! 名簿 END — DO NOT TOUCH — 絶対に変更禁止 !!
@@ -3667,7 +3648,7 @@ async function buildRegisterDropdown() {
       'Leong Weng Yuen','Liu GuangYue','Ng Chye Kim','Ng Yew Huat',
       'Seah Tang Chew','Shige Oike','Sim Soon Wah','Sivabalan Arumugan',
       'Tan Boon Long','Tan Thiam Hock','Tan Yew Seng','Tay Ban Liang',
-      'Yau Soo Kee','Zhang Xianwei','Aren Keuh Min Cheng'
+      'Yau Soo Kee','Zhang Xianwei'
     ];
     // ============================================================
     // !! 名簿 END — DO NOT TOUCH — 絶対に変更禁止 !!
@@ -3684,7 +3665,7 @@ async function buildRegisterDropdown() {
       'Leong Weng Yuen','Liu GuangYue','Ng Chye Kim','Ng Yew Huat',
       'Seah Tang Chew','Shige Oike','Sim Soon Wah','Sivabalan Arumugan',
       'Tan Boon Long','Tan Thiam Hock','Tan Yew Seng','Tay Ban Liang',
-      'Yau Soo Kee','Zhang Xianwei','Aren Keuh Min Cheng'
+      'Yau Soo Kee','Zhang Xianwei'
     ];
     // ============================================================
     // !! 名簿 END — DO NOT TOUCH — 絶対に変更禁止 !!
@@ -3698,98 +3679,6 @@ async function buildRegisterDropdown() {
   }
 }
 
-// ── Passkey 新規登録 ──────────────────────────────────────────
-async function passkeyRegister() {
-  // ── [修正 Ver.3.0] 署名付きURL経由の場合は固定名を優先 ──
-  const regParams = window._regParams || null;
-  const name = regParams ? regParams.name : document.getElementById('pk-name-select').value;
-  const errEl = document.getElementById('pk-register-error');
-  errEl.classList.remove('show');
-
-  if (!name) { errEl.textContent = 'Please select your name.'; errEl.classList.add('show'); return; }
-
-  const btn = document.getElementById('pk-register-btn');
-  btn.disabled = true;
-  btn.textContent = 'Registering…';
-
-  try {
-    const challenge = new Uint8Array(32);
-    crypto.getRandomValues(challenge);
-
-    const userId = new TextEncoder().encode(name);
-
-    const credential = await navigator.credentials.create({
-      publicKey: {
-        challenge,
-        rp: { name: 'J2Hub Staff Portal', id: location.hostname },
-        user: { id: userId, name, displayName: name },
-        pubKeyCredParams: [{ alg: -7, type: 'public-key' }, { alg: -257, type: 'public-key' }],
-        authenticatorSelection: { userVerification: 'preferred', residentKey: 'preferred' },
-        timeout: 60000
-      }
-    });
-
-    if (!credential) throw new Error('Registration cancelled.');
-
-    // credentialIdをBase64で取得
-    const credId = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
-
-    // 公開鍵をBase64で取得
-    const pubKeyBytes = new Uint8Array(credential.response.getPublicKey());
-    const publicKeyB64 = btoa(String.fromCharCode(...pubKeyBytes));
-
-    // ── [修正 Ver.3.0] GASへ exp・sig も送信(署名付きURL経由の場合のみ) ──
-    // ── [追加 #7] DeviceInfoも併せて送信 ──
-    const payload = { action: 'registerPasskey', name, publicKey: publicKeyB64, credId, deviceInfo: navigator.userAgent };
-    if (regParams) { payload.exp = regParams.exp; payload.sig = regParams.sig; }
-
-    const gasRes  = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
-    // ── [変更 2026-08-19] 応答がJSONでない場合(GoogleのHTMLエラーページ等)、
-    // 原因不明のまま握りつぶさず、HTTPステータスと本文の一部をエラーに含める。
-    // これにより、次回以降は実行数ログを開かずとも、個人ログだけで原因特定できる。
-    const gasRawText = await gasRes.text();
-    let gasData;
-    try {
-      gasData = JSON.parse(gasRawText);
-    } catch (parseErr) {
-      throw new Error('HTTP ' + gasRes.status + ' - ' + gasRawText.substring(0, 200));
-    }
-
-    // ── [追加 Ver.3.0] GAS側の検証結果を確認してから確定 ──
-    // ── [変更 2026-08-19] messageが空の場合でも、生の応答を残し、原因不明のまま握りつぶさない ──
-    if (gasData.status !== 'success') {
-      throw new Error((gasData.message || 'Registration rejected by server.') + ' | raw: ' + gasRawText.substring(0, 200));
-    }
-
-    localStorage.setItem(PK_NAME_KEY, name);
-    localStorage.setItem(PK_CRED_KEY, credId);
-
-    // ── [追加 2026-07-27] 登録成功を、個人ログに1行だけ記録 ──
-    sendAccessLog(name, 'Register_Attempt', 'Success');
-
-    // アプリを起動
-    document.getElementById('passkey-screen').classList.remove('show');
-    launchApp(name);
-
-  } catch (err) {
-    const msg = err.message || 'Registration failed. Please try again.';
-    // ── [追加 2026-07-27] 登録失敗を、理由付きで個人ログに1行だけ記録 ──
-    sendAccessLog(name, 'Register_Attempt', 'Failed: ' + msg);
-    // ── [追加 #6・#8] 署名が期限切れ・無効な場合は、通知ボタン画面へ切り替える ──
-    if (regParams && /invalid or expired/i.test(msg)) {
-      document.getElementById('pk-register-panel').style.display = 'none';
-      document.getElementById('pk-expired-name').textContent = regParams.name;
-      document.getElementById('pk-expired-panel').style.display = 'block';
-      btn.disabled = false;
-      btn.textContent = '🔑 Register with Passkey';
-      return;
-    }
-    errEl.textContent = msg;
-    errEl.classList.add('show');
-    btn.disabled = false;
-    btn.textContent = '🔑 Register with Passkey';
-  }
-}
 
 // ── [追加 #8・#9] ロックアウト通知ボタン:GASへ異常フラグ+新規リンク自動発行を依頼 ──
 async function notifyShigeLockout() {
@@ -3814,116 +3703,7 @@ async function notifyShigeLockout() {
   }
 }
 
-// ── ECDSA ASN.1署名をr+s形式に変換 ──────────────────────────
-function convertEcdsaAsn1ToRS(asn1) {
-  let offset = 2;
-  if (asn1[1] === 0x81) offset = 3;
-  const rLen = asn1[offset + 1];
-  const r = asn1.slice(offset + 2, offset + 2 + rLen);
-  offset = offset + 2 + rLen;
-  const sLen = asn1[offset + 1];
-  const s = asn1.slice(offset + 2, offset + 2 + sLen);
-  const pad = a => { while (a.length < 32) a = new Uint8Array([0, ...a]); return a.slice(-32); };
-  const out = new Uint8Array(64);
-  out.set(pad(r), 0); out.set(pad(s), 32);
-  return out;
-}
 
-// ── Passkey 認証 ──────────────────────────────────────────────
-async function passkeyAuthenticate() {
-  const name   = localStorage.getItem(PK_NAME_KEY);
-  const credId = localStorage.getItem(PK_CRED_KEY);
-  const errEl  = document.getElementById('pk-auth-error');
-  errEl.classList.remove('show');
-
-  const btn = document.getElementById('pk-auth-btn');
-  btn.disabled = true;
-  btn.textContent = 'Authenticating…';
-
-  try {
-    const challenge = new Uint8Array(32);
-    crypto.getRandomValues(challenge);
-
-    const rawId = Uint8Array.from(atob(credId), c => c.charCodeAt(0));
-
-    // ── [追加 2026-09-10] 認証ハングアップ対策:明示的な15秒タイムアウト ──
-    // 一部端末(SamsungBrowser等)でnavigator.credentials.get()が
-    // 応答なしのまま無期限に保留状態(ハング)になる不具合への対処。
-    const AUTH_TIMEOUT_MS = 15000;
-    const abortController = ('AbortController' in window) ? new AbortController() : null;
-    const credentialOptions = {
-      publicKey: {
-        challenge,
-        allowCredentials: [{ id: rawId, type: 'public-key' }],
-        userVerification: 'preferred',
-        timeout: AUTH_TIMEOUT_MS
-      }
-    };
-    if (abortController) credentialOptions.signal = abortController.signal;
-
-    let authTimeoutId;
-    const authTimeoutPromise = new Promise((_, reject) => {
-      authTimeoutId = setTimeout(() => {
-        if (abortController) abortController.abort();
-        reject(new Error('Authentication timed out. Please try again.'));
-      }, AUTH_TIMEOUT_MS);
-    });
-
-    const assertion = await Promise.race([
-      navigator.credentials.get(credentialOptions),
-      authTimeoutPromise
-    ]);
-    clearTimeout(authTimeoutId);
-
-    if (!assertion) throw new Error('Authentication cancelled.');
-
-    // GASから公開鍵を取得して署名検証
-    // ── [変更 2026-08-19] JSON以外の応答(HTML等)への耐性を追加 ──
-    const pkRes     = await fetch(GAS_URL + '?action=getPublicKey&name=' + encodeURIComponent(name));
-    const pkRawText = await pkRes.text();
-    let pkData;
-    try {
-      pkData = JSON.parse(pkRawText);
-    } catch (parseErr) {
-      throw new Error('HTTP ' + pkRes.status + ' - ' + pkRawText.substring(0, 200));
-    }
-    if (pkData.status === 'success' && pkData.publicKey) {
-      const pubKeyBytes = Uint8Array.from(atob(pkData.publicKey), c => c.charCodeAt(0));
-      const cryptoKey = await crypto.subtle.importKey(
-        'spki', pubKeyBytes.buffer,
-        { name: 'ECDSA', namedCurve: 'P-256' },
-        false, ['verify']
-      );
-      const authData = new Uint8Array(assertion.response.authenticatorData);
-      const clientDataHash = await crypto.subtle.digest('SHA-256', assertion.response.clientDataJSON);
-      const sigData = new Uint8Array(assertion.response.signature);
-      const signedData = new Uint8Array(authData.length + 32);
-      signedData.set(authData);
-      signedData.set(new Uint8Array(clientDataHash), authData.length);
-      const rsSignature = convertEcdsaAsn1ToRS(sigData);
-      const valid = await crypto.subtle.verify(
-        { name: 'ECDSA', hash: 'SHA-256' },
-        cryptoKey, rsSignature.buffer, signedData.buffer
-      );
-      if (!valid) throw new Error('Signature verification failed. Please try again.');
-    }
-
-    // 認証成功 → アプリ起動
-    // ── [追加 2026-08-19] ログイン成功を、個人ログに1行だけ記録 ──
-    sendAccessLog(name, 'Login_Attempt', 'Success');
-    document.getElementById('passkey-screen').classList.remove('show');
-    launchApp(name);
-
-  } catch (err) {
-    const msg = err.message || 'Authentication failed. Please try again.';
-    // ── [追加 2026-08-19] ログイン失敗を、理由付きで個人ログに1行だけ記録 ──
-    sendAccessLog(name, 'Login_Attempt', 'Failed: ' + msg);
-    errEl.textContent = msg;
-    errEl.classList.add('show');
-    btn.disabled = false;
-    btn.textContent = '🔐 Authenticate';
-  }
-}
 
 // ── アプリ起動（Passkey認証成功後）──────────────────────────
 let _currentUser = '';
@@ -5104,8 +4884,8 @@ function resetPasskey() {
 }
 
 function confirmReset() {
-  localStorage.removeItem(PK_NAME_KEY);
-  localStorage.removeItem(PK_CRED_KEY);
+  localStorage.removeItem(DK_NAME_KEY);
+  localStorage.removeItem(DK_KEY_KEY);
   try { localStorage.removeItem('j2hub_cache_registered'); } catch(e) {}
   location.reload();
 }
