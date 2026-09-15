@@ -3492,15 +3492,22 @@ const PK_CRED_KEY = 'j2hub_passkey_credid';
     document.getElementById('passkey-screen').classList.add('show');
     document.querySelector('.app').style.display = 'flex'; // ── loading-overlayが.app内にあるため、表示前に一時的に開放 ──
     showLoading('Checking your account…', 'Please keep this screen open.');
+    sendAccessLog(guardName, 'RedirectGuard_Start');
+    let guardAttempt = 0;
     for (;;) {
+      guardAttempt++;
       try {
         const guardAbortController = new AbortController();
         const guardTimeoutId = setTimeout(() => guardAbortController.abort(), 6000);
         const flagRes  = await fetch(GAS_URL + '?action=checkRedirectFlag&name=' + encodeURIComponent(guardName), { signal: guardAbortController.signal });
         clearTimeout(guardTimeoutId);
-        const flagData = await flagRes.json();
+        const flagRawText = await flagRes.text();
+        let flagData;
+        try { flagData = JSON.parse(flagRawText); }
+        catch (parseErr) { throw new Error('HTTP ' + flagRes.status + ' - ' + flagRawText.substring(0, 200)); }
         if (flagData && flagData.status === 'success') {
           if (flagData.redirect === true) {
+            sendAccessLog(guardName, 'RedirectGuard_Result', 'Redirect to Ver.3.1 (attempt ' + guardAttempt + ')');
             const newBase = 'https://www.j2hub.com.sg/app/bb6e292c2ccdfacc100d4516.html';
             const forwardParams = new URLSearchParams();
             forwardParams.set('name', guardName);
@@ -3510,10 +3517,11 @@ const PK_CRED_KEY = 'j2hub_passkey_credid';
             return;
           }
           // ── redirect:falseと確定した場合のみ、旧Passkeyログインへ進む ──
+          sendAccessLog(guardName, 'RedirectGuard_Result', 'Stay on Ver.3.0 (attempt ' + guardAttempt + ')');
           break;
         }
       } catch (guardErr) {
-        // ── 通信エラー。旧Passkey画面へは進ませず、リトライを続ける ──
+        sendAccessLog(guardName, 'RedirectGuard_Retry', 'Failed (attempt ' + guardAttempt + '): ' + (guardErr && guardErr.message ? guardErr.message : String(guardErr)));
       }
       await new Promise(r => setTimeout(r, 2000));
     }
