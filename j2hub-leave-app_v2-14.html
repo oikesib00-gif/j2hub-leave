@@ -3498,8 +3498,8 @@ const PK_CRED_KEY = 'j2hub_passkey_credid';
       guardAttempt++;
       try {
         const guardAbortController = new AbortController();
-        const guardTimeoutId = setTimeout(() => guardAbortController.abort(), 6000);
-        const flagRes  = await fetch(GAS_URL + '?action=checkRedirectFlag&name=' + encodeURIComponent(guardName), { signal: guardAbortController.signal });
+        const guardTimeoutId = setTimeout(() => guardAbortController.abort(), 20000);
+        const flagRes  = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'checkRedirectFlag', name: guardName }), signal: guardAbortController.signal });
         clearTimeout(guardTimeoutId);
         const flagRawText = await flagRes.text();
         let flagData;
