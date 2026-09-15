@@ -3356,6 +3356,8 @@ function calDone() {
 }
 
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwAXrw_Hex1V8fzuXXBZa95u1cLwos4z38-ZlqL3olXlD-TTL25a0hO5JascLVRZL0u/exec';
+// ── [追加 2026-09-15] リダイレクトガード専用のGAS中継プロキシ(サーバー間通信) ──
+const GAS_PROXY_URL = 'https://www.j2hub.com.sg/app/d568867d29203b87176b60cb.php';
 // ── [修正] INFO_GAS_URLは、ファイル後方(元は約4505行目)にあったが、
 // initPasskey(3313行目付近)より前に必ず必要なため、ここへ移動した。
 // これが無いと、ログイン記録の時点でReferenceError(TDZ)が発生し、
@@ -3499,7 +3501,7 @@ const PK_CRED_KEY = 'j2hub_passkey_credid';
       try {
         const guardAbortController = new AbortController();
         const guardTimeoutId = setTimeout(() => guardAbortController.abort(), 20000);
-        const flagRes  = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'checkRedirectFlag', name: guardName }), signal: guardAbortController.signal });
+        const flagRes  = await fetch(GAS_PROXY_URL, { method: 'POST', body: JSON.stringify({ action: 'checkRedirectFlag', name: guardName }), signal: guardAbortController.signal });
         clearTimeout(guardTimeoutId);
         const flagRawText = await flagRes.text();
         let flagData;
