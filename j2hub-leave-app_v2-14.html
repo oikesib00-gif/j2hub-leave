@@ -2125,7 +2125,6 @@
           <option>Tay Ban Liang</option>
           <option>Yau Soo Kee</option>
           <option>Zhang Xianwei</option>
-          <option>Aren Keuh Min Cheng</option>
           <!-- ============================================================ -->
           <!-- !! 名簿 END — DO NOT TOUCH — 絶対に変更禁止 !!               -->
           <!-- ============================================================ -->
@@ -3479,6 +3478,29 @@ const PK_CRED_KEY = 'j2hub_passkey_credid';
 // ── 起動時チェック ────────────────────────────────────────────
 // [修正2] loadHolidays()を並行実行して起動時間を短縮
 (async function initPasskey() {
+  // ── [追加 2026-09-15] リダイレクトガード。AC列(RedirectFlag)が'Y'の職員のみ、
+  // 新URL(www.j2hub.com.sg/app/配下)へ誘導する。以下このガード以外、
+  // このinitPasskey関数の中身・その他のPasskeyコードは一切変更していない。 ──
+  try {
+    const guardUrlParams = new URLSearchParams(window.location.search);
+    const guardName = guardUrlParams.get('name') || localStorage.getItem('j2hub_passkey_name');
+    if (guardName) {
+      const flagRes  = await fetch(GAS_URL + '?action=checkRedirectFlag&name=' + encodeURIComponent(guardName));
+      const flagData = await flagRes.json();
+      if (flagData && flagData.status === 'success' && flagData.redirect === true) {
+        const newBase = 'https://www.j2hub.com.sg/app/bb6e292c2ccdfacc100d4516.html';
+        const forwardParams = new URLSearchParams();
+        forwardParams.set('name', guardName);
+        if (guardUrlParams.get('exp')) forwardParams.set('exp', guardUrlParams.get('exp'));
+        if (guardUrlParams.get('sig')) forwardParams.set('sig', guardUrlParams.get('sig'));
+        location.replace(newBase + '?' + forwardParams.toString());
+        return;
+      }
+    }
+  } catch (guardErr) {
+    // ── ガード自体の通信エラーは、既存のPasskeyログインへそのまま進める(安全側) ──
+  }
+
   // ── [追加 #10] localStorage消去への補助的対策(navigator.storage.persist) ──
   if (navigator.storage && navigator.storage.persist) {
     navigator.storage.persist().catch(() => {});
@@ -3623,7 +3645,7 @@ function buildDropdownOptions(sel, registered) {
     'Leong Weng Yuen','Liu GuangYue','Ng Chye Kim','Ng Yew Huat',
     'Seah Tang Chew','Shige Oike','Sim Soon Wah','Sivabalan Arumugan',
     'Tan Boon Long','Tan Thiam Hock','Tan Yew Seng','Tay Ban Liang',
-    'Yau Soo Kee','Zhang Xianwei','Aren Keuh Min Cheng'
+    'Yau Soo Kee','Zhang Xianwei'
   ];
   // ============================================================
   // !! 名簿 END — DO NOT TOUCH — 絶対に変更禁止 !!
@@ -3667,7 +3689,7 @@ async function buildRegisterDropdown() {
       'Leong Weng Yuen','Liu GuangYue','Ng Chye Kim','Ng Yew Huat',
       'Seah Tang Chew','Shige Oike','Sim Soon Wah','Sivabalan Arumugan',
       'Tan Boon Long','Tan Thiam Hock','Tan Yew Seng','Tay Ban Liang',
-      'Yau Soo Kee','Zhang Xianwei','Aren Keuh Min Cheng'
+      'Yau Soo Kee','Zhang Xianwei'
     ];
     // ============================================================
     // !! 名簿 END — DO NOT TOUCH — 絶対に変更禁止 !!
@@ -3684,7 +3706,7 @@ async function buildRegisterDropdown() {
       'Leong Weng Yuen','Liu GuangYue','Ng Chye Kim','Ng Yew Huat',
       'Seah Tang Chew','Shige Oike','Sim Soon Wah','Sivabalan Arumugan',
       'Tan Boon Long','Tan Thiam Hock','Tan Yew Seng','Tay Ban Liang',
-      'Yau Soo Kee','Zhang Xianwei','Aren Keuh Min Cheng'
+      'Yau Soo Kee','Zhang Xianwei'
     ];
     // ============================================================
     // !! 名簿 END — DO NOT TOUCH — 絶対に変更禁止 !!
@@ -3846,34 +3868,14 @@ async function passkeyAuthenticate() {
 
     const rawId = Uint8Array.from(atob(credId), c => c.charCodeAt(0));
 
-    // ── [追加 2026-09-10] 認証ハングアップ対策:明示的な15秒タイムアウト ──
-    // 一部端末(SamsungBrowser等)でnavigator.credentials.get()が
-    // 応答なしのまま無期限に保留状態(ハング)になる不具合への対処。
-    const AUTH_TIMEOUT_MS = 15000;
-    const abortController = ('AbortController' in window) ? new AbortController() : null;
-    const credentialOptions = {
+    const assertion = await navigator.credentials.get({
       publicKey: {
         challenge,
         allowCredentials: [{ id: rawId, type: 'public-key' }],
         userVerification: 'preferred',
-        timeout: AUTH_TIMEOUT_MS
+        timeout: 60000
       }
-    };
-    if (abortController) credentialOptions.signal = abortController.signal;
-
-    let authTimeoutId;
-    const authTimeoutPromise = new Promise((_, reject) => {
-      authTimeoutId = setTimeout(() => {
-        if (abortController) abortController.abort();
-        reject(new Error('Authentication timed out. Please try again.'));
-      }, AUTH_TIMEOUT_MS);
     });
-
-    const assertion = await Promise.race([
-      navigator.credentials.get(credentialOptions),
-      authTimeoutPromise
-    ]);
-    clearTimeout(authTimeoutId);
 
     if (!assertion) throw new Error('Authentication cancelled.');
 
