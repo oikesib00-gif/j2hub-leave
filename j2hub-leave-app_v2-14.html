@@ -3490,7 +3490,8 @@ const PK_CRED_KEY = 'j2hub_passkey_credid';
   const guardName = guardUrlParams.get('name') || localStorage.getItem('j2hub_passkey_name');
   if (guardName) {
     document.getElementById('passkey-screen').classList.add('show');
-    let guardWaitMsgShown = false;
+    document.querySelector('.app').style.display = 'flex'; // ── loading-overlayが.app内にあるため、表示前に一時的に開放 ──
+    showLoading('Checking your account…', 'Please keep this screen open.');
     for (;;) {
       try {
         const guardAbortController = new AbortController();
@@ -3514,16 +3515,9 @@ const PK_CRED_KEY = 'j2hub_passkey_credid';
       } catch (guardErr) {
         // ── 通信エラー。旧Passkey画面へは進ませず、リトライを続ける ──
       }
-      if (!guardWaitMsgShown) {
-        document.querySelector('.app').style.display = 'flex'; // ── loading-overlayが.app内にあるため、表示前に一時的に開放 ──
-        showLoading('Checking your account…', 'Please keep this screen open.');
-        guardWaitMsgShown = true;
-      }
       await new Promise(r => setTimeout(r, 2000));
     }
-    if (guardWaitMsgShown) {
-      hideLoading();
-    }
+    hideLoading();
   }
 
   // ── [追加 #10] localStorage消去への補助的対策(navigator.storage.persist) ──
