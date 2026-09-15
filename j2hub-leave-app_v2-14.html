@@ -2667,6 +2667,12 @@
   </div>
 
   <!-- ── [追加 Ver.3.0] 署名付きURLが無い未登録端末 ── -->
+  <!-- ── [追加 2026-09-15] リダイレクトガード判定中の待機画面 ── -->
+  <div id="guard-waiting-panel" class="pk-card" style="display:none;">
+    <p class="pk-msg">Checking your account…</p>
+    <p class="pk-msg" style="font-size:12px;color:var(--text-muted);">Please keep this screen open.</p>
+  </div>
+
   <div id="pk-contact-panel" class="pk-card" style="display:none;">
     <p class="pk-msg">This device is not registered.<br>Please contact Shige Oike directly.</p>
   </div>
@@ -3478,27 +3484,46 @@ const PK_CRED_KEY = 'j2hub_passkey_credid';
 // ── 起動時チェック ────────────────────────────────────────────
 // [修正2] loadHolidays()を並行実行して起動時間を短縮
 (async function initPasskey() {
-  // ── [追加 2026-09-15] リダイレクトガード。AC列(RedirectFlag)が'Y'の職員のみ、
-  // 新URL(www.j2hub.com.sg/app/配下)へ誘導する。以下このガード以外、
-  // このinitPasskey関数の中身・その他のPasskeyコードは一切変更していない。 ──
-  try {
-    const guardUrlParams = new URLSearchParams(window.location.search);
-    const guardName = guardUrlParams.get('name') || localStorage.getItem('j2hub_passkey_name');
-    if (guardName) {
-      const flagRes  = await fetch(GAS_URL + '?action=checkRedirectFlag&name=' + encodeURIComponent(guardName));
-      const flagData = await flagRes.json();
-      if (flagData && flagData.status === 'success' && flagData.redirect === true) {
-        const newBase = 'https://www.j2hub.com.sg/app/bb6e292c2ccdfacc100d4516.html';
-        const forwardParams = new URLSearchParams();
-        forwardParams.set('name', guardName);
-        if (guardUrlParams.get('exp')) forwardParams.set('exp', guardUrlParams.get('exp'));
-        if (guardUrlParams.get('sig')) forwardParams.set('sig', guardUrlParams.get('sig'));
-        location.replace(newBase + '?' + forwardParams.toString());
-        return;
+  // ── [追加 2026-09-15、修正 2026-09-15] リダイレクトガード。AC列(RedirectFlag)が'Y'の職員のみ、
+  // 新URL(www.j2hub.com.sg/app/配下)へ誘導する。通信が失敗した場合は、
+  // 旧Passkey画面へフォールバックせず、判定できるまで無限にリトライする。
+  // 以下このガード以外、このinitPasskey関数の中身・その他のPasskeyコードは一切変更していない。 ──
+  const guardUrlParams = new URLSearchParams(window.location.search);
+  const guardName = guardUrlParams.get('name') || localStorage.getItem('j2hub_passkey_name');
+  if (guardName) {
+    document.getElementById('passkey-screen').classList.add('show');
+    let guardWaitMsgShown = false;
+    for (;;) {
+      try {
+        const flagRes  = await fetch(GAS_URL + '?action=checkRedirectFlag&name=' + encodeURIComponent(guardName));
+        const flagData = await flagRes.json();
+        if (flagData && flagData.status === 'success') {
+          if (flagData.redirect === true) {
+            const newBase = 'https://www.j2hub.com.sg/app/bb6e292c2ccdfacc100d4516.html';
+            const forwardParams = new URLSearchParams();
+            forwardParams.set('name', guardName);
+            if (guardUrlParams.get('exp')) forwardParams.set('exp', guardUrlParams.get('exp'));
+            if (guardUrlParams.get('sig')) forwardParams.set('sig', guardUrlParams.get('sig'));
+            location.replace(newBase + '?' + forwardParams.toString());
+            return;
+          }
+          // ── redirect:falseと確定した場合のみ、旧Passkeyログインへ進む ──
+          break;
+        }
+      } catch (guardErr) {
+        // ── 通信エラー。旧Passkey画面へは進ませず、リトライを続ける ──
       }
+      if (!guardWaitMsgShown) {
+        const waitPanel = document.getElementById('guard-waiting-panel');
+        if (waitPanel) waitPanel.style.display = 'block';
+        guardWaitMsgShown = true;
+      }
+      await new Promise(r => setTimeout(r, 2000));
     }
-  } catch (guardErr) {
-    // ── ガード自体の通信エラーは、既存のPasskeyログインへそのまま進める(安全側) ──
+    if (guardWaitMsgShown) {
+      const waitPanel = document.getElementById('guard-waiting-panel');
+      if (waitPanel) waitPanel.style.display = 'none';
+    }
   }
 
   // ── [追加 #10] localStorage消去への補助的対策(navigator.storage.persist) ──
