@@ -2680,6 +2680,25 @@
 </div>
 
 <script>
+// ── [追加 2026-09-16] 自動キャッシュ更新チェック。
+// 端末に古い版がキャッシュされていても、利用者に何もさせず自動で最新版へ切り替える。 ──
+const PAGE_BUILD = '20260916a';
+(function checkPageFreshness_() {
+  if (new URLSearchParams(location.search).get('_fresh') === '1') return; // 再読み込み直後の無限ループ防止
+  fetch(location.pathname + '?_nocache=' + Date.now(), { cache: 'no-store' })
+    .then(function(res) { return res.text(); })
+    .then(function(html) {
+      const m = html.match(/const PAGE_BUILD = '([^']+)'/);
+      if (m && m[1] !== PAGE_BUILD) {
+        const url = new URL(location.href);
+        url.searchParams.set('_fresh', '1');
+        url.searchParams.set('_v', Date.now());
+        location.replace(url.toString());
+      }
+    })
+    .catch(function() { /* 確認に失敗しても、通常通りこのまま進める(安全側) */ });
+})();
+
 // ── キャッシュキー（グローバル定義） ─────────────────────────────
 const CACHE_KEY     = 'j2hub_cache_data';
 const CACHE_HOL_KEY = 'j2hub_cache_holidays';
