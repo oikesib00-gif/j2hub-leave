@@ -3375,13 +3375,21 @@ let _accessRoute = '';
 // 正面玄関:sendBeacon / 裏口:古いブラウザ向けのfetch(keepalive)フォールバック
 function sendAccessLog(name, section, postId) {
   try {
+    // ── [追加 2026-09-15] 接続種別(Wi-Fi/モバイル回線等)。Android系ブラウザのみ取得可能、
+    // iPhone Safari等では非対応のため常にunknownになる ──
+    let connInfo = 'unknown';
+    if (navigator.connection && navigator.connection.effectiveType) {
+      connInfo = navigator.connection.effectiveType + (navigator.connection.type ? ('/' + navigator.connection.type) : '');
+    } else if (navigator.connection && navigator.connection.type) {
+      connInfo = navigator.connection.type;
+    }
     const payload = JSON.stringify({
       action:   'logAccess',
       name:     name,
       section:  section,
       postId:   postId || '',
       version:  FILE_VERSION,
-      mobile:   navigator.platform || '',
+      mobile:   (navigator.platform || '') + ' | conn:' + connInfo,
       browser:  navigator.userAgent,
       referrer: document.referrer || '',
       route:    _accessRoute
