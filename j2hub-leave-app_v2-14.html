@@ -3551,6 +3551,14 @@ const PK_CRED_KEY = 'j2hub_passkey_credid';
         }
       } catch (guardErr) {
         sendAccessLog(guardName, 'RedirectGuard_Retry', 'Failed (attempt ' + guardAttempt + '): ' + (guardErr && guardErr.message ? guardErr.message : String(guardErr)));
+        // ── [追加 2026-09-22] 3回失敗した時点で、接続不安定(WiFi要因の可能性)を
+        // 3言語で案内する。既存の待機・再試行の流れ自体は一切変更しない。 ──
+        if (guardAttempt >= 3) {
+          showLoading('Checking your account…',
+            'Connection seems unstable. If you\'re on Wi-Fi, please turn it off and try again using mobile data (4G/5G).<br><br>' +
+            '网络连接似乎不稳定。如果您正在使用Wi-Fi，请关闭Wi-Fi，并尝试使用移动数据（4G/5G）重试。<br><br>' +
+            'இணைப்பு நிலையற்றதாக உள்ளது. நீங்கள் Wi-Fi பயன்படுத்துகிறீர்கள் எனில், தயவுசெய்து அதை அணைத்துவிட்டு மொபைல் டேட்டா (4G/5G) மூலம் மீண்டும் முயற்சிக்கவும்.');
+        }
       }
       await new Promise(r => setTimeout(r, 2000));
     }
