@@ -4015,8 +4015,10 @@ function launchApp(name) {
   // ── [修正] 全スタッフ、ログイン直後は両ナビを非表示にし、必ずホーム画面(3アイコン)を経由させる ──
   if (navApp)   navApp.style.display   = 'none';
   if (navLorry) navLorry.style.display = 'none';
-  // データ取得中はローディング表示
-  showLoading('Loading your data…', 'Please wait while we load your information.');
+  // ── [変更 2026-09-26] 全画面の待機表示を、ここでは出さない。以前はここで
+  // showLoading()を呼び、休暇データ(Google)の読み込みが終わるまで、
+  // ホーム画面のLORRYボタン等まで操作できなくなっていた。点検には休暇データが
+  // 一切不要なため、ホーム画面は即座に操作可能にし、休暇データは裏側で読み込む。 ──
   // 初回データを1回のリクエストでまとめて取得
   loadInitialData(name);
   checkBirthday(name);
@@ -4157,6 +4159,8 @@ function goToInspection() { goToLorry(); }
 // !! INSPECTION GAS URL — デプロイ後に設定 !!
 // !! INSPECTION GAS URL !!
 const INSP_GAS_URL = 'https://script.google.com/macros/s/AKfycbynoXNjgS1swI8BCoNiYGzpIAWP3xmDoDTMHH5L88hYn8lUV1u8zYVd9HlL5nKGfSS0/exec';
+// ── [追加 2026-09-26] 点検の送信(文字情報)・履歴取得は、こちら(MySQL)を使う ──
+const INSP_DB_URL = 'https://www.j2hub.com.sg/app/inspection_api.php';
 
 // ============================================================
 // Inspection 3言語対応
@@ -4722,12 +4726,7 @@ async function submitInspection() {
     ? t.attnNeeded + failedKeys.length + t.attnItems
     : t.allOK;
 
-  document.getElementById('insp-success-title').textContent = 'Thank you, ' + driver.split(' ')[0] + '!';
-  document.getElementById('insp-success-msg').textContent   = vehicleNo + ' — ' + resultText;
-  document.getElementById('insp-success-sub').textContent   = t.successSub;
-  document.getElementById('insp-success-overlay').classList.add('show');
-
-  // 写真・音声をkey:b64形式で送信
+  // 写真・音声をkey:b64形式で送信(Google側の記録用。以下すべてGASへのみ渡す)
   const photos = {};
   for (const key in inspPhotoMap) {
     if (inspPhotoMap[key] && inspPhotoMap[key].b64) {
@@ -4741,17 +4740,40 @@ async function submitInspection() {
     }
   }
 
-  const payload = {
-    action:       'submitInspection',
-    driver:       driver,
-    vehicleNo:    vehicleNo,
-    odometer:     odometer,
-    checklist:    inspState,
-    failedLabels: failedLabels,
-    remarks:      remarks,
-    photos:       photos,
-    audios:       audios
-  };
+  // ── [変更 2026-09-26] MySQLへの保存(速い・待つ)→保存確認後に「完了」表示。
+  // Google側(車両別シート・未点検メール・印刷機能・写真/音声の保管用)への送信は、
+  // 完全に裏側(fire-and-forget)に回し、ドライバーを一切待たせない。 ──
+  try {
+    const mysqlRes = await fetch(INSP_DB_URL, {
+      method: 'POST', cache: 'no-store',
+      body: JSON.stringify({
+        action: 'submitInspection', driver, vehicleNo, odometer,
+        failedLabels, remarks
+      })
+    });
+    const mysqlData = await mysqlRes.json();
+    if (mysqlData.status !== 'success') throw new Error(mysqlData.message || 'Save failed.');
+  } catch (err) {
+    btn.disabled    = false;
+    btn.textContent = t.submitBtn;
+    document.getElementById('error-detail').innerText = 'Could not save inspection. Please try again.';
+    document.getElementById('error-overlay').classList.add('show');
+    return;
+  }
+
+  // ── Google側への送信(裏側・待たない・失敗しても画面には影響させない) ──
+  fetch(INSP_GAS_URL, {
+    method: 'POST', cache: 'no-store',
+    body: JSON.stringify({
+      action: 'submitInspection', driver, vehicleNo, odometer,
+      checklist: inspState, failedLabels, remarks, photos, audios
+    })
+  }).catch(() => {});
+
+  document.getElementById('insp-success-title').textContent = 'Thank you, ' + driver.split(' ')[0] + '!';
+  document.getElementById('insp-success-msg').textContent   = vehicleNo + ' — ' + resultText;
+  document.getElementById('insp-success-sub').textContent   = t.successSub;
+  document.getElementById('insp-success-overlay').classList.add('show');
 
   try {
     await fetch(INSP_GAS_URL, { method: 'POST', cache: 'no-store', body: JSON.stringify(payload) });
